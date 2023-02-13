@@ -1,5 +1,5 @@
 # Pythinux Beta
-**Current Version: v0.13.0**
+### **Current Version: v0.13.0**
 ## A fully-featured, multi-purpose virtual operating system written in Python
 Pythinux [portmanteau of "python linux"] is a virtual operating system written fully in Python.
 ## Features
