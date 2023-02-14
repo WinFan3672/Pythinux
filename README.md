@@ -10,12 +10,9 @@ Pythinux [portmanteau of "python linux"] is a virtual operating system written f
 * User manager
 * Program API
 * Package Manager
-* Documentation*
-* Standard Library*
+* Documentation
+* Standard Library
 * Etc.
-
-
-*incomplete.
 
 ## Install ⚙️
 To install, just download a release and run the py file. 
