@@ -1,9 +1,9 @@
-# Pythinux Beta
+# Pythinux Beta 💽
 ### **Current Version: v0.14.0**
 ### [Download](https://github.com/WinFan3672/pythinux/archive/refs/heads/main.zip)
-## A fully-featured, multi-purpose virtual operating system written in Python
+### A fully-featured, multi-purpose virtual operating system written in Python
 Pythinux [portmanteau of "python linux"] is a virtual operating system written fully in Python.
-## Features
+## Features 👾
 * 50+ built-in commands
 * Setup Wizard
 * User system
@@ -17,7 +17,7 @@ Pythinux [portmanteau of "python linux"] is a virtual operating system written f
 
 *incomplete.
 
-## Install
+## Install ⚙️
 To install, just download a release and run the py file. 
 ### System Requirements
 Python 3.9+ [Tested on 3.10]
@@ -30,9 +30,9 @@ Just download a copy off of your relevant package manager.
 MacOS 10.9 "Mavericks" or later.
 ## Contributing
 Submit an issue/pull request and I will look into it.
-## Docs
+## Docs 📄
 TBA
 
 [Dev Roadmap](https://github.com/WinFan3672/pythinux/blob/main/ROADMAP.md)
-## Contact
+## Contact 📨
 Contact me at ```i.am@mildlysuspicio.us```. I will respond.
