@@ -787,7 +787,7 @@ def main(ch=""):
         pswd = sha256(getpass.getpass("Password >>"))
         ulvl = input("UserLVL >>")
         print(f"{unn}|{pswd}|{ulvl}")
-    elif ch == "about -c":
+    elif ch == "about -c" or ch == "about":
         return f"{os_name} v{app_version[0]}.{app_version[1]}.{app_version[2]}"
     elif ch == "about -cc":
         return app_version
