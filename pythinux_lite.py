@@ -24,7 +24,7 @@ from secrets import choice
 (
     os_name,
     app_version,
-) = "Pythinux Lite", [0, 15, 0]
+) = "Pythinux Lite", [0, 15, 1]
 autologin = 0
 import os
 
