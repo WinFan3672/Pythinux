@@ -25,6 +25,20 @@ Any platform that supports Python 3.9 or higher.
 Just download a copy off of your relevant package manager.
 #### MacOS
 MacOS 10.9 "Mavericks" or later.
+
+## Using
+Here are a few tips to get you started:
+* The HELP command shows a list of commands
+  * Every entry is split by a space
+* The STARTED command provides a series of tutorials you can follow.
+  * The STARTED command has multiple tutorials - for a list of all of them, `started /` is your friend.
+* THE IHELP command is an interactive utility for seeing what a command does
+* The MAN command contains built-in manpages.
+* To install a program, use PKM
+* To run a program, use RUN <name of program>.
+* Here are some important commands:
+  * help, ihelp, started, man, started, cls, pkm, run, logoff, echo, alias, terminal, user_control, user_editor, view_log
+
 ## Contributing
 Submit an issue/pull request and I will look into it.
 ## Docs 📄
