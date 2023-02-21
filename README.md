@@ -1,6 +1,6 @@
 # Pythinux Beta 💽
-### **Current Version: v0.14.0**
-### [Download](https://github.com/WinFan3672/pythinux/archive/refs/heads/main.zip)
+### **Current Version: v0.15.0**
+### [Download](https://github.com/WinFan3672/pythinux/raw/main/pythinux.py)
 ### A fully-featured, multi-purpose virtual operating system written in Python
 Pythinux [portmanteau of "python linux"] is a virtual operating system written fully in Python.
 ## Features 👾
