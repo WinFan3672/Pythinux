@@ -15,14 +15,22 @@ Pythinux [portmanteau of "python linux"] is a virtual operating system written f
 * Etc.
 
 ## Install ⚙️
-To install, just [download a release](https://github.com/WinFan3672/pythinux/archive/refs/heads/main.zip) and run the py file. 
+To install, just [download a release](https://github.com/WinFan3672/pythinux/raw/main/pythinux.py) and run the py file. 
 ### System Requirements
 Python 3.9+ [Tested on 3.10]
+
 Any platform that supports Python 3.9 or higher.
 #### Windows
 3.9 is supported on Windows 8+
 #### Linux
 Just download a copy off of your relevant package manager.
+
+Apt: `apt install python`
+
+Pacman: `pacman -S python`
+
+yay: `yay -S python`
+
 #### MacOS
 MacOS 10.9 "Mavericks" or later.
 
