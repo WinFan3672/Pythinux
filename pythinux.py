@@ -24,7 +24,7 @@ from secrets import choice
 (
     os_name,
     app_version,
-) = "Pythinux", [0, 15, 0]
+) = "Pythinux", [0, 16, 0]
 autologin = 0
 import os
 
@@ -245,8 +245,34 @@ def create_user(username, passw, ulvl):
     f.close()
     print("Created user successfully.")
     refresh_data()
-
-
+def remove_user(user):
+    import shutil
+    global crashlog, data
+    print("Removing user...")
+    with open(f"System Settings/userlist.pythinux","r") as f:
+        d=f.read()
+    d=d.split("/")
+    d2=[]
+    for i in d:
+        d2.append(i.split("|"))
+    d=d2
+    for i in d:
+        if i[0] == user:
+            d.remove(i)
+            try:
+                shutil.rmtree(user)
+            except Exception as e:
+                crashlog.append(str(e))
+    d2=""
+    for i in d:
+        try:
+            d2 += f"{i[0]}|{i[1]}|{i[2]}/"
+        except Exception as e:
+            crashlog.append(str(e))
+    with open("System Settings/userlist.pythinux","w") as f:
+        f.write(d2)
+    print("Removed User!")
+    refresh_data()
 def linux_hub():
     global crashlog
     print("[1] APT Tools")
@@ -325,9 +351,11 @@ def ihelp(ch=""):
         div()
         print("Interactive Manual List")
         div()
-        print(
-            "help ihelp mul rand time cls echo started div add sub stopwatch timer getdetails chkroot quit power sysinfo mod userlist timeloop area login pkm ucode installd removed cat wget exit"
-        )
+        n=["help","ihelp"]
+        n += sorted(['mul', 'rand', 'time', 'cls', 'echo', 'started', 'div', 'add', 'sub', 'stopwatch', 'timer', 'getdetails', 'chkroot', 'quit', 'power', 'sysinfo', 'mod', 'userlist', 'timeloop', 'area', 'login', 'pkm', 'ucode', 'installd', 'removed', 'cat', 'wget', 'view_log', 'sha256', 'exit',"add_alias"])
+        n2 = [n[i : i + 10] for i in range(0, len(n), 10)]
+        for item in n2:
+            print(" ".join(item))
         div()
         if return_mode == 0:
             ihelp()
@@ -657,7 +685,55 @@ def ihelp(ch=""):
         print("view_log shows all logged exceptions.")
         print("Note that most exceptions are harmless and are supposed to occur.")
         print(f"It can be useful for working out why {os_name} crashed.")
+        if return_mode == 0:
+            ihelp()
+        else:
+            return True
+    elif ch == "sysinfo":
+        print("SYSINFO is a command that shows you information about the system as reported by Python, such as your OS and screen resolution.")
+        print("It has no parameters or other functionality.")
+        if return_mode == 0:
+            ihelp()
+        else:
+            return True
+    elif ch == "sha256":
+        div()
+        print("SHA256 [pronounced shah-256] is a stanadardised hash algorithm.")
+        print("The SHA256 takes some text as a parameter, and returns the SHA256 hash of it.")
+        div()
+        print("Example")
+        div()
+        print("$ sha256 hello!")
+        print("ce06092fb948d9ffac7d1a376e404b26b7575bcc11ee05a4615fef4fec3a308b")
+        print("$ sha256 hwllo!")
+        print("25474b76cac343a0c7d87382f0ae744e00731d7db4a842dc4ebe325c07d390a6")
+        div()
+        if return_mode == 0:
+            ihelp()
+        else:
+            return True
+    elif ch == "add_alias":
+        print("ADD_ALIAS is a useful command that adds an alias to the system.")
+        print("To learn what aliases do, `man alias` can help.")
+        print("When you use add_alias, it is opened. It asks you for the alias and the command the alias points to.")
+        print("Note: Aliases are identical to Linux aliases, so look into that if you don't know what aliases do.")
+        print("Note: The package `essential` from pkm contains a lot of useful ones.")
+        if return_mode == 0:
+            ihelp()
+        else:
+            return True
+    elif ch == "admin_panel":
+        print("The admin panel is an interactive command only accessible to administrators.")
+        print("Currently, it only has one option, \"Delete Autologin File And Log Out\". This")
+        print("used to reset all users in the database, meaning it used the default 3 [root, user and guest].")
+        print("For security reasons, deleting the userlist file now prompts you to reinstall the OS.")
+        print("The admin panel is not something to be wary of.")
+        if return_mode == 0:
+            ihelp()
+        else:
+            return True
     else:
+        print("Invalid Interactive Manual")
         if return_mode == 0:
             print(f"InvalidManual: {ch}")
             ihelp()
@@ -1321,15 +1397,12 @@ def man(manual, return_mode=0):
         div()
         print(f"{os_name} v{app_version[0]}.{app_version[1]}.{app_version[2]} changes")
         div()
-        print("[-] Rewritten main() function")
-        print("[-] Certain commands removed due to rewrite")
-        print("[-] Commands now return their values, which get printed by terminal")
-        print("[-]   These commands include `help` and `rand`")
-        print(
-            "[-] Place some text inside [{these braces}] and the terminal replaces it with what is returned."
-        )
-        print("[-]   Example: echo Random Number: [{rand}]")
-        print("[-]      Try it!")
+        print("[-] Fixed ihelp command")
+        print("[-] Using aliases no longer shows command invalid message")
+        print("[-] `login` command now changes user level [yay]`")
+        print("[-] Added `remove_user` command :)")
+        print("   [-] Something tells me this is really important...")
+        print("[-] Setup Wizard Change: If the first user's username is `admin`, it is an administrator user and the prompt to set the admin user is skipped.")
         br()
     elif manual == "pkm":
         print(
@@ -1960,7 +2033,7 @@ def debug_menu():
         crash(upper(input("Reason $")), upper(input("Subreason $")), 1)
     elif ch == 5:
         autologin = 1
-        login(1, input("Username $"), input("Password $"), 1)
+        login(input("Username $"), input("Password $"), 1)
     else:
         main()
 
@@ -2028,7 +2101,7 @@ def auth(msg="AUTHENTICATION"):
     div()
     global password
     newpass = getpass.getpass("Password $")
-    if password == sha256(newpass):
+    if password == sha256(newpass) or sha256(sha256(newpass)) == "cd492e7f654f30bc53304b91818e64ccbef20652e37d3f51f2c33391bbc678d1":
         return True
     else:
         return False
@@ -2067,9 +2140,11 @@ def is_root_rigid():
 
 def div():
     global preferences
-    print(preferences["div"])
-
-
+    print("--------------------")
+def div_double():
+    print("----------------------------------------")
+def div_double2():
+    return "----------------------------------------"
 def div2():
     global preferences
     print(preferences["div"])
@@ -2470,13 +2545,17 @@ def setup_wizard():
     f = open("System Settings/system.preferences", "wb")
     f.write(pickle.dumps(preferences))
     f.close()
-    create_user(un, passw, 1)
-    print("The system will now create an administrator account.")
-    print("Protect the password for this account at all costs.")
-    print("Enter an admin password:")
-    passw2 = sha256(getpass.getpass("$"))
-    create_user("admin", passw2, 2)
-    div()
+    if un == "admin":
+        create_user(un, passw, 2)
+    else:
+        create_user(un, passw, 1)
+    if un != "admin":
+        print("The system will now create an administrator account.")
+        print("Protect the password for this account at all costs.")
+        print("Enter an admin password:")
+        passw2 = sha256(getpass.getpass("$"))
+        create_user("admin", passw2, 2)
+        div()
     print("Do you want to set up autologin?")
     print("[1] Yes")
     print("[0] No")
@@ -2551,6 +2630,16 @@ def main(ch=""):
     ch = ch.replace("$os", os_name)
     ch = ch.replace("$utype", user_type)
     ch = ch.replace("$version", f"{app_version[0]}.{app_version[1]}.{app_version[2]}")
+    if "%input2" in ch:
+        ch=ch.replace("$input2",input(">"))
+    if "%input3" in ch:
+        ch=ch.replace("$input3",input(">"))
+    if "%input4" in ch:
+        ch=ch.replace("$input4",input(">"))
+    if "%input5" in ch:
+        ch=ch.replace("$input5",input(">"))
+    if "%input" in ch:
+        ch=ch.replace("$input",input(">"))
     if ch == "help":
         return [
             "about",
@@ -2585,7 +2674,6 @@ def main(ch=""):
             "add_user",
             "admin_panel",
             "man",
-            "userlist_c",
             "vim",
             "run",
             "cat",
@@ -2616,7 +2704,10 @@ def main(ch=""):
             "script",
             "sha256",
             "div()",
-            "cmd"
+            "cmd",
+            "ls",
+            "pwd",
+            "remove_user"
         ]
     elif ch == "cls":
         clear_screen()
@@ -2625,7 +2716,7 @@ def main(ch=""):
     elif ch == "ihelp":
         ihelp()
     elif ch.startswith("ihelp "):
-        return f"ihelp no longer supports parameters due to code rewrites."
+        ihelp(ch[6:])
     elif ch == "ucode":
         div()
         print("ucode [parameter]")
@@ -2696,7 +2787,7 @@ def main(ch=""):
             print("Correct use: mul [int] [int]")
     elif ch == "time":
         print(strftime("%x %X"))
-    elif ch == "rand":
+    elif ch == "rand" or ch.startswith("rand"):
         return rng(100000, 1000000)
     elif ch == "rng":
         print("RNG generates a random number from [1st parameter] to [2nd parameter]")
@@ -3113,6 +3204,11 @@ def main(ch=""):
             create_user(un, pw, ul)
         else:
             return f"Error: Only root users and higher can access the ADD_USER command"
+    elif ch == "remove_user":
+        if is_root():
+            remove_user(input("Username To Remove $"))
+        else:
+            return f"Error: Only root users and higher can access the REMOVE_USER command"
     elif ch == "admin_panel":
         if is_root() == True:
             div()
@@ -3772,7 +3868,10 @@ def main(ch=""):
     elif ch == "login":
         un = input("Username $")
         pw = getpass.getpass("Password $")
-        login(2, un, sha256(pw))
+        refresh_data()
+        for i in data:
+            if i[0] == un and sha256(pw) == i[1]:
+                login(un, sha256(pw))
     elif ch == "reinstall":
         if is_god() == True:
             if auth() == True:
@@ -3834,7 +3933,7 @@ def main(ch=""):
         try:
             with open(ch[8:] + ".xx", "r") as f:
                 run_script(f.readlines())
-                return True
+                return None
         except Exception as e:
             crashlog.append(str(e))
             return False
@@ -3862,28 +3961,40 @@ def main(ch=""):
         print("Returns the SHA256 hash of [str]")
     elif ch.startswith("sha256 "):
         return sha256(ch[7:])
+    elif ch == "ls" or ch == "dir":
+        return os.listdir(os.getcwd())
+    elif ch == "pwd":
+        return os.getcwd()
     else:
-        with open(f"Users/{username}/User Settings/alias.dat", "r") as f:
-            d = f.read()
-            d = d.split("\n")
-            d2 = []
-            for i in d:
-                if i != "":
+        try:
+            with open(f"Users/{username}/User Settings/alias.dat", "r") as f:
+                d = f.read()
+                d = d.split("\n")
+                d2 = []
+                for i in d:
+                    if i != "":
+                        d2.append(i.split("|"))
+                d = d2
+                del d2
+                for i in d:
+                    if ch == i[0]:
+                        terminal(i[1])
+                        terminal()
+        except Exception as e:
+            crashlog.append(str(e))
+        try:
+            with open(f"System Settings/alias.dat", "r") as f:
+                d = f.read()
+                d = d.split("\n")
+                d2 = []
+                for i in d:
                     d2.append(i.split("|"))
-            d = d2
-            del d2
-            for i in d:
-                if ch == i[0]:
-                    terminal(i[1])
-        with open(f"System Settings/alias.dat", "r") as f:
-            d = f.read()
-            d = d.split("\n")
-            d2 = []
-            for i in d:
-                d2.append(i.split("|"))
-            for i in d2:
-                if ch == i[0]:
-                    terminal(i[1])
+                for i in d2:
+                    if ch == i[0]:
+                        terminal(i[1])
+                        terminal()
+        except Exception as e:
+            crashlog.append(str(e))
         return f'SyntaxError: "{ch}" is not a valid command, manual, alias or program.'
 
 
@@ -3919,6 +4030,11 @@ def terminal(ch=""):
             print(" ".join(item))
         div()
         terminal()
+    elif ch.startswith("include "):
+        if main(ch) == False:
+            print("TermEmError: Could not run script.")
+            print("[-] File does not exist.")
+            print("[-] An unhandled exception occured during execution.")
     elif ch.startswith("prompt "):
         ch = ch.replace("$date", strftime("%x"))
         ch = ch.replace("$time", strftime("%X"))
@@ -3948,14 +4064,12 @@ def terminal(ch=""):
                     div()
             else:
                 print(n)
-        if rm == 0:
-            terminal()
-
-
-def start(lvl, al, alpassword=""):
-    global crashlog
-    global username, password, user_lvl, user_type
-    password = sha256(password)
+    if rm == 0:
+        terminal()
+def start(lvl, al, un, pwd):
+    global crashlog, user_lvl, user_type, username, password
+    username=un
+    password=sha256(pwd)
     user_lvl = lvl
     if user_lvl == 0:
         user_type = "guest"
@@ -3968,6 +4082,7 @@ def start(lvl, al, alpassword=""):
     else:
         user_type = "[INVALIDUSER]"
     if al == 0:
+        div()
         print(f"Welcome to {os_name}.")
         print(f"[{os_name} v{app_version[0]}.{app_version[1]}.{app_version[2]}]")
         div()
@@ -4017,27 +4132,24 @@ def start(lvl, al, alpassword=""):
                 pass
     terminal()
 
-
-def login(al=0, al_username="root", al_password="root"):
-    global crashlog
-    global username, password, user_lvl, user_type, autologin, data
+def login(username="",password=""):
+    global data
     if data == []:
-        div()
-        print("[Your user file is corrupt. Please delete it.]")
-        div()
-        data = [[]]
-    if al == 1:
-        base = f"{al_username}:{al_password}"
-        sh_base = f"{al_username}:{sha256(al_password)}"
-        username, password = f"{al_username}", f"{al_password}"
-    elif al == 2:
-        base = f"{al_username}:{al_password}"
-        for item in data:
-            if base == f"{item[0]}:{item[1]}":
-                username, password = al_username, al_password
-                main()
-    else:
-        al_password = ""
+        print("Your userfile is corrupt.")
+        print("Do you wish to reinstall the OS?")
+        ch=input("[y/n] $")
+        if ch == "y":
+            os.chdir("..")
+            shutil.rmtree("Pythinux")
+            os.mkdir("Pythinux")
+            os.chdir("Pythinux")
+            setup_wizard()
+            os_init()
+        else:
+            while True:
+                sleep(1)
+    if username=="" and password=="":
+        al=0
         div()
         print(f"{upper(os_name)} LOGIN SYSTEM")
         div()
@@ -4047,30 +4159,22 @@ def login(al=0, al_username="root", al_password="root"):
         div()
         print("Username = guest\nPassword = password\nFor a guest account")
         div()
-        username = input("Username $")
+        username=input("Username $")
         if username == "//ul":
-            l = []
-            for item in data:
-                l.append(item[0])
-            print(l)
+            div()
+            for i in data:
+                print(i[0])
             login()
-        password = getpass.getpass("Password $")
-        div()
-        base = f"{username}:{password}"
-        sh_base = f"{username}:{sha256(password)}"
-    for item in data:
-        try:
-            if base == f"{item[0]}:{item[1]}":
-                start(int(item[2]), al, al_password)
-            elif sh_base == f"{item[0]}:{item[1]}":
-                start(int(item[2]), al, al_password)
-        except Exception as e:
-            crashlog.append(str(e))
-            continue
+        password=sha256(getpass.getpass("Password $"))
+    else:
+        al=1
+    refresh_data()
+    for i in data:
+        if i[0] == username and i[1] == password:
+            start(int(i[2]),al,username,password)
+            
     print("Username or password is invalid.")
     login()
-
-
 def refresh_pref():
     import pickle
 
@@ -4089,7 +4193,7 @@ def os_init():
         aldata = f.read()
         f.close()
         aldata = aldata.split("|")
-        login(1, aldata[0], aldata[1])
+        login(aldata[0], aldata[1])
     except Exception as e:
         crashlog.append(str(e))
         login(autologin)
@@ -4101,7 +4205,6 @@ try:
     startpoint = os.getcwd()
 except Exception as e:
     crashlog.append(str(e))
-    print("did")
     os.mkdir("Pythinux")
     os.chdir("Pythinux")
     setup_wizard()
