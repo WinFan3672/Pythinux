@@ -4,15 +4,6 @@ Current Release: Beta 15
 ## Beta 15 - Beta ?
 These releases will add documentation and implement the following features:
 * Standard Library
-* WinHub
-	- Implements several Windows-only functions:  
-		+ Sound playback
-		+ Registry editing
-		+ DNS Resolver Cache Clearing
-			* And other network functions
-		+ Etc.
-		
-* RemoveUser support
 * Lift/drop commands for Files
 	- Lift
 		+ Format: lift [filename]
