@@ -1,5 +1,5 @@
 # Pythinux Roadmap
-### As of 14/2/2023
+### As of 23/2/2023
 Current Release: Beta 15
 ## Beta 15 - Beta ?
 These releases will add documentation and implement the following features:
