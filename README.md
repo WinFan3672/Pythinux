@@ -4,14 +4,14 @@
 ### A fully-featured, multi-purpose virtual operating system written in Python
 Pythinux [portmanteau of "python linux"] is a virtual operating system written fully in Python.
 ## Features 👾
-* 50+ built-in commands
+* 80+ built-in commands
 * Setup Wizard
 * User system
 * User manager
 * Program API
+* Scripting Language
 * Package Manager
 * Documentation
-* Standard Library
 * Etc.
 
 ## Install ⚙️
