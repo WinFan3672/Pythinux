@@ -1,4 +1,4 @@
-# Pythinux Beta 💽
+# Pythinux 💽
 ### **Current Version: v1.0.0**
 ### [Download](https://github.com/WinFan3672/pythinux/raw/main/pythinux.py)
 ### A fully-featured, multi-purpose virtual operating system written in Python
