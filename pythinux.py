@@ -31,7 +31,7 @@ from secrets import choice
 (
     os_name,
     app_version,
-) = "Pythinux", [0, 19, 0]
+) = "Pythinux", [1, 0, 0]
 autologin = 0
 import os
 
@@ -1511,7 +1511,6 @@ def man(manual, return_mode=0):
             "vim",
             "echo",
             "scripting",
-            "todo",
             "mem",
             "szips",
             "alias",
@@ -1574,13 +1573,7 @@ def man(manual, return_mode=0):
         div()
         print(f"{os_name} v{app_version[0]}.{app_version[1]}.{app_version[2]} changes")
         div()
-        print("[-] This is [most likely] the FINAL pre-1.0 release!")
-        print("[-] Removed a lot of manuals")
-        print("[-] Updated manuals")
-        print("[-] Updated Setup Wizard")
-        print("[-] Fixed Input Wildcards")
-        print("[-] Reverted some changes to preferences file")
-        print("[-] Fixed a major bug that can remove all installed programs at once and cause system instability")
+        print("This is the 1.0 release of Pythinux.")
         br()
     elif manual == "pkm":
         print(
@@ -1691,19 +1684,6 @@ def man(manual, return_mode=0):
         div()
         print("To see a list of manuals, type \"cmanls\".")
         print("To see a manual, type \"cman <manual>\"")
-        br()
-    elif manual == "todo":
-        div()
-        print("[-] Proper documentation for every command")
-        print("[-] Finish scripting system [MAN TODO_SCRIPTS]")
-        print("[-] Finish IHELP command")
-        div()
-        print("MAN TODO_SCRIPTS")
-        br()
-    elif manual == "todo_scripts":
-        div()
-        print("[-] File operations")
-        print("[-] Direct Python execution")
         br()
     elif manual == "mem":
         main("cls")
@@ -3144,8 +3124,7 @@ def main(ch=""):
         login()
     elif ch == "author":
         div()
-        print(f"{os_name} was written by WinFan3672.")
-        print(f"WinFan3672 is a British developer making stupid things like this.")
+        print(f"{os_name} written by WinFan3672.")
         div()
     elif ch == "quit" or ch == "exit":
         exit()
@@ -4132,13 +4111,13 @@ def main(ch=""):
         main(f"removed {ch[11:]}")
     elif ch == "pkm version":
         print("PKM Package Manager")
-        print("Version 1.1.0")
+        print("Version 1.2.0")
         print(f"OS Version: {app_version[0]}.{app_version[1]}.{app_version[2]}")
-        print("Build Date: 11 Feb 2023")
+        print("Build Date: 1 Apr 2023")
         print("(c) 2023 WinFan3672, Some Rights Reserved.")
     elif ch == "pkm version -c":
         print(
-            f"PKM Version 1.1.0 : OS Version {app_version[0]}.{app_version[1]}.{app_version[2]}"
+            f"PKM Version 1.2.0 : OS Version {app_version[0]}.{app_version[1]}.{app_version[2]}"
         )
     elif ch == "pkm":
         div()
@@ -4232,6 +4211,7 @@ def main(ch=""):
                     return None
         print(f"Could not find package {term}.")
     elif ch == "pkm update":
+        main("pkm db clean")
         packages = []
         print("Updating packages...")
         import urllib.request
@@ -4265,6 +4245,8 @@ def main(ch=""):
         div()
         print("Note: If you save the database list, it is loaded on startup")
         div()
+    elif ch == "pkm db clean":
+        dbs = list(set(dbs))
     elif ch == "pkm db list":
         return dbs
     elif ch == "pkm list":
@@ -4324,7 +4306,7 @@ def main(ch=""):
                 os.mkdir("Pythinux")
                 os.chdir("Pythinux")
                 setup_wizard()
-                login()
+                login("xm","xm")
             else:
                 print("User operation cancelled.")
                 return None
@@ -4850,8 +4832,6 @@ def login(username="", password=""):
     for i in data:
         if i[0] == username and i[1] == password:
             start(int(i[2]), al, username, password)
-
-    print("Username or password is invalid.")
     login()
 
 
