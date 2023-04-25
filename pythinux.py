@@ -31,7 +31,7 @@ from secrets import choice
 (
     os_name,
     app_version,
-) = "Pythinux", [1, 0, 0]
+) = "Pythinux", [1, 0, 1]
 autologin = 0
 import os
 
@@ -247,115 +247,6 @@ def tronTextEditor(path=""):
         else:
             editor.run()
     return editor
-from tkinter import *
-from tkinter.colorchooser import askcolor
-from tkinter import messagebox
-from tkinter import filedialog
-from PIL import Image, ImageTk
-
-class daVinci:
-    def __init__(self, master):
-        self.master = master
-        self.master.title("DaVinci")
-        self.master.geometry("800x600")
-
-        # Create the canvas widget
-        self.canvas = Canvas(self.master, bg="white")
-        self.canvas.pack(fill=BOTH, expand=True)
-
-        # Bind mouse events to canvas
-        self.canvas.bind("<Button-1>", self.start_draw)
-        self.canvas.bind("<B1-Motion>", self.draw)
-        self.canvas.bind("<ButtonRelease-1>", self.stop_draw)
-        
-        # Create toolbar
-        self.toolbar = Frame(self.master)
-        self.toolbar.pack(side=TOP, fill=X)
-
-        # Add buttons to toolbar
-        self.clear_button = Button(self.toolbar, text="Clear", command=self.clear_canvas)
-        self.clear_button.pack(side=LEFT)
-
-        self.color_button = Button(self.toolbar, text="Color", command=self.choose_color)
-        self.color_button.pack(side=LEFT)
-
-        self.draw_color = "black"
-        self.start_x = None
-        self.start_y = None
-        self.draw_size = 5
-
-        # Create menu bar
-        self.menu_bar = Menu(self.master)
-        self.master.config(menu=self.menu_bar)
-
-        # Add file menu
-        self.file_menu = Menu(self.menu_bar, tearoff=False)
-        self.menu_bar.add_cascade(label="File", menu=self.file_menu)
-        self.file_menu.add_command(label="New", command=self.clear_canvas, accelerator="Ctrl+N")
-        self.file_menu.add_command(label="Open", command=self.open_file, accelerator="Ctrl+O")
-        self.file_menu.add_command(label="Save", command=self.save_file, accelerator="Ctrl+S")
-        self.file_menu.add_command(label="Save As", command=self.save_file_as, accelerator="Ctrl+Shift+S")
-        self.file_menu.add_separator()
-        self.file_menu.add_command(label="Exit", command=self.master.destroy, accelerator="Ctrl+Q")
-
-        # Add help menu
-        self.help_menu = Menu(self.menu_bar, tearoff=False)
-        self.menu_bar.add_cascade(label="Help", menu=self.help_menu)
-        self.help_menu.add_command(label="About DaVinci", command=self.show_about)
-
-        # Add key bindings
-        self.master.bind("<Control-n>", lambda event: self.clear_canvas())
-        self.master.bind("<Control-o>", lambda event: self.open_file())
-        self.master.bind("<Control-s>", lambda event: self.save_file())
-        self.master.bind("<Control-S>", lambda event: self.save_file_as())
-        self.master.bind("<Control-q>", lambda event: self.master.destroy())
-
-    def start_draw(self, event):
-        self.start_x = event.x
-        self.start_y = event.y
-
-    def draw(self, event):
-        if self.start_x and self.start_y:
-            x1, y1 = (self.start_x - self.draw_size), (self.start_y - self.draw_size)
-            x2, y2 = (event.x + self.draw_size), (event.y + self.draw_size)
-            self.canvas.create_oval(x1, y1, x2, y2, fill=self.draw_color, outline=self.draw_color)
-            self.start_x = event.x
-            self.start_y = event.y
-
-    def stop_draw(self, event):
-        self.start_x = None
-        self.start_y = None
-    def choose_color(self):
-        color = askcolor(title="Choose color", initialcolor=self.draw_color)
-        if color:
-            self.draw_color = color[1]
-
-    def clear_canvas(self):
-        self.canvas.delete("all")
-
-    def show_about(self):
-        messagebox.showinfo("About DaVinci", "DaVinci 1.0.0\nSimple bitmap editor written using Tkinter.\nMade by WinFan3672.")
-
-    def open_file(self):
-        file_path = filedialog.askopenfilename(filetypes=[("Bitmap files", "*.bmp")])
-        if file_path:
-            image = Image.open(file_path)
-            self.canvas.delete("all")
-            self.canvas.image = ImageTk.PhotoImage(image)
-            self.canvas.create_image(0, 0, anchor=NW, image=self.canvas.image)
-
-    def save_file(self):
-        file_path = filedialog.asksaveasfilename(defaultextension=".bmp", filetypes=[("Bitmap files", "*.bmp")])
-        if file_path:
-            self.canvas.postscript(file=file_path + '.eps', colormode='color')
-            Image.open(file_path + '.eps').save(file_path, "bmp")
-
-    def save_file_as(self):
-        file_path = filedialog.asksaveasfilename(defaultextension=".bmp", filetypes=[("Bitmap files", "*.bmp")])
-        if file_path:
-            self.canvas.postscript(file=file_path + '.eps', colormode='color')
-            Image.open(file_path + '.eps').save(file_path, "bmp")
-        
 def obj_to_dict(obj):
     """
     Recursively convert an object and all its attributes to a dictionary.
@@ -414,11 +305,6 @@ def list2Dict(lst):
             key, value = sublst[0], sublst[1]
             dictionary[key] = value
     return dictionary
-def daVinciApp():
-    if __name__ == '__main__':
-        root = Tk()
-        daVinci(root)
-        root.mainloop()
 def settingsModule():
     global PREFERENCES, preferences
     if preferences["alias_priority"] == True:
@@ -510,7 +396,7 @@ def doCalc(s):
         # Remove all spaces from the string
         s = s.replace(' ', '')
         s = s.replace('^', '**')
-        
+        print(s)
         # Evaluate the expression using eval()
         result = eval(s)
         
@@ -1573,7 +1459,7 @@ def man(manual, return_mode=0):
         div()
         print(f"{os_name} v{app_version[0]}.{app_version[1]}.{app_version[2]} changes")
         div()
-        print("This is the 1.0 release of Pythinux.")
+        print("[-] Removed DaVinci due to use of non-standard libraries.")
         br()
     elif manual == "pkm":
         print(
@@ -4683,7 +4569,7 @@ def main(ch=""):
         import importlib
         module = importlib.import_module(module_name)
     elif ch == "davinci":
-        daVinciApp()
+        main("run davinci")
     else:
         try:
             with open(f"Users/{username}/User Settings/alias.dat", "r") as f:
