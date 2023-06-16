@@ -1,4821 +1,697 @@
 #!/usr/bin/python
-global crashlog
-crashlog = []
-
-global functions
-functions = []
-
-global data
-global consent_mode
-consent_mode = 0
-import os.path
+import os, pickle, sys
+global cdir
+import hashlib
+import io
+import traceback
+import base64
+import inspect
+import zipfile
+import re
+import copy as cp
+from getpass import getpass
 from platform import uname
-from time import strftime as stime
+import shutil
 
-import pickle, inspect
+import importlib.util
 
-global stdlib
-global mem, var_data, prompt
-mem = 0
-var_data = []
-prompt = ""
-packages = []
-global os_name, app_version, autologin
-global username, password, user_lvl, user_type, user_type
-import getpass
-from time import ctime, strftime, sleep
-from random import randint as rng
-import os, sys
-from secrets import choice
+global osName, version
+osName = "Pythinux"
+version = [2,0,0]
+import ast
 
-(
-    os_name,
-    app_version,
-) = "Pythinux", [1, 0, 1]
-autologin = 0
+from io import StringIO
 import os
+def zip_to_byte_stream(zip_path):
+    # Read the zip file into a byte stream
+    with open(zip_path, 'rb') as file:
+        byte_stream = io.BytesIO(file.read())
+    return pickle.dumps(byte_stream)
 
-global preferences, PREFERENCES
+def byte_stream_to_zip(byte_stream, output_path):
+    byte_stream = pickle.loads(byte_stream)
+    # Convert the byte stream to a zip file
+    with open(output_path, 'wb') as file:
+        file.write(byte_stream.getvalue())
+def compileOS():
+    ## clear directories
+    for item in ['app', 'app_high', 'config', 'home', 'log', 'tmp']:
+        if os.path.isdir(item):
+            shutil.rmtree(item)
+            os.mkdir(item)
 
-PREFERENCES = {
-    "allowDebugMenu":False,
-    "pref_format": [1, 7, 0],
-    "pref_version": app_version,
-    "time_format": "%x %X",
-    "div": "--------------------",
-    "alias_priority": False,
-    "default_prompt": "",
-    "banlist":list(set(["pkm","vim","user_editor","user_control","alias","add_alias","qaa","qaag","include","getdetails","settings","run","add_user","prompt","script","installd","linuxhub","terminal","user","wget","mem","var","idle-launch","pwd","reinstall","remove_user","removed","stdlib","view_log","admin_panel","echf","xvim","prompt","censor","tron","davinci"]))
-}
-
-preferences=PREFERENCES
-
-import tkinter as tk
-
-def tronTextEditor(path=""):
-    import tkinter as tk
-    from tkinter import messagebox
-    from tkinter import Menu
-    from tkinter import filedialog
-    from tkinter import simpledialog
-    class Tron:
-        def __init__(self, master):
-            self.file_path = None
-            self.master = master
-            self.scrollbar = tk.Scrollbar(master)
-            self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-            # Create the text widget and link the scrollbar to it
-            self.text = tk.Text(master, bg="#002240", fg="white", insertbackground="white", yscrollcommand=self.scrollbar.set)
-            self.text.bind("<Control-a>", self.select_all_text)
-            self.text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-            # Configure the scrollbar to work with the text widget
-            self.scrollbar.config(command=self.text.yview)
-
-            self.master.title("Tron :: Text Editor")
-            self.master.geometry("500x700")
-
-            self.menu_bar = tk.Menu(self.master)
-            self.master.config(menu=self.menu_bar)
-
-            self.file_menu = tk.Menu(self.menu_bar, tearoff=False)
-            self.menu_bar.add_cascade(label="File", menu=self.file_menu)
-            self.file_menu.add_command(label="New", command=self.new_file, accelerator="Ctrl+N")
-            self.file_menu.add_command(label="Open", command=self.open_file, accelerator="Ctrl+O")
-            self.file_menu.add_command(label="Save", command=self.save_file, accelerator="Ctrl+S")
-            self.file_menu.add_command(label="Save As", command=self.save_file_as, accelerator="Ctrl+Shift+S")
-            self.file_menu.add_separator()
-            self.file_menu.add_command(label="Exit", command=self.exit_application, accelerator="Ctrl+Q")
-
-            self.edit_menu = tk.Menu(self.menu_bar, tearoff=False)
-            self.menu_bar.add_cascade(label="Edit", menu=self.edit_menu)
-            self.edit_menu.add_command(label="Cut", command=self.cut_text, accelerator="Ctrl+X")
-            self.edit_menu.add_command(label="Copy", command=self.copy_text, accelerator="Ctrl+C")
-            self.edit_menu.add_command(label="Paste", accelerator="Ctrl+V", command=self.paste_text)
-            self.edit_menu.add_separator()
-            self.edit_menu.add_command(label="Select All", command=self.select_all_text, accelerator="Ctrl+A")
-            self.edit_menu.add_command(label="Undo", command=self.undo_text, accelerator="Ctrl+Z")
-            self.edit_menu.add_command(label="Redo", command=self.redo_text, accelerator="Ctrl+Y")
-            self.edit_menu.add_separator()
-            self.edit_menu.add_command(label="Go to Line", command=self.go_to_line, accelerator="Ctrl+G")
-            
-            help_menu = Menu(self.menu_bar, tearoff=0)
-            self.menu_bar.add_cascade(label="Help", menu=help_menu)
-            help_menu.add_command(label="Help", command=self.show_help_info)
-            help_menu.add_command(label="Tron Docs", command=self.open_doc,accelerator="F1")
-            help_menu.add_command(label="About Tron", command=self.show_about, accelerator="Shift+F1")
-            self.master.bind("<Shift-F1>", self.show_about)
-
-            self.master.bind("<Control-n>", lambda event: self.new_file())
-            self.master.bind("<Control-a>", lambda event: self.select_all_text())
-            self.master.bind("<Control-o>", lambda event: self.open_file())
-            self.master.bind("<Control-s>", lambda event: self.save_file())
-            self.master.bind("<Control-S>", lambda event: self.save_file_as())
-            self.master.bind("<Control-q>", lambda event: self.exit_application())
-            self.master.bind("<Shift-F1>", lambda event: self.show_about())
-            self.master.bind("<Control-x>", lambda event: self.cut_text())
-            self.master.bind("<Control-c>", lambda event: self.copy_text())
-            self.master.bind("<Control-v>", lambda event: self.paste_text())
-            self.master.bind("<Control-z>", lambda event: self.undo_text())
-            self.master.bind("<Control-y>", lambda event: self.redo_text())
-            self.master.bind("<Control-g>", lambda event: self.go_to_line())
-            self.master.bind("<Shift-F1>", lambda event: self.show_about())
-            self.master.bind("<F1>", lambda event: self.open_doc())
-        def new_file(self):
-            print("[TRON] File New")
-            self.text.delete("1.0", "end")
-        def open_changelog(self):
-            self.open_file_with_name("Program Data/Tron/changelog.txt")
-        def open_doc(self):
-            self.open_file_with_name("Program Data/Tron/docs.txt")
-        def open_file(self):
-            file_path = filedialog.askopenfilename()
-            print("[TRON] File Opened DialogWise:",file_path)
-            if file_path:
-                with open(file_path, "r") as file:
-                    file_contents = file.read()
-                    self.text.delete("1.0", "end")
-                    self.text.insert("1.0", file_contents)
-
-        def save_file(self):
-            print("[TRON] Saved File")
-            if self.file_path:
-                with open(self.file_path, "w") as file:
-                    file_contents = self.text.get("1.0", "end-1c")
-                    file.write(file_contents)
-            else:
-                self.save_file_as()
-
-        def save_file_as(self):
-            file_path = filedialog.asksaveasfilename()
-            print("[TRON] Saved File To",file_path)
-            if file_path:
-                with open(file_path, "w") as file:
-                    file_contents = self.text.get("1.0", "end-1c")
-                    file.write(file_contents)
-                    self.file_path = file_path
-
-        def show_about(self):
-            message = "Tron\nv1.1.0\nText Editor: Reliable, Organised Notes"
-            width = max(len(line) for line in message.split("\n")) * 10
-            messagebox.showinfo("About", message)
-
-
-        def open_file_with_name(self, file_path=None):
-            print("[TRON] Opened file manual",str(file_path))
-            if file_path:
-                with open(file_path, "r") as file:
-                    file_contents = file.read()
-                    self.text.delete("1.0", "end")
-                    self.text.insert("1.0", file_contents)
-                    self.file_path = file_path
-
-        def run(self):
-            self.master.mainloop()
-        def cut_text(self):
-            print("[TRON] Cut Text")
-            self.text.event_generate("<<Cut>>")
-        def copy_text(self):
-            print("[TRON] Copied Text")
-            self.text.event_generate("<<Copy>>")
-
-        def paste_text(self):
-            print("[TRON] Pasted Text")
+    for path, dirs, files in os.walk(os.getcwd()):
+        for item in dirs:
             try:
-                self.text.event_generate("<Paste>")
+                shutil.rmtree("__pycache__")
             except:
                 pass
-
-        def select_all_text(self, event=None):
-            print("[TRON] SelectAlltext")
-            self.text.tag_add(tk.SEL, "1.0", tk.END)
-            self.text.mark_set(tk.INSERT, "1.0")
-            self.text.see(tk.INSERT)
-
-        def undo_text(self):
-            try:
-                # get current cursor position
-                current_index = self.text.index('insert')
-                
-                # undo last action
-                self.text.edit_undo()
-                
-                # update text widget to reflect changes
-                self.text.update()
-                
-                # restore cursor position after undo
-                self.text.mark_set('insert', current_index)
-            except TclError as e:
-                # ignore error when there's nothing left to undo
-                pass
-
-
-        def redo_text(self):
-            try:
-                self.text.edit_redo()
-                print("[TRON] RedoAction")
-            except:
-                print("[FAIL] RedoAction")
-        def show_help_info(self):
-            help_text = "Tron Text Editor\n\nTo use Tron, use the menus at the top for operations such as opening files (also supports keyboard shortcuts as shown.)"
-            messagebox.showinfo("Help", help_text)
-        def go_to_line(self):
-            line = simpledialog.askinteger("Go to Line", "Enter line number:")
-            print("[TRON] WentToLine",line)
-            if line:
-                self.text.mark_set("insert", f"{line}.0")
-                self.text.see("insert")
-
-        def exit_application(self):
-            print("[TRON] Exit Tron")
-            print("Thanks for using Tron!")
-            self.master.destroy()
-    # Create a Tkinter root window
-    root = tk.Tk()
-
-    # Create a Tron object
-    editor = Tron(root)
-
-    # Run the Tron editor
-    if path == "":
-        editor.run()
-    else:
-        if os.path.isfile(path):
-            editor.open_file_with_name(path)
-            editor.run()
+    ## create zip file
+    
+    zip_name = "core.zip"
+    zip_mode = "w"  # "w" for write mode, "a" for append mode
+    current_dir = "."  # current directory
+    os.system("7z a core.zip")
+    ## show bytes of core.zip
+    print(zip_to_byte_stream("core.zip"))
+class SystemOpen:
+    def __init__(self, file_path, mode='r', base_directory=None):
+        if base_directory is None:
+            self.base_directory = os.path.abspath(os.getcwd())
         else:
-            editor.run()
-    return editor
-def obj_to_dict(obj):
+            self.base_directory = os.path.abspath(base_directory)
+
+        absolute_path = os.path.abspath(file_path)
+        if not self._is_path_allowed(absolute_path):
+            raise ValueError("File access is restricted to the current directory or its subdirectories.")
+
+        self.file = open(file_path, mode)
+
+    def __enter__(self):
+        return self.file
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.file.close()
+
+    def _is_path_allowed(self, path):
+        path = os.path.relpath(path, self.base_directory)
+        return not (os.path.pardir in path or os.path.isabs(path) or path.startswith(".."))
+class FileError(Exception):
+    def __init__(self,text):
+        self.text=text
+    def write(self,text):
+        return text
+def joinIterable(string,iterable):
+    return string.join([str(x) for x in iterable])
+def startService(thread, name):
+    thread.name=name
+    thread.start()
+def giveOutput(command,user):
+    # Redirect stdout to a buffer
+    stdout_backup = sys.stdout
+    sys.stdout = StringIO()
+
+    # Call the function
+    main(user,command)
+
+    # Get the output from the buffer
+    output = sys.stdout.getvalue()
+
+    # Restore stdout
+    sys.stdout = stdout_backup
+
+    return output
+def doCalc(text):
+    # Sanitize the input by only allowing basic mathematical expressions
+    allowed_nodes = (ast.BinOp, ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Num)
+    allowed_operators = (ast.Add, ast.Sub, ast.Mult, ast.Div)
+    allowed_names = {'math'}
+    
+    try:
+        # Wrap the expression in a valid context by adding a dummy variable assignment
+        wrapped_text = f"result = {text.strip()}"
+        
+        # Parse the wrapped expression
+        module = ast.parse(wrapped_text, mode='exec')
+        
+        # Extract the expression value from the module body
+        expr = module.body[0].value
+        
+        # Traverse the parsed AST and check if any disallowed nodes or names are present
+        for node in ast.walk(expr):
+            if not isinstance(node, allowed_nodes):
+                raise ValueError("Invalid expression")
+            if isinstance(node, ast.Name) and node.id not in allowed_names:
+                raise ValueError("Invalid expression")
+            if isinstance(node, ast.BinOp) and not isinstance(node.op, allowed_operators):
+                raise ValueError("Invalid expression")
+        
+        # Create a namespace dictionary for evaluation
+        namespace = {}
+        
+        # Execute the wrapped expression within the namespace
+        exec(compile(module, filename="<ast>", mode="exec"), namespace)
+        
+        # Retrieve the evaluated result from the namespace
+        result = namespace['result']
+        
+        return result
+    
+    except (SyntaxError, ValueError) as e:
+        # Handle any parsing or evaluation errors
+        return f"Error: {str(e)}"
+
+class Base:
+    """
+    Base class used by all classes.
+    This class is used as a base for other classes exclusively, and is not called directly.
+    """
+
+    __slots__ = ["__weakref__"]
+
+    def __str__(self):
+        return pprint_dict(obj_to_dict(self))
+
+    def __iter__(self):
+        return iter(sorted(self.__dict__.keys()))
+
+    def __len__(self):
+        return len(dir(self))
+class SudoError(Exception):
+    def __str__(self):
+        return "Insufficient priveleges to execute action."    
+class LOGOFFEVENT:
+    pass
+class User(Base):
+    def __init__(self,username,password=None,lvl=1):
+        super().__init__()
+        self.username=username
+        self.password=hashString(password)
+        self.lvl=lvl
+    def check(self,username,password=None):
+        if username == self.username and verifyHash(password,self.password):
+            return True
+        return False
+    def admin(self):
+        return self.lvl > 1
+    def god(self):
+        return self.lvl > 2
+    def USERTYPE(self):
+        if self.lvl == 0:
+            return "guest"
+        elif self.lvl == 1:
+            return "user"
+        elif self.lvl == 2:
+            return "root"
+        elif self.lvl == 3:
+            return "god"
+        else:
+            return "#INVALID"
+def copy(obj):
+    try:
+        return cp.deepcopy(obj)
+    except:
+        try:
+            return cp.copy(obj)
+        except:
+            return obj
+def hashString(plaintext, salt=None):
+    if salt is None:
+        salt = os.urandom(16).hex()
+    
+    salted_string = f"{plaintext}{salt}"
+    hashed_string = hashlib.sha256(salted_string.encode()).hexdigest()
+    salted_hash = f"{hashed_string}{salt}"
+    return salted_hash
+def logEvent(text,log="base_log"):
+    try:
+        with open(f"log/{log}.log","a") as f:
+            f.write(text+"\n")
+    except:
+        with open(f"log/{log}.log","w") as f:
+            f.write(text+"\n")
+def verifyHash(plaintext, saltedHashString):
+    salt = saltedHashString[-32:]
+    hashed_plaintext = hashString(plaintext, salt)
+    return hashed_plaintext == saltedHashString
+    
+    return hashed_plaintext == saltedHashString
+
+def sha256(string,salt=None):
+    if string:
+        return hashString(string,salt)
+    else:
+        return None
+class rangedInt:
+    ## A floating point number with a specified range that gets automatically adhered to
+    ## Currently unused, but will be used soon
+    def __init__(self, value, min_value, max_value):
+        self.min_value = min_value
+        self.max_value = max_value
+        self._value = None
+        self.set(value)
+
+    def get(self):
+        return self._value
+
+    def set(self, value):
+        if value < self.min_value:
+            self._value = self.min_value
+        elif value > self.max_value:
+            self._value = self.max_value
+        else:
+            self._value = int(value)
+
+    def __str__(self):
+        return str(self._value)
+
+    def __add__(self, other):
+        if isinstance(other, rangedInt):
+            return rangedInt(self._value + other.get(), self.min_value, self.max_value)
+        elif isinstance(other, (int, float)):
+            return rangedInt(self._value + other, self.min_value, self.max_value)
+        else:
+            return NotImplemented
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __sub__(self, other):
+        if isinstance(other, rangedInt):
+            return rangedInt(self._value - other.get(), self.min_value, self.max_value)
+        elif isinstance(other, (int, float)):
+            return rangedInt(self._value - other, self.min_value, self.max_value)
+        else:
+            return NotImplemented
+
+    def __rsub__(self, other):
+        return self.__sub__(other)
+
+    def __mul__(self, other):
+        if isinstance(other, rangedInt):
+            return rangedInt(self._value * other.get(), self.min_value, self.max_value)
+        elif isinstance(other, (int, float)):
+            return rangedInt(self._value * other, self.min_value, self.max_value)
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        if isinstance(other, rangedInt):
+            return rangedInt(self._value / other.get(), self.min_value, self.max_value)
+        elif isinstance(other, (int, float)):
+            return rangedInt(self._value / other, self.min_value, self.max_value)
+        else:
+            return NotImplemented
+
+    def __rtruediv__(self, other):
+        return self.__truediv__(other)
+def div():
+    print("--------------------")
+def div2():
+    return "--------------------"
+def br():
+    div()
+    input("Press ENTER to continue.")
+import shlex
+
+def main(user, prompt,sudoMode=False,shell="terminal"):
+    try:
+        for item in aliases:
+            if prompt == item:
+                prompt = aliases[item]
+        global cdir
+        if prompt == "":
+            return None
+        elif prompt.startswith("sudo "):
+            if user.lvl >= 1 and sudo(user):
+                main(user,prompt[5:],True)
+            else:
+                print("[sudo] Failed to authenticate, continuing w/out sudo mode")
+                main(user,prompt[5:])
+        elif prompt == "logoff":
+            return LOGOFFEVENT
+        else:
+            i = load_program(prompt,user,sudoMode,shell)
+            os.chdir(cdir)
+            if not i:
+                print("Bad command or file name:",prompt)
+    except Exception as e:
+        return traceback.format_exc()
+    except KeyboardInterrupt:
+        return "Operation interrupted by user"
+def saveAliases(aliases):
+    with open("config/alias.cfg","wb") as f:
+        pickle.dump(aliases,f)
+def loadAliases():
+    try:
+        with open("config/alias.cfg","rb") as f:
+            return pickle.load(f)
+    except:
+        saveAliases({})
+        return {}
+def exposeObjects(module, objects):
+    for object_name, obj in objects.items():
+        setattr(module, object_name, obj)
+def sudo(user,inca=0):
+    if inca > 9:
+        return False
+    p = getpass(f"[sudo] password for {user.username}: ")
+    if verifyHash(p,user.password):
+        return True
+    else:
+        sudo(user,inca+1)
+def splitString(string):
+    # Find substrings enclosed in single quotes
+    pattern = r"'([^']*)'"
+    matches = re.findall(pattern, string)
+    
+    # Replace single-quoted substrings with placeholders
+    for i, match in enumerate(matches):
+        placeholder = f'__{i}__'
+        string = string.replace(f"'{match}'", placeholder)
+    
+    # Split the modified string based on spaces
+    split_list = string.split()
+    
+    # Replace the placeholders with the original single-quoted substrings
+    for i, item in enumerate(split_list):
+        if item.startswith('__') and item.endswith('__'):
+            index = int(item[2:-2])
+            split_list[i] = matches[index]
+    return split_list
+def maxEscape():
+    z = {}
+    for item in pdir:
+        z[item] = eval(item)
+    return z
+def exposeAllVar(module):
+    # Get the global namespace of the current program
+    program_globals = globals()
+
+    # Assign all variables to the module's namespace
+    for var_name, var_value in program_globals.items():
+        # Exclude built-in and special variables
+        if not var_name.startswith("__"):
+            setattr(module, var_name, var_value)
+def load_program(program_name_with_args, user, sudoMode=False, shell=None):
+    def getTerm():
+        return shell
+    if user.god():
+        sudoMode = True
+    current_directory = os.getcwd()
+    system_directory = os.path.join(current_directory, 'system')
+    hsystem_directory = os.path.join(current_directory, 'system_high')
+    lsystem_directory = os.path.join(current_directory, 'system_low')
+    app_directory = os.path.join(current_directory, 'app')
+    happ_directory = os.path.join(current_directory, 'app_high')
+
+    directories = [system_directory, lsystem_directory, app_directory]
+    if user.admin() or sudoMode:
+        directories.append(system_directory)
+        directories.append(happ_directory)
+    if user.god():
+        directories.append(hsystem_directory)
+    for directory in directories:
+        program_parts = splitString(program_name_with_args)
+
+        if len(program_parts) > 0:
+            program_name = program_parts[0]
+            args = program_parts[1:]
+        else:
+            program_name = ""
+            args = []
+        if not program_name in list_loadable_programs(user,sudoMode):
+            return None
+        program_path = os.path.join(directory, program_name + '.py')
+        script_path = os.path.join(directory, program_name + '.xx')
+        if os.path.exists(script_path):
+            with open(script_path) as f:
+                run_script(f, user)
+            return None
+        if os.path.exists(program_path):
+            module_spec = importlib.util.spec_from_file_location(program_name, program_path)
+            module = importlib.util.module_from_spec(module_spec)
+            shared_objects = {
+                "currentUser":copy(user),
+                "div": copy(div),
+                "div2": copy(div2),
+                "br": copy(br),
+                "load_program": copy(load_program),
+                "list_loadable_programs": copy(list_loadable_programs),
+                "version": copy(version),
+                "hashString": copy(hashString),
+                "verifyHash": copy(verifyHash),
+                "pprint_dict": copy(pprint_dict),
+                "pprint": copy(pprint),
+                "obj_to_dict": copy(obj_to_dict),
+                "os":copy(os),
+                "alias":copy(aliases),
+                "cls":copy(cls),
+                "doCalc":copy(doCalc),
+                "mergeDict":copy(mergeDict),
+                "copy":copy(copy),
+                "logEvent":copy(logEvent),
+                "getTerm":copy(getTerm),
+                "currentProgram":copy(program_name),
+                "giveOutput":copy(giveOutput),
+                "osName":copy(osName),
+                "FileError":copy(FileError),
+                "startService":copy(startService),
+##                "open":copy(SystemOpen),
+            }
+            if directory in [system_directory,hsystem_directory,lsystem_directory,happ_directory]:
+                system_objects = {
+                    "cdir": copy(cdir),
+                    "User": copy(User),
+                    "currentUser": user,
+                    "aliases": aliases,
+                    "userList": userList,
+                    "saveAliases":copy(saveAliases),
+                    "createUser":copy(createUser),
+                    "saveUserList":saveUserList,
+                    "main":copy(main),
+                    "saveAL":copy(saveAL),
+                    "clearTemp":copy(clearTemp),
+                    "run_script":copy(run_script),
+                    "main":copy(main),
+                    "removeUser":copy(removeUser),
+                    "sudo":copy(sudo),
+                    "loginScreen":copy(loginScreen),
+                    "LOGOFFEVENT":copy(LOGOFFEVENT),
+                    "load_program":copy(load_program),
+                    "vanillaOpen":copy(open),
+                }
+                if user.god():
+                    system_objects["compileOS"] = copy(compileOS)
+                    system_objects["setupWizard"] = copy(setupWizard)
+                shared_objects.update(system_objects)
+            # Expose the objects to the loaded program
+            if sudoMode:
+                exposeAllVar(module)
+            exposeObjects(module, shared_objects)
+            
+            # Set arguments as a custom attribute
+            module.arguments = args
+            module.args = args
+            
+            # Execute the module's code
+            module_spec.loader.exec_module(module)
+            return module
+def clearTemp():
+    try:
+        shutil.rmtree("tmp")
+    except:
+        pass
+    try:
+        os.mkdir("tmp")
+    except:
+        pass
+def saveAL(username):
+    with open("config/autologin.cfg","w") as f:
+        f.write(username)
+def loadAL():
+    try:
+        with open("config/autologin.cfg") as f:
+            return f.read()
+    except:
+        return None
+def cls():
+    res = uname()
+    os.system("cls" if res[0] == "Windows" else "clear")        
+def run_script(f,user):
+    for item in f.readlines():
+        main(user,item,shell="script")
+def list_loadable_programs(user,sudoMode=False):
+    current_directory = os.getcwd()
+    system_directory = os.path.join(current_directory, 'system')
+    app_directory = os.path.join(current_directory, 'app')
+    current_directory = os.getcwd()
+    system_directory = os.path.join(current_directory, 'system')
+    hsystem_directory = os.path.join(current_directory, 'system_high')
+    lsystem_directory = os.path.join(current_directory, 'system_low')
+    app_directory = os.path.join(current_directory, 'app')
+    happ_directory = os.path.join(current_directory, 'app_high')
+    
+    directories = [lsystem_directory,app_directory]
+    if user.admin() or sudoMode:
+        directories.append(system_directory)
+        directories.append(happ_directory)
+    if user.god():
+        directories.append(hsystem_directory)
+    loadable_programs = set()
+
+    for directory in directories:
+        if os.path.exists(directory) and os.path.isdir(directory):
+            programs = [f[:-3] for f in os.listdir(directory) if f.endswith('.py')]
+            loadable_programs.update(programs)
+
+    if os.path.exists(app_directory) and os.path.isdir(app_directory):
+        programs = ["*"+f[:-3] for f in os.listdir(app_directory) if f.endswith('.xx')]
+        loadable_programs.update(programs)
+
+    return sorted(loadable_programs)    
+def init(user,x):
+    if user.god() and x:
+        div()
+        print("God Warning")
+        div()
+        print("You have logged in as a God account.")
+        print("Do not use a God account unless you HAVE to.")
+        print("If you are unaware of the security risks of using a God account, type \"logoff\".")
+        div()
+    main(user,"initd --init")
+    sys.exit()
+def saveUserList(userList):
+    with open("config/users.cfg","wb") as f:
+        pickle.dump(userList,f)
+def loadUserList():
+    try:
+        with open("config/users.cfg","rb") as f:
+            return pickle.load(f)
+    except:
+        return []
+def loginScreen(username=None,password=None):
+    load_program("cls",User(""))
+    if not password:
+        div()
+        print("Unlock System" if username else "Pythinux Login Screen")
+        div()
+        x = True
+    else:
+        x = False
+    if not username:
+        username = input("Username $")
+    if not password:
+        password = getpass("Password $")
+    for item in userList:
+        if item.check(username,password):
+            init(item,x)
+    if x:        
+        div()
+        print("Incorrect username/password sequence.")
+        br()
+    loginScreen()
+def makeDir():
+    z = []
+    for i in pdir:
+        z.append(eval(i))
+    return z
+def makeDirDict():
+    m = makeDir()
+    index = 0
+    z = {}
+    for item in pdir:
+        z[item] = m[index]
+        index += 1
+    return z
+def removeUser(userlist,user):
+    try:
+        os.remove(f"home/{user.username}")
+    except:
+        pass
+    userlist.remove(user)
+    saveUserList(userlist)
+def createUser(userlist,user):
+    if not isinstance(userlist,list) or not isinstance(user,User):
+        raise TypeError
+    for item in userlist:
+        if item.username == user.username:
+            removeUser(userlist,item)
+    try:
+        os.mkdir(f"home/{user.username}")
+    except FileExistsError:
+        pass
+    with open(f"home/{user.username}/init.d","w") as f:
+        f.write("terminal")
+    userlist.append(user)
+    return userlist
+def mergeDict(a, b):
+    result = a.copy()  # Create a copy of dictionary a
+
+    for key, value in b.items():
+        if key not in a:
+            result[
+                key
+            ] = value  # Add entries from b to result if key is not present in a
+
+    return result
+def obj_to_dict(obj, addItemType=True):
     """
     Recursively convert an object and all its attributes to a dictionary.
     """
     if isinstance(obj, (int, float, bool, str)):
         return obj
-
+    if isinstance(obj,type):
+        return f"<type '{obj.__name__}'>"
     if inspect.isclass(obj):
-        try:
-            return {"__class__": obj.__name__}
-        except:
-            pass
+        return {"__class__": obj.__name__}
 
     if isinstance(obj, (tuple, list)):
         return [obj_to_dict(x) for x in obj]
 
     if isinstance(obj, dict):
+        if addItemType:
+            obj2 = {"@itemType": type({}).__name__}
+        obj2.update(obj)
+        obj = obj2
         return {key: obj_to_dict(value) for key, value in obj.items()}
-
     obj_dict = {}
+    if addItemType:
+        obj_dict["@itemType"] = type(obj).__name__
     for attr in dir(obj):
         if attr.startswith("__") and attr.endswith("__"):
+            continue
+        if attr == "dic":
+            continue
+        if getattr(obj, attr) is None:
+            obj_dict[attr] = "<class 'none'>"
+            continue
+        if callable(getattr(obj, attr)):
+            obj_dict[attr] = f"<function '{attr}'>"
             continue
         value = getattr(obj, attr)
         obj_dict[attr] = obj_to_dict(value)
     return obj_dict
-def get_user_classes():
-    import inspect, sys
-
-    ## Returns a list of all user-defined classes in the current module.
-    classes = []
-    for name, obj in inspect.getmembers(sys.modules[__name__]):
-        if inspect.isclass(obj) and obj.__module__ == __name__:
-            classes.append(obj)
-    return classes
-def pprint(obj):
-    print(pprint_dict(obj_to_dict(obj)))
 def pprint_dict(dic):
     ## Takes a dictionary and returns it as a string with indentation
     import json
 
     return json.dumps(dic, indent=4)
-
-
-def list2Dict(lst):
-    ## Takes a 2D list and converts it into a dictionary.
-    ## Example Usage:
-
-    ## lst = [["hello", "world"]]
-    ## dictionary = list2Dict(lst)
-    ## print(dictionary)  # Output: {"hello":"world"}
-
-    dictionary = {}
-    for sublst in lst:
-        if len(sublst) == 2:
-            key, value = sublst[0], sublst[1]
-            dictionary[key] = value
-    return dictionary
-def settingsModule():
-    global PREFERENCES, preferences
-    if preferences["alias_priority"] == True:
-        print("[1] Alias Prority [ENABLED]")
-    else:
-        print("[1] Alias Prority [DISABLED]")
-    print("    If this is enabled, aliases can replace system commands such as \"help\".")
-    print("[2] Edit Default Prompt")
-    print("[0] Exit")
-    ch=input("$")
-    if ch == "1":
-        if preferences["alias_priority"] == True:
-            preferences["alias_priority"] = False
-            settingsModule()
-        else:
-            preferences["alias_priority"] = True
-            settingsModule()
-    elif ch == 2:
-        preferences["default_prompt"] = input("Prompt $")
-        settingsModule()
-    elif ch == "":
-        settingsModule()
-    else:
-        save_pref(preferences)
-        main()
-def getIndex(lst,item):
-    lst=list(lst)
-    return lst.index(item)
-def mergeCurlyBrackets(lst):
-    merged_lst = []
-    i = 0
-
-    while i < len(lst):
-        if i < len(lst) - 1 and lst[i] == "{" and lst[i+1] == "}":
-            merged_lst.append("{}")
-            i += 2
-        else:
-            merged_lst.append(lst[i])
-            i += 1
-
-    return merged_lst
-def get_variable_names():
-    # Get the variables in the global and local namespaces
-    global_vars = dir(globals())
-    local_vars = dir(locals())
-
-    # Return a list of the variable names
-    return global_vars + local_vars
-
-def removeItems(lst,check):
-    for item in check:
-        try:
-            lst.remove(item)
-        except:
-            pass
-    return lst
-def banCheck(string,check):
-    for item in check:
-        if item == string or string.startswith(item):
-            return item
-    return False
-def addCommas(n):
-    # Convert the number to a string
-    s = str(n)
-    
-    # Get the length of the string
-    l = len(s)
-    
-    # Determine the number of commas to insert
-    num_commas = (l-1) // 3
-    
-    # Insert the commas
-    for i in range(num_commas):
-        index = l - (i+1)*3
-        s = s[:index] + ',' + s[index:]
-        
-    # Return the modified string
-    return s
-
-
-def doCalc(s):
-    global crashlog
-    import re
-    try:
-        s = re.sub(r'[a-zA-Z]', '', s)
-        all_variables = get_variable_names()
-        for item in all_variables:
-            s=s.replace(item,"")
-        # Remove all spaces from the string
-        s = s.replace(' ', '')
-        s = s.replace('^', '**')
-        print(s)
-        # Evaluate the expression using eval()
-        result = eval(s)
-        
-        # Check if there is a comparison operator in the expression
-        if '==' in s:
-            return result == eval(s.split('==')[1])
-        elif '>=' in s:
-            return result >= eval(s.split('>=')[1])
-        elif '<=' in s:
-            return result <= eval(s.split('<=')[1])
-        elif '!=' in s:
-            return result != eval(s.split('!=')[1])
-        elif '>' in s:
-            return result > eval(s.split('>')[1])
-        elif '<' in s:
-            return result < eval(s.split('<')[1])
-        else:
-            return result
-    except Exception as e:
-        print(f"Error: {e}")
-        return None
-
-def removed(filename, return_mode=0):
-    if filename == "/":
-        print(f"Error: Deleting the {filename} package has been blocked.")
-        return None
-    try:
-        import shutil
-
-        shutil.rmtree("Installed Programs/" + filename)
-        if return_mode == 0:
-            print(f"Uninstalled {filename}.")
-    except Exception as e:
-        crashlog.append(str(e))
-        if return_mode == 0:
-            print("Failed to remove program.")
-    if return_mode == 0:
-        main()
-    else:
-        return True
-
-
-def create_file(filename, data):
-    try:
-        f = open(filename, "wb")
-        f.write(data)
-        f.close()
-        return True
-    except:
-        return False
-
-
-def installd(filename, consent=0):
-    try:
-        fn = os.path.basename(filename)
-        global crashlog
-        from zipfile import ZipFile as zf
-
-        try:
-            with open(filename, "rb") as f:
-                zipdata = f.read()
-        except Exception as e:
-            crashlog.append(str(e))
-        import shutil
-
-        shutil.rmtree("Cached Data")
-        os.mkdir("Cached Data")
-        os.chdir("Cached Data")
-        with open(fn, "wb") as f:
-            f.write(zipdata)
-            f.close()
-        with zf(fn, "r") as zip:
-            zip.extractall()
-        import sys
-
-        sys.path.insert(0, os.getcwd())
-        try:
-            f = open("program.name", "r")
-            progname = f.read()
-            f.close()
-            progname = progname[:-1]
-        except Exception as e:
-            crashlog.append(str(e))
-            print('Error: No "program.name" in zip archive".')
-            return False
-        try:
-            f = open("program.info", "r")
-            progdata = f.read()
-            f.close()
-            progdata = progdata.split("\n")
-            progdata = progdata[0]
-            progdata = progdata.split("|")
-            progdata[4] = progdata[4].split(".")
-            progdata[4][0] = int(progdata[4][0])
-            progdata[4][1] = int(progdata[4][1])
-            progdata[1] = progdata[1].split(".")
-        except Exception as e:
-            crashlog.append(str(e))
-            print('Error: No "program.info" in zip archive.')
-            return False
-        try:
-            with open("manuals.zip","rb") as f:
-                man = f.read()
-                is_man = 1
-        except Exception as e:
-            crashlog.append(str(e))
-            is_man = 0
-        try:
-            with open("program.zip", "rb") as f:
-                mp = f.read()
-                is_mp = 1
-        except Exception as e:
-            crashlog.append(str(e))
-            is_mp = 0
-        try:
-            f = open("setup.xx", "r")
-            xx = f.read()
-            f.close()
-            is_xx = 1
-        except Exception as e:
-            crashlog.append(str(e))
-            is_xx = 0
-        try:
-            f = open("program.deps", "r")
-            deps = f.read()
-            deps = deps.split("\n")
-            f.close()
-            is_dep = 1
-        except Exception as e:
-            crashlog.append(str(e))
-            is_dep = 0
-        if is_dep == 1:
-            deps = [dep for dep in deps if dep != ""]
-        if consent == 0:
-            print(f"Program Name: {progdata[0]}")
-            print(f"Version: {progdata[1][0]}.{progdata[1][1]}.{progdata[1][2]}")
-            print(f"Released: {progdata[2]}")
-            print(f"Author: {progdata[3]}")
-            if is_dep == 1:
-                print(f"Dependencies: [{len(deps)}]")
-                print("Dependency List:", deps)
-            print("Install?")
-            yn = input("[y/n] >").lower()
-            if yn != "y":
-                print("User Install Cancelled.")
-                return False
-        if progdata[4] <= [app_version[0], app_version[1]]:
-            pass
-        else:
-            print(f"Error: OS Version Must be >= {app_version[0]}.{app_version[1]}")
-            return False
-        if os.path.isfile(os.getcwd() + "/setup.py"):
-            import sys
-
-            print("[START] Program Setup")
-            print("[NOTICE] If not in terminal, you may not see anything.")
-            os.system(f"{sys.executable} setup.py")
-            print("[END] Program Setup")
-        sys.path.remove(os.getcwd())
-        os.chdir("..")
-        try:
-            import shutil
-
-            shutil.rmtree(f"Installed Programs/{progname}")
-            print("[UPGRADE] Removed Old Program")
-        except Exception as e:
-            crashlog.append(str(e))
-        if is_dep == 1:
-            for item in deps:
-                if item != "":
-                    main(f"pkm install -y {item}")
-        if is_mp == 1:
-            os.mkdir(f"Installed Programs/{progname}")
-            f = open(f"Installed Programs/{progname}/program.zip", "wb")
-            f.write(mp)
-            f.close()
-        if is_man == 1:
-            with open("manuals.zip","wb") as f:
-                f.write(man)
-            with zipfile.ZipFile('manuals.zip', 'r') as zip_ref:
-                zip_ref.extractall('Custom Manuals')
-            os.remove("manuals.zip")
-        if is_xx == 1:
-            run_script(xx.split("\n"))
-        if is_man == 1:
-            f = open(f"Installed Manuals/{progname}.cmanpak", "wb")
-            f.write(mandata)
-            f.close()
-        print(f"Successfully installed {progdata[0]}.")
-        if is_mp == 1:
-            print(f'To run {progdata[0]}, type "run {progname}"')
-        return True
-    except Exception as e:
-        crashlog.append(str(e))
-        print("Install failed.")
-        print("Check the following:")
-        print("[-] Installer file exists/path was entered correctly")
-        print("[-] Installer path typed correctly")
-        print("[-] Installer is formatted correctly")
-        print(
-            "[-] Alternatively, contact the developers of the program to see if this is an issue on your end."
-        )
-        return False
-
-
-def can_change_dir(path, startpoint):
-    abs_path = os.path.abspath(path)
-    start_path = os.path.abspath(startpoint)
-    return abs_path.startswith(start_path)
-
-
-def create_user(username, passw, ulvl):
-    global crashlog
-    print("Creating user...")
-    os.chdir("Users")
-    os.mkdir(username)
-    os.chdir(username)
-    os.mkdir("Documents")
-    os.mkdir("Scripts")
-    os.mkdir("User Settings")
-    os.mkdir("Programs")
-    os.mkdir("Program Data")
-    os.mkdir("Vim Files")
-    os.chdir("User Settings")
-    f = open("os_settings.toml", "w")
-    f.close()
-    f = open(f"alias.dat", "w")
-    f.close()
-    os.chdir("..")
-    os.chdir("..")
-    os.chdir("..")
-    f = open("System Settings/userlist.pythinux", "a")
-    f.write(f"{username}|{passw}|{ulvl}/")
-    f.close()
-    print("Created user successfully.")
-    refresh_data()
-
-
-def remove_user(user):
-    import shutil
-
-    global crashlog, data
-    print("Removing user...")
-    with open(f"System Settings/userlist.pythinux", "r") as f:
-        d = f.read()
-    d = d.split("/")
-    d2 = []
-    for i in d:
-        d2.append(i.split("|"))
-    d = d2
-    for i in d:
-        if i[0] == user:
-            d.remove(i)
-            try:
-                shutil.rmtree(user)
-            except Exception as e:
-                crashlog.append(str(e))
-    d2 = ""
-    for i in d:
-        try:
-            d2 += f"{i[0]}|{i[1]}|{i[2]}/"
-        except Exception as e:
-            crashlog.append(str(e))
-    with open("System Settings/userlist.pythinux", "w") as f:
-        f.write(d2)
-    print("Removed User!")
-    refresh_data()
-
-
-def linux_hub():
-    global crashlog
-    print("[1] APT Tools")
-    print("[2] Pacman Tools")
-    print("[0] Exit")
-    try:
-        ch = int(input(">"))
-    except Exception as e:
-        crashlog.append(str(e))
-        linux_hub()
-    if ch == 1:
-        print("[1] Install package")
-        print("[2] Remove packages")
-        print("[3] Update DB")
-        print("[4] Update packages")
-        print("[5] 3+4")
-        print("[0] Exit")
-        try:
-            ch = int(input(">"))
-        except Exception as e:
-            crashlog.append(str(e))
-            linux_hub()
-        if ch == 1:
-            os.system(f"sudo apt install {input('Package Name >')} -y")
-            main()
-        elif ch == 2:
-            os.system(f"sudo apt remove {input('Package Name >')} -y")
-        elif ch == 3:
-            os.system("sudo apt update")
-            main()
-        elif ch == 4:
-            os.system("sudo apt upgrade")
-            main()
-        elif ch == 5:
-            os.system("sudo apt update && sudo apt upgrade")
-            main()
-        else:
-            main()
-    elif ch == 2:
-        print("[1] Install package")
-        print("[2] Remove package")
-        print("[3] Update DB")
-        print("[4] Update packages")
-        print("[0] Exit")
-        try:
-            ch = int(input(">"))
-        except Exception as e:
-            crashlog.append(str(e))
-            linux_hub()
-        if ch == 1:
-            os.system(f"sudo pacman -S {input('Package Name >')}")
-            main()
-        elif ch == 2:
-            os.system(f"sudo pacman -R {input('Package Name >')}")
-            main()
-        elif ch == 3:
-            os.system("sudo pacman -Sy")
-            main()
-        elif ch == 4:
-            os.system("sudo pacman -Syu")
-            main()
-        else:
-            main()
-    else:
-        main()
-
-
-def ihelp(ch=""):
-    global crashlog
-    if ch == "":
-        ch = input("interactive-help $")
-        return_mode = 0
-    else:
-        return_mode = 1
-    if ch == "help":
-        div()
-        print("Interactive Manual List")
-        div()
-        n = ["help", "ihelp"]
-        n += sorted(
-            [
-                "mul",
-                "rand",
-                "time",
-                "cls",
-                "echo",
-                "started",
-                "div",
-                "add",
-                "sub",
-                "stopwatch",
-                "timer",
-                "getdetails",
-                "chkroot",
-                "quit",
-                "power",
-                "sysinfo",
-                "mod",
-                "userlist",
-                "timeloop",
-                "area",
-                "login",
-                "pkm",
-                "ucode",
-                "installd",
-                "removed",
-                "cat",
-                "wget",
-                "view_log",
-                "sha256",
-                "exit",
-                "add_alias",
-                "break",
-            ]
-        )
-        n2 = [n[i : i + 10] for i in range(0, len(n), 10)]
-        for item in n2:
-            print(" ".join(item))
-        div()
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "exit":
-        main()
-    elif ch == "ihelp":
-        div()
-        print(
-            "ihelp is an interactive help application that allows you to learn how commands work."
-        )
-        print(
-            "Type the name of a supported command and it will help you use the command."
-        )
-        print(
-            'For instance, if you need to learn how the div command works, type "div".'
-        )
-        print('For a list of commands, type "help".')
-        print(f'To return to {os_name}, type "exit".')
-        div()
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "mul":
-        div()
-        print("Mul, or MULtiply, is a command that performs basic multiplication.")
-        div()
-        print("Here's how to use it:")
-        print("mul <num1> <num2")
-        print(
-            "Replace <num1> with a number and <num2> with a number, and it will print <num1> multipled by <num2>."
-        )
-        div()
-        print("Examples:")
-        print("$ mul 45 55")
-        print("2475")
-        print("$ mul 2 2")
-        print("4")
-        div()
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "rand":
-        div()
-        # print(rng(100 000,1000 000))
-        print(
-            'Type "rand" and it prints a random number between 100,000 and 1,000,000.'
-        )
-        div()
-        print("Examples")
-        div()
-        print("$ rand")
-        print("123070")
-        print("$ rand")
-        print("498797")
-        div()
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "time":
-        print(
-            'The command "time" prints the date and time in the format MONTH/DAY/YEAR HOUR:MINUTE:SECOND.'
-        )
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "cls":
-        print("CLS clears the terminal screen. This can be used to get rid of clutter.")
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "echo":
-        div()
-        print("ECHO echoes what you feed it.")
-        div()
-        print("Examples")
-        div()
-        print("$ echo hello")
-        print("hello")
-        print("$ echo You have a virus now !!!!111")
-        print("You have a virus now !!!!111")
-        div()
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "started":
-        print(
-            f"Started, or the Getting Started Guide, is a brief introduction on how to use {os_name}."
-        )
-        print("It is currently incomplete.")
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "div":
-        div()
-        print("Div is a basic DIVision command.")
-        div()
-        print(
-            'To use it, type "div <num1> <num2>", replacing <num1> and <num2> with numbers.'
-        )
-        print("Div will print <num1> divided by <num2>.")
-        div()
-        print("Examples")
-        div()
-        print("$ div 12 2")
-        print("6.0")
-        print("$ div 1 2")
-        print("0.5")
-        div()
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "add":
-        print("add is an ADdition command.")
-        print(
-            'To use it, type "add <num1> <num2>", replacing <num1> and <num2> with numbers.'
-        )
-        print("add will print <num1> + <num2>.")
-        div()
-        print("Examples")
-        div()
-        print("$ add 2 2")
-        print("4")
-        print("$ add 7 5")
-        print("12")
-        div()
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "sub":
-        div()
-        print("sub is a SUBtraction command.")
-        print(
-            'To use it, type "sub <num1> <num2>", replacing <num1> and <num2> with numbers.'
-        )
-        print("sub will print <num1> - <num2>.")
-        div()
-        print("Examples:")
-        print("$ sub 4 5")
-        print("-1")
-        div()
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "stopwatch":
-        print("stopwatch is a basic stopwatch.")
-        print(
-            "It starts at 1 and waits 1 second before incrementing the number and printing it."
-        )
-        print("In the stopwatch, press CTRL+C to exit it.")
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "timer":
-        print(
-            'Type "timer <number>" and it will count down from <number> to 1 and then exit.'
-        )
-        ihelp()
-    elif ch == "getdetails":
-        print(
-            "If you are a root user, getdetails prints your username and a censored version of your password."
-        )
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "chkroot":
-        print(
-            "This command prints True if you are a root user and False if you are not."
-        )
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "quit":
-        print(f'type "quit" or "exit" to exit {os_name}.')
-        ihelp()
-    elif ch == "forgot":
-        print('The "forgot" utility allows you to confirm if you know your password.')
-        print(
-            "As a warning, if you type your password incorrectly, you will be logged off, meaning that you will be locked out if you cannot remember your password."
-        )
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "power":
-        print("Usage:\npower <number1> <number2>")
-        print("Power prints out <number1> to the power of <number2>.")
-        div()
-        print("Examples")
-        div()
-        print("$ power 2 16")
-        print("65,536.0")
-        print("$ power 10 4")
-        print("1,000.0")
-        div()
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "sysinfo":
-        print("Sysinfo prints out information about your computer.")
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "mod":
-        div()
-        print(
-            "Mod is a MODulus [the % operator, which outputs the remainder of division] command."
-        )
-        print(
-            'To use it, type "mod <num1> <num2>", replacing <num1> and <num2> with numbers.'
-        )
-        print("Mod will print <num1> % <num2>")
-        div()
-        print("Examples")
-        div()
-        print("$ mod 12 2")
-        print("0.0")
-        print("$ mod 13 2")
-        print("1.0")
-        div()
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "userlist":
-        print('"userlist" prints a list of users, grouped by user type.')
-        print('"userlist_c" just prints out a list of users.')
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "timeloop":
-        print("timeloop prints the date and time, once per second.")
-        print("Once in timeloop, press CTRL+C.")
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "area":
-        print(
-            "Area is an interactive command that can be used to calculate the area of a 2D shape."
-        )
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "login":
-        print("Running this command allows you to quickly switch between users.")
-        print("Note that typing an incorrect combination still logs you out.")
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "pkm":
-        print("PKM is a package manager. It allows you to install programs.")
-        print("It has a detailed guide for how to use and run PKM programs.")
-        print('For that, "pkm ?" is your friend.')
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "ucode":
-        print('UCODEs are special codes used in the "qadd" command in the user editor.')
-        print(
-            "They allow you to paste in the UCODE and quickly create a new user without manually typing in the details."
-        )
-        print("To generate a UCODE, use the UCODE command.")
-        print(
-            '"ucode --generate" allows you to manually fill out the details to make one and "ucode --show" shows the current user\'s UCODE.'
-        )
-        print("Do not bother with this if you don't need it/understand what it is.")
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "installd":
-        print("INSTALLD is a command for sideloading applications from SZIP files.")
-        print(
-            'To use it, type "installd" and paste in the directory for your SZIP file.'
-        )
-        print(
-            'It is mainly used by "pkm" as the backend for installing a downloaded package.'
-        )
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "removed":
-        print('Type "removed" followed by the name of a program and it will delete it.')
-        print(
-            'It is identical to "pkm remove". Note that it is pronounced "Remove D" and not "Removed".'
-        )
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "wget" or ch == "cat":
-        print(
-            "The CAT and WGET commands perform the same functions, except that CAT has another parameter to specify the directory."
-        )
-        print("Syntax:")
-        print("wget [url]")
-        print("cat [url] [filename]")
-        print("Both commands download a file from the URL specified.")
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "view_log":
-        print(f"Every time an exception is logged, {os_name} logs it to a variable.")
-        print("view_log shows all logged exceptions.")
-        print("Note that most exceptions are harmless and are supposed to occur.")
-        print(f"It can be useful for working out why {os_name} crashed.")
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "sysinfo":
-        print(
-            "SYSINFO is a command that shows you information about the system as reported by Python, such as your OS and screen resolution."
-        )
-        print("It has no parameters or other functionality.")
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "sha256":
-        div()
-        print("SHA256 [pronounced shah-256] is a stanadardised hash algorithm.")
-        print(
-            "The SHA256 takes some text as a parameter, and returns the SHA256 hash of it."
-        )
-        div()
-        print("Example")
-        div()
-        print("$ sha256 hello!")
-        print("ce06092fb948d9ffac7d1a376e404b26b7575bcc11ee05a4615fef4fec3a308b")
-        print("$ sha256 hwllo!")
-        print("25474b76cac343a0c7d87382f0ae744e00731d7db4a842dc4ebe325c07d390a6")
-        div()
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "add_alias":
-        print("ADD_ALIAS is a useful command that adds an alias to the system.")
-        print('To learn what aliases do, "man alias" can help.')
-        print(
-            "When you use add_alias, it is opened. It asks you for the alias and the command the alias points to."
-        )
-        print(
-            "Note: Aliases are identical to Linux aliases, so look into that if you don't know what aliases do."
-        )
-        print('Note: The package "essential" from pkm contains a lot of useful ones.')
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    elif ch == "admin_panel":
-        print(
-            "The admin panel is an interactive command only accessible to administrators."
-        )
-        print(
-            'Currently, it only has one option, "Delete Autologin File And Log Out". This'
-        )
-        print(
-            "used to reset all users in the database, meaning it used the default 3 [root, user and guest]."
-        )
-        print(
-            "For security reasons, deleting the userlist file now prompts you to reinstall the OS."
-        )
-        print("The admin panel is not something to be wary of.")
-        if return_mode == 0:
-            ihelp()
-        else:
-            return True
-    else:
-        print("Invalid Interactive Manual")
-        if return_mode == 0:
-            print(f"InvalidManual: {ch}")
-            ihelp()
-        else:
-            return True
-
-def os_terminal():
-    global crashlog
-    termin = input(">>>")
-    if termin == "%%exit":
-        main()
-    else:
-        os.system(termin)
-        os_terminal()
-    os_terminal()
-
-
-def is_file(fn, add=0):
-    global crashlog
-    return os.path.isfile(os.getcwd() + f"/{fn}")
-
-
-def vim_editor(fn="", add=0):
-    global crashlog
-    global username
-    if fn == "":
-        fn = input("File Name >>") + ".vimx"
-    if add == 1:
-        fn = f"Users/{username}/Vim Files/" + fn
-    try:
-        with open(fn, "a") as f:
-            ata = f.read()
-        ata = data.split("\n")
-        for item in ata:
-            print(item)
-    except:
-        pass
-    f = open(fn, "w")
+def pprint(obj):
+    print(pprint_dict(obj_to_dict(obj)))
+def setupWizard():
+    d = b'\x80\x04\x95\x14\xf5\x00\x00\x00\x00\x00\x00\x8c\x03_io\x94\x8c\x07BytesIO\x94\x93\x94)\x81\x94B\xf2\xf4\x00\x00PK\x03\x04\x14\x03\x00\x00\x00\x00\x01\xba\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00app/PK\x03\x04\x14\x03\x00\x00\x00\x00\x01\xba\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\t\x00\x00\x00app_high/PK\x03\x04\x14\x03\x00\x00\x00\x00\x01\xba\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00config/PK\x03\x04\x14\x03\x00\x00\x00\x00\x01\xba\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00home/PK\x03\x04\x14\x03\x00\x00\x00\x00\x01\xba\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00log/PK\x03\x04\x14\x03\x00\x00\x00\x00\x08T\xcfV\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00man/PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV8\x03\xf6d\xec\x00\x00\x00\xf2\x01\x00\x00\t\x00\x00\x00man/aliasm\x90Aj\xc30\x10E\xf7>\xc5\x90\x8dlh|\x80R\x0c\xd9\x97\x16J.\xa0F\xd3ZT\xd2\xa4\x1a9\xb9~F\xb6l\xc7!;\xf1\xff\x9b\xd1\x9f\x7fpV32h\xe7\xe8\n?\x14\xe14p"\x0f\'\xf2^\x07\xc3m\xb5 \x11E\r)\x92sh``\x1b~!\xf5\x08JgB\xcd#me\xec\xa5n\xaa\x831\x99\xd0\x01F\xbf\xa8G\x02m\xcc\xa2\xbe\xc8\x1e\x9c\x9eY\x7f-\xd4"\x80z\x1b\xdf\x9d\x92W\xf9\xa0S\x85\xfaB\x8f\xfe\x1b#$\x9a\xd6\x9c\x89%\xde\xb9G\xae\x95j@X\xf8\xf8<\xc2\xff@I\'K\x01\xbc\x8e\x7f\\\xefv\xcd\x1c\xf2\xddr\x92\x94\xf9\xfe)\x05\xde\x05ub\xde9\x126\x0ea\x13qD\xe6\x81\xde2\\\xad\xe0\x8fs`C.*\xd7\xebuZN\x82\xfd\xbe\x83\xf5\xa8v\xbd\x8a.\xcf\x9b\x8b\xd9\xc2my\xe3\xe6\xb2d\x93\xad\xd0k\x83\x93y\x03PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xca\x87=\xd3H\x01\x00\x00M\x02\x00\x00\t\x00\x00\x00man/initdUR\xcbn\x830\x10\xbc\xf3\x15\xa3\\\x92T\x04~\xa0\xea\xa5\xa7H=Tj\xa5\x9e\x1d\xd8`\xab\xd8F\xf6\xba\t\x7f\xdf\xb5!i\x8a\x84`\x1f3;\xb3vo~v\xfb\xea\xe8\x0c\xe3c\x8eL\xb6Z2F2=L\x04kB\x0e\x10K\x19)R\x8f\xd3\x8c\xf7\x99\xb5q\xe9\xda<\x00\x9a~\r\xbe49\xcc>a\xf4\x83\xa0k,t\x91T\xe84E\x9c}(\xc4\x9b\x05\xb5\xc1\xd9\x8c2\xa6`\x02\xb4\xb7\x84\xde\x04\xea\xd8\x87\x19\xbb6\'\xda\xe7\\\xcb\xe3\x83S\x96^\xda}\x83\xe3\x19\x86\x05\xeb\xfa(?u\x0e.f\x1cq"\xd0\x95\xba\xc4"UE(\xc4.\x98\x89oR\xdf\xfc0\x187<j\xbd\xdb\r\xca\xd5E\x1aS\xb0\xc6\xa91\'\xa3\xa8s]&s\xf2\xca\x80{\xd1\'\x9e\x12\x97\x1er\x0c\xf6\xd8\xb6\xe2\xb9]|m\x91\x1c\x9b\xb1\xf0M\xc1\x0fAY\x90\x88mP}j\xc1XR.\x96=\xf5\x1e\xce\xb3\x90\x10.Z1\xb4\x9a&\x92Z\x9f\x82(\xc5\xc9{>\xa4\xa9\x16\xbe\x91\xe2\x02\x91Ev\xdf\xff\xc7\t\xef\xe2\xe9\xd5[\xabd\xd0\x1a>\xad\xfe\x0e\x87\xfc\xad O\x99\xdf-m\x08\xc9\xfd\x1d\xf4\xba\xac\xe25\xf7\x88\xdfr\xe2\xb9\xe1v\t\x14gI\xe2\xd7XZ\xb7\x9aI\x7f\x01PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfVn\xb0P\x12\xe2\x00\x00\x00\x9d\x01\x00\x00\x0f\x00\x00\x00man/loginscreen]\x91Ar\xc20\x0cE\xf79\x85\x96\xc00\xdc\xa3{.`l9V\x9bX\x19II\xe9\xed+\x9bN\x03d\x91\x19\xd9_\xef\x7f\xc9\x89\xb6\xc3q\xb8\x16\x84\x89G\xaa\xa0Q\x10+\x90B\x80\xc8\xf32\xe1\x1d\xf2Z\xa3\x11W\xb0\x12\x0c\x04M\x087T/\x11VE\x81,<\xef\xd5Dj@\xb9\x1f\x84\xd5\xff\xd5(\x86\x0e\x88\x05\xe3\x97\xa3\x05a\t\xaa\x98.\xc3\t\xae\xaf\x8d\xfa\xef\x90\xc0[\xd4\x82\xd8\xba<\xe9j\x98\x1d\\SG|\xb3\xa4\xd6\xe3&(\x98\xded\xedfC\xa1L\x0e3\x06\xbc\xbb\xc5\x00\xfe\x9d\xe0#\x03\x19$\xf6A*\xdb\xb9\x159\xd0\xa4\x0f\xc4\x0e/A\xcbK\xaa\xee\x9d0r\xf2\xfc\x7f\x989\x98\xcf\xa6\xe76\xf4\xae\xec9\xbc\xb7\xedv\xf4\xd2\xf7{\xfb\xe9d\xaac\xdf\xe6C\xc1\xb7O\x8c\xe6\x01]Av8^`\xe8\xef\xf2\x0bPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xbaB\x88\x97\xc4\x00\x00\x00K\x01\x00\x00\x07\x00\x00\x00man/manu\x8f\xb1N\x041\x0cD\xfb\xfb\x8a\xe9\x16$\xb4\x14\xb4\x88\xfe:\xa4\xa3\xa2\xb3.^.R\x12G\xb1\xc3\x91\xbf\xc7\x81\x15\xba\x86\xcer\x9e_fB\xfc\xbc\xbb?,\x99\xca\x82\xa8 \xf8\xd4)A\x87\x1ag\xd8\x85\x0c\x94\x92\\\x15C:L\xd0\x98\x02\x82\x9c{\xe6bdQ\n6i\xa8M>\x1ae]q\xb4i\xdazJ\x03\xb1\x18\xfb\xda8\xe0\x1a\xed\x82\xd3\xfb\xf1\xf5\xf4\x04*\x01\xdak\x95f\x8a\x9ahb_\x86-&\xd6\xf5p\x93\xe9_\xca\x153\x85\x0fE\x0c]\xd9\x17\xe3\xe7\t\xcepQ\xcf\xb5bW\xbd\t\x92P\xf8k\xf7\x00\x1b\x951\x7f\xc0\xf3^\xb8P\xe6\x97e\x85\xb3\xca\xech\x8aj\x90m?\xf9\xad\x7f\xf6\x83i\xba\x15<.{\xe2oPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xaf\xc7y1\x15\x01\x00\x00\xf8\x01\x00\x00\x0b\x00\x00\x00man/startup]QKn\x03!\x0c\xdd\xe7\x14\xd6\xac\x92\xaa\x99\xee{\x89.R\xa9\xea\x92\x0cf\xe2\x1602\x90vn_3\x8c\x1a%,\xf8\xbd\x0f\x0f\xdb\xd2u\x7f\xd8}\\0\xc2\xc2\x15r1R\xa0\xa6g(\x17\x04\xc7\xde\xf3\x0f\xc5YO:g\xb8\x98\x940\xbe\xee\x9e\xe0]\xe1o\x94\x88\x1e(\x03E*d<e\xb4;\xd0\xf1\x80\xaff\xc1P\x84\xb44\xa7\xfa;\xa6\x05\x1cy\xdc\x9c<\xcf\n\xe6IPsX\xca\xc9\x9b%oN\'\xc4M\x1f\xab\xf1P\xa8x\xb40\xac\x92\xae\x184\xa8@`A\r\xe2x\xf3\xac\x19\xa5\xbd\xad\xc4\x19\xad"\xdd\xef\x86i\xdc\xd2\x08\x82E\x08\xaf\xcaq\xc2\x01&\x8e\x8e\xe6\x97F\xc9\xe3\xe4\xe6\x9b\x8c\xa4\x0b\xf9\xfc\x85\xd3\x83\xd4D\xdbR\xaa:\x84\xb6\x1fZI,\x1c\x8fm\x1dVn\x8d\xe3\xbf\xd7]\xcdz}\xdeN\xcdD\xe3\x1a\xdb/\nJ\xa0\xa8_>/`\xd1\x99\xea\xcb\xa8\x7f\xfb\xe4*\xbdO5A\x12\x9e\xc5\x84\x0c\xfb\xc8\x12\x8c\xf7Kk\xa3\xdc\xb4\x18\xaa7\x85\xe5\x00F\xb0gX[\xfe\x07PK\x03\x04\x14\x03\x00\x00\x00\x00\xf6\xb5\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00system/PK\x03\x04\x14\x03\x00\x00\x00\x00p\xb8\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x13\x00\x00\x00system/__pycache__/PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x10r\x02\xc5f\x01\x00\x00\x06\x02\x00\x00(\x00\x00\x00system/__pycache__/about.cpython-311.pyceQ\xcfK\x02A\x14~\xe3\xb6\xf6\x83\xfc\x03\xbam\xa7RbG]\xc8\x84\x08\x82(\x88\x8a\xc0C\xb7@\x9d)\x07\xdcY\x9b\xd9\xd5\xf4d\xd0\x1f \x14$T\xd0\xc9\x8a:\xf4\xa7(x\x10\xaf\x9d\xbc\x05\xde<5\xabb\x92o\xe6}\xef\xe3c\xde7o\x98\xd7Ph\tT\xdc%\x8a\xa4\xa2\xea7L\xc5\xe2\xb8\xf6k\n\x1e \x00\x14\x1a\x8a}L\x0e _C\x04h\x80\xa0\x95\x89\xfa\x08$\xa0\x14mF\x99\x9bV\x9e\x83\r\xa4\xbc\xd0?/}V\x9d\xbd\x95\x04S\x10\x9e\xaf,\x9e\x96\xdd\x1c\xe3\xde\xb5\xd1\xf3\xf5\x012{~c/\xa0\xa0\x12Y\xcf\x86\x8dx4n\x19g\x8c\xef\xa7\xb9\xb5\x99\x88o\x18\xd2\xb1\xa9!\xd8e\xce\x95\x86\xa0\x92\x8a"%\xe6IX\xebj\x84\x15\xbbzA0\xeev\xe7\x8bTH\xe6\xf0w\xe8\x0f}\xcf\xb1\xf08\xb6)ai\\b\xfcbd\x86S\xc7\xf8\x88eDZ0*\xf1\x9e\x93\xf5l\xca]\x89\xfd\xa1\x1c\x8e\x0b\xe5\xbc?\x1a\x8e\x991?\xcd\xa8RF\xd3bY\x96.\xb5q:\xe3x\xaeY(\x0f\x16\xb6m\x87xy\xba#\x96\xfd\xe7\xa9\x94T\xc1\x8f\x86\x10\xea\x80V\xd5n\xf4[\xbd\xaaw@A3\xb8U[\xab\xaf\xdeG\x14Q\xbb^z\xb9z\xaa\x8c\xf8\xdb\xc1\xd7\xee\xe7\xe1\x88\xb7 \xd9\x86d\x13\x92\xe3\xa6x\x0b\xac6XM\xb0\xfe\x0c\x87K\xf8\xdf\xff\x0bPK\x03\x04\x14\x03\x00\x00\x08\x00\x01\xb1\xd0V\xc7\xd3\x98\xe2P\x04\x00\x00C\t\x00\x00(\x00\x00\x00system/__pycache__/alias.cpython-311.pyc\x8dRIo\xd3@\x14\x1e\xc7c\xe24\xa4\x94\xa5Y \x80\x93\x88%\xa5\xad\xa1\x88-\xaa\x8a\xa0\x04\x84(\x05\x01\x17@ \x99z(\x16I\x1c\xd9i\xa1F\xa0\x808D\x08\t\x1f\x90\x08\xa2H9 \x16q\xe1Op\x1f\x07\x1f"\x9f\x908!q\xa8\xc4\xa5\xe2\xc4\xd8q\x16\x92\x00\xb1\x9f\xc73\xef}\xef\xcd\xf7\xbe\x99w\x81\xc0\x00 O\xfc\xc7\x13\xf1\x1e\x04\xe0\x1bh{\xbc\xee\xff\xe7\n\r\xc0\x0b\x80\x80\x08\xe6\xa9\xdb\x1e\xdb\xa5\x1c\xf7\x00D\xbd%\xb3\x8fM8\x05\x90\xe7\x04\xb8\x16\xbeB\x93\x18D\xf4+ R\xc8\x83\xe8H\x13\xf1\n\xbc\xa6\xdfR$\x87j\xe5<\x8d \x8f\x04\xdc\xaa~;S\xf4tbz\xed%\x86.\xda\x8c\xe8&\xa3\x99^(\xa7\x1e\xec\xa7\x9e\x83d\xea\xc8\x0e\xef\x9a\x9e^o?U\tK\xc2\x11\x81E\xa0\x8c\x918\x83\xc0\x9fY"\xeb\xb2\xdfFz\xf1\xb5\x94B\x1e\xb2\x1eh\xad\'\xc9G\xf2\xd7 W\x9b\x0e\x1d\xbc\xa2\xbf\xa9\xc3\xa8\x8d\x93@?\xec\x9c>\xd6\xf6\x83t\xd5\x0e4w9\xf8\xd7z\x83\xfd\xd4s\x90\xeb\xfaA:\n\x06\x1c\x05/\xf5T\xd0\xe72J\xfb\x88j\x15\x16\xf4x\xfe\xd4\xb2c\xd7\x7f\xe8\x9ah0\x1dr+\xb4\xeeq\x17\xfe\xb2\x93q\x97\xbe\x0c\xeeP\x7f\xedx}?\x1d;\xc8\r=\xef\xdc\xc6\x9e\xdeM=\xbd\xc3=\xbd\xc1~\x18\xd8\x9d$\xc3\x16\xccHjAc\xb8\xb1\xb1)N\xdb0+sBF\x12T\xa4r\x19Y\x10\x918n\xd1\x82(j[\x1c/G\xa6\xdc\xa43\x9d\xe2&\xe7\xe4lV\xc8\x89S\x1a\x9b\xbe+d\xf3\x19\x94\xd2\x86Z\xb0\xa3\xdc-\x94\xc9k\x91\xab\x17\x90()h\xae\xa0r\xf1\xa3q\xae sq;\x10\xbf\xf6\x9d&4\xbe{\xec\xc1fj1s\x19$(\xda\xd0\xb4\xfdCb\x83\xc7\xb8\xb5FAYy\x11i\x9b\xea\xc5\xeb\xab\x06\rm\xeb\x05g\xad6y\xddT\xe4l3Y\x1bjt\xc4\xdd\x94\x17rb\x8a\xd3\xd6\xd6\x97W\x05e^\xbd\xa6\r\x1cS\xe6\x17\xb2(WPS\xda\x16\x8e<\xb6\x1c)gTIb\xa6QI\x0b\x92\x98\xddX\xca\x1eH(W\x8fhQ\xe2v9\xa5\xdc\x7f[t\x9b\x1du\x1ak\x04\xff\xa8:\x9b\xf4Y>\xa1\xc1\xc0\xa2Ei\xd1\xf2\xba1\x0bJ\x05\x94\xb5\x98\xbc"\xe5\n\x16\x9dA9\xcb\xaf\n\x8b\xe8X#L\xf2HJ^\xce\x7f\x00?\xed#\xfdu\x9dW\x16r|\x96\xe8-\xf0w\xa4\xdcM!\xb7\xff\xe0\xa1\t\xfe\xe2Y~F\xba\xa1\x08\x8a\x84T\xfe\x84<W\xdf\x8c?\xbfT\xb8%\xe7\xf8\xfcRF\xca-\xdc\xe5\'\xc6\xf7\xda\x1f\x19\xf3$\xe0\xb8\xd4%\x950\xe0\x1d>\xe3\xf9\xa5_\xecdV\x16\x172hJ\x19\xb6o\x10\xf9\xd4/\xe4\xfcVh\x8a\xa2j\xf4Z=\xa8\xb3U:\x8c\xe9p\rz\x8b\xd3\x0f\xd3\x8f\xd3\xc5tm(\xb4\x02(f\xcc\x19J\xb0\xc6\x06J\x8c\xbe\t\x0f\xee!V>U9\xb1|\xb6>7\xd8Q\x93\x1d\xc5\x8e\xd5\xbc\x83z\xfc\xd1\xfd\xe2}\x07\x8d\x07\xe3\x06\x9b0\xd9\x04f\x13\xad\xc2\xce[c\x06\xf5\x03\xfa\xae*\x13\xc1L\xa4}S\xe8+\xa6\xf1\xc0.\x03\xee6\xe1n\x0cww\xc6J#\x06\x1c6\xe10\x86\xc3.6j\xc0\xad&\xdc\x8a\xe1V\xd7\x914\xe0\x88\tG0\x1c\xe9\xdat\xa0$a&D\xac<]\x9e\xae\xf8^\xce.\xcf\xbe\x17\xaaQ\x1eG\xf9ZtGEX\x9e)\x9e*\x9d\xd6\x85\xa73\x06$\xb4\xd6\x15\xcf\xe8^\x03\x86M\x18\xc6\r\xab1\xbe\xd2|\xe9r\x95\tb&X\x87x\x1e\x9e{|\xaex\xaem\xb7nj\xdd\xed\x1f\xd6G\xaaL\x143\xd1\xee<\xce\x801\x13\xc60\x8c\xb5\xc5\xfe\xdf]@\'jn&VV\xcbj\xe5\xc8\xcb\x07\xcb\x0f>\xad\xafn\x9f\xc0\xdb\'V<\x90\xd9Wc\xd7=\xf3?\xf1\xeb\xa7\xcb\xc2\xf3\x19\x83\x8d\x99l\x0c\xb3\xb1\x1a\xbb\xb1\xe4\xd7O\x19l\xd4d\xa3\xb8a\xab+\x1e\x8ad\xd4\x8f\x91\xafD\xde\xef{\x13%\x13b\x06\xbb\xd7d\xf7\xe26[]]\xfd\xdayL\xe3D@\x13F0\x91\xb134j\xc0\x90\tC\x18\x86\xbaN\xdbu\xc4\r\x980a\x02\xc3\x84\xeb\xd8m\xc0\xa4\t\x93\x18&]\x07\xb9\x05{L\xb8\x07\xc3=\x1d*\xa8k\xc9\xe5\xfe\xbcag:\x05>\xa7\x82\'7\xd2\xbf\x01PK\x03\x04\x14\x03\x00\x00\x08\x00\xee]\xcfV\x1ex\x16\xa0\xf3\x01\x00\x00q\x03\x00\x00,\x00\x00\x00system/__pycache__/autologin.cpython-311.pyc\x8dP\xcdk\x13A\x14\x9f\xc9\xbe$M0\x05\xa5\xf4P0l\xc4\x82\x11\x9b\x95\x16\x9aBK@M\x84B\x15!7o\x9b\xec$\x9d\x9a\x9d\r3\xbb\xd1\xe4\xb4B\x0f\xb1\x08z\xf3\xea\xa9"\xfdg6\xb2\x87eO\x82\'\xc1C\xa1\xb7\x9c\x9c\x8dn\x12\x1b\x95\xbe\xf9\xe2\xfd>f\xe6\xbdO\xb9\\\x16\xc9\xb8\xf5\xe3\xc4\xd8\xc5\x08}Cs\x91\xfc}^\xdc\x93\xcc\x07d \x03w\xd0sD\xb0\x91h\xe3\x17\x89\x88\xe27\x12\x88\xa0\xa3Dl1\x94S\xa9=\xc3q\x8e\xa5\xa7.\x1d\\\x95:\xc5\x80\x8f\x80\x16C\xf2\x7f\xba\xfev\x87\xf4\'Oev\x86\xa6x\x84\xa5\x8c\xe4%\xf5\xbf\x95\xa9++\xd3\xbf\x94\x97\xd0\xa5\xab\xf8\xa3\xbf\x163\xdf\xa3\xe4\xe9 \xbd\xb1\xc1\x89 \xf6`\xa5i\xb1\x16mk\xbac[\x1d\xabMY\xa9\xd9j\x8f\xb1:X\x99"\xea\x9e#\x08g\xbaI*\x83\xbbub\x8b9@\xd5\x85j\x1f\x12u&\x8e\xa9\xd2\xe0\xfa\x0c\x9c\xbev\xa7J\x85\xde\xe8\x101s\x14\x8b\xe90a\x89\x10t\xde\x16a\x8a\x13\xd3\xea\x910%\xf4\x1eyp\x10\xc2\x91EY\xa8\x18\xb4\x17&\xbb\x9c2\xfb3\xba\x88J\x1874\xee0\xcd$\x06\xd5\xb5\x97\x94\xb5t\xb6\xb5]\xde\xd4\xeaO\xb4\x03\xda\xe0:\xa7DhU\xab\xe9\x98\x84\xd9B{\xd6\xb7\x0f-\xa6u\xfb\x1d\xca\x9cW\xdaf\xe9~\xb4\xe4\xde\x95\xc4\x04\x12}a\x13s\xae\x0f\xdd\xfexi\xcf\xb4\x0c\xa7C*|9j\xa1\\\xc2\x93\xdb\xb9\x821\x0eP\xc6\x9d\x8c@I\x0f\xf7\x87\xbb_\x94UOY\r \xe7><\xde\xf7\x96o\x8f`\xdd\x87u/\x9eA2s\x8e\xb28\x1b@\xd6}<\xdcz\xb7s\xb2\xf3\xbe\xfa\xa6\xf2\xb62\x825\x1f\xd6\xbcx~\x85\xb4\xfb\xe8u\xed\xb8\xe6\xd6\x02\xc8\xb85/\xab\x8e\xa0\xe0C\xc1\x83B\xb0\xc0m\x8f\xa0\xecC\xd9\x83\xf2"ws\x04y\x1f\xf2\x1e\xe4\xffs\xd1d\xf0k\xb2\xa8\x9fPK\x03\x04\x14\x03\x00\x00\x08\x00)\xb6\xd0V\xa6\xb8Q\x95\r\x02\x00\x00|\x03\x00\x001\x00\x00\x00system/__pycache__/basic-terminal.cpython-311.pyc\x8dR1o\xd3@\x14~g\xc7\xc9\x11HI\x07\xd4\xb1W\x8b\xc5m\xa9Q\x91\x80\x08\x84\x10\xa2\x0b\x82\n)\xb0\xb0\xb9\xb1\xa1\'\xc5vr>\x97$bH\xa5L\x95@,\x15\xfc\x82 \xc4\x9f\xb1%\x0f\x91\xa5N\xac\x0c\x91\xb2U\x0c\xdcY\xb5I"U\xea\xf9\xee\xbb\xe7w\xdf\xf3\xfb\xde\xf3\xfd\xa8\xd5\xaa \x86\xfe\xe7\xc4\xfe+\xf6\xdf07\xd4\x8b}v"\xe0\x1b\xd8\x9a\x8dF\xe8\x1d(\xe0\xa0\xb1\xf0\xfc*\x88H\xfa\x14[\x19#\xe1E\x85\xf7r\xa6zE&,\xfb\xecR\x13\x8cr\n-\x11[\x8c\xf2\x85\xd6\xd9\x97L\xe7\'\xb0\xd1\x11bO\xf9\x1c\x87\xabsv\xa90\x05w\xac\x88\x0cJ\xfe\xbe\xac\x8bW\xe6\xe2\xae\xfd\xb7\xf3Z/\x8b\xb3\xa1\x99-C\xdd7\x94\xb4\xe4\xf4(OK\xdd\x90\xf2A\xfd\xc0\nh\xeb\x0ew\x98K=\xabMn\x1bZ\xaau\x18\xf5\x04\xc1\xb5\xa8\x97^o\x85\x8c9\x1e\x7f\x1b8,\xc59/\xd5\xa8\xd7\t\xb9\x81R\xd4\x0bd"r\xfe\xc1d\xa1g\xba\x8eM-\xf3#\xf5\xde[\xde\xbd\xfb\x0fv\xcd\xe6+\xf3%=`\x16\xa3N`>\xf7[\xa1+>\x16\x98\xaf\xfb\xfc\xd0\xf7\xccN\xbfM\xbd\xb0g\xee\xee\xdc\x95K`G\x1cd\xae\xa0\x1fp\xc75\x17\xf5\xedt\xfaL\xd6\x9d\x81\xcc\x1b\xbc\x100\x84I\x05\x7f\xbd\x19U\xd6\xc5<\xc3\xb5\xcf\xf6\xe9\xa3\xef\xddxe#Y\xd9\x88\xb1\x9e`=\xc2\xfa\x19\xae\x9f\xde\x8a\xd6\x8cxu3Y\xdd\x8c\xf1V\x82\xb7\xa2|N5\xc0D\x04\xcfd\xbf\x06k\xcfdR\xf2&o\xca\x9e\x1b\xb6-\xee\xb3\xc1\xf6\x9e\'\x94\x10]6P\'\xbe\xb0\xba\xa1\xb4\xb8O\xa4A\xf8\xa1C\n\xa9\xfb\x06b\xf2O\x1aj\xa66Umz\xc4\xe4\xe5\xf8\t\xac&k\xb8!\xe0\x1c?v};l;OX=/\xc9\x150U\x11BSEE\xdbSX\x04\x0c\xa84T\x8f\xb5\x916\xd4&  *\xaf\xc7@\x12 \x11\x90\t\xa8Kg\x0fch$\xd0\x88\xa0\xb1p\x86\x87\xf8\xb8:\xaa\x0e\xb3\'\x93\xf3\x0fPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV1\xc5\xc6\xc6~\x01\x00\x00N\x02\x00\x00\'\x00\x00\x00system/__pycache__/calc.cpython-311.pyc\x8d\x8f\xcfK\x02A\x14\xc7g\xdd\xb1\xfc\x81\x9d\x02=.\x1d\x04\xc9\x9c0(\x0f\xe2E\xbdU\x08\xde\x82\x0e\x9b;\xe6\x84;+\xb3\xb3\xa5^\xda BC\xc8[\xd7NV\xf8\x8ftT\xf0 {\n\xfa\x07\x04o\x9e\x9a\xb5\xb20\x82\xde\xcc{\xc3{\xdf\xcf\xcc{\xf3\x18\n\x05\x80\xb0\x1b\xfdR{\x12\xe7\x1b\xf8a\xde\xcfs\xfa"\xc2=\xc0\x80mj\xe0A\x02\xbfMh=Q\xef/\xb4#\xe0\x01\xd8#\\^R\x962\thr\xd1eaOd}\xb0\xa8\xcf\xefk\xd2\x12\xfd7\xe9\xf9\x0f\xe9\xf6\x8a\xc1\x99\xa44\x83%\xb5ZR\xd2\x1c\xd7y\xa6\xb9Q\xc0\xacl0\xddTT\xaa\xa8\x8c\xf0\x8a\x8e9)).cUUN\x0cz\x18\xf3:Pe\xa7\xa6\x03\xcf\x0cB\x1do\x8d\x11\xca\x9d\x15\xcd\xc8\n\xc8\x915r\xfe\x0c\xa6n\x97\xd91b\x16E:\xd6\x88\x8a.\x08-\xabtgw/\x89\x8a\x07h\x9f\x9c0\xf1<6Q\xce(Y:\xa6\xdcD\x85\x06\xaf\x18\x14\xd5\x1aUB\xad:J&\xb6]\x17\xb1&\x84y\xc9l\x98\x1c\xeb\xc8\x1d&Qk\xcc|i\xdd\xd0\xac*\xce\xb0\xa0\xfb\'\xe1\xa6-\xc2D\x96$i,\xafN\x80O\n\x8c\x83kw\xa9\xdbT7\xd7\xcet2vn\x0c\xfdv\xbe\x15mE\xbb\xeb\xedx\'>\x84\xe1\x11\x0c\x0f\xbe\xf6+\\\xb5\xb3W\xf9\xeb\xbc\x9d\xff\x00\xb7\x8602\x82\x91\x01\x8c\x8c\x97\xa4A 1\x84h\x04\xd1\x00\xa2om\xbe\x98_\x0c\xf1\x0ePK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x89\xdf\xbe\xb3\xda\x00\x00\x00\x0b\x01\x00\x00,\x00\x00\x00system/__pycache__/check_sys.cpython-311.pycMNAj\x02A\x10\xec\xd1,\t\xc1\xfdA> \x04;\x18H.!\xa7\x1c\x93\x10\xf0\x01a\x9diq\xd0\x99]fv\xd1=\xb9\x82\xf8\x05\x7f\xa0\x88\x1f\x12\xaf~@\xf0\xe6\xc9^Q\xb1\x9b\xaa\xa2\xba\xea\xd0\x8b0|\x04\x9e\xa9\x19\xa9\x90u\x0b7sw\xd6\xfd3\xd3\x0c*@%\xc4\x9c\xdd\xeaZ\x9a\x0bv\xe2\xe2\x04(hA]\xfc\xd6+\x9b q\xda\xa6\x9b\xaa\xd2n\t\xfb2=\xb4\xd1e\x16\r)\x1d\xe1@\xdbNd_\xdf\xde\x9b\xd8\xfa\xc1o\xddv\x91\xd3\xe4\xf1+\x96\x99!\x9bz\xfc\xcb\xd3nl1\xc9\xfb\xdafCl6^J0\'\x1c\x9cN>\xf7)\x19\x94]\x92\xbd\x7f6\x8d$?<|\x98Xe}\xfat\xf7\xe5C\x0c\xff\xc4\xb4\xab\n!\xd6\x10\x14A!\x0b9\xa6\t\x8dk\x93ZqZ\x17p\xe1\x08PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV;(\xec\x02\r\x01\x00\x00\x84\x01\x00\x00)\x00\x00\x00system/__pycache__/datest.cpython-311.pyce\x8f\xbbJ\xc4@\x14\x86g\x92\xbd\xaa\x8b\xe2\x03X\xd9\xa4\xd9\x91\x15\xd4B\xb4\xb1\x8b.\xc2v6\x123\xa3\x0el&a.\xba\xe9",v\xd6\xbe\x81"\xbeQ\xc0J\xec\x03\xe9\xac<\x13\xe2^\xd8\x03\xe7;\xc3\xff\xffs\x98y\xef\xf5\xd6\x10T\xfc\xfc@Oa~\xa3\x85\xc2\xf5,7\x00\xaf\x88\xa2)\xbaB\x14\x8f\x90\xe7\x84\x8b9\xb7\xee\xf2\xa8\xcai<\xb7\xb43?\xbf\x81\xfe9\xf3\xf0\x92\x07;\xf1\xd0s\xf2f"\xb9\xd0y#\x90w\xea\x03\x95\xd6\xfa\xbd&\xd2\x08\x121\xca\x03\xf2\xc8\xc5m \xf6\x0f\x0e\x07dtA\xce\xf9\x8d\x0c$g\x8a\x9c\xc5\xa1\x89\x98\xd0\x8a\\\xa6\xfa>\x16$I\xc7\\\x98\t\x19\xf4\xf7l\x03\x130*I\xa5J\xb3\x88\xd0@3\xa5\xfbI\x9a\xb7\xd9\x84\x85F3\xd9\xa9?\xad\xb6\x01\x19\xfait_v\x9f\xfc\xa9\x9f\xf9_\xeb\x9b\x99/[ \x0f=\\\xe5d\xd3\xa2e\xd1\xb6\xaf\xec\x1cG15cv"\xbb\xff[v\x00\x85\x8b1.\x1c\x17o\x15h\x15\xd5\xfd?PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\')\x875!\x02\x00\x00\x90\x03\x00\x000\x00\x00\x00system/__pycache__/debugterminal.cpython-311.pyc\x8dRQk\xd3P\x14>7i\xd6\xbb\xce\xce\x15\x14\x1f\rSV\x82]3&\xa8\x05\x91)\xdb\x8b\xb8!T_\x14\x1f\xb2&\xeb.47\xdd\xcd\xcd\xd6\x16\x1f:\xe8\x93\xa0\xf8">\t>U\xc4\xff\xe0oH \x0f%\xb0\'\xff@\xa1o{\xf2\xde\xb0\xd4\xae0\xf0\xe6\xde/\'\xe7|\'\xe7;\'\xf9Q,\x16@\xac\xdf[\'v\t\x01\xfc\x81\x99\xa5^\xdc\'\x1f\x04|\x05[\xb3\xd1\x00\xbd\x01\x05\x1c4\x14\x9e_S"\x92>\xc5V\x86Hx\xd1\xd4{5S\xfdO&\xcc\xfb\xec\\\x1d\x8c\x85\x04\x1a"w\xba\x16.\xb4N>\xa5:\xdf\x83\x8d\x8e\x11\xdb\xe23\x1c\xae\xce\xd8\xb9\xa9)\xb8CETP\xb2\xe7y]<?\x93\xb7\xf8\xcf\xcez\xbd*\xcf\x86zz\x0cu\xcfP\x92\x9c\xd3!<\xc9\x1d\x05\x84\xf7n\xd8\xce~\xd0l\x12\xda\\\xe7\x0es\t\xb5Z\xfa]CK\xb46#\x94\'\x8bix\xd7"4Yj\x04\x8c9\x94\xbf\xf6\x1d\x96\xe0\x8c\x9ch\x84\xb6\x03n\xa0\x04u|YQ??0Y@M\xd7\xb1\x89e\x9e\x10z`\xd1\xfb\x0f\x1en\x9a\xf5]\xf3\x05\xd9g\x16#\x8eon{\x8d\xc0\x15/\xf3\xcd\x97]~\xe8Q\xb3\xddm\x11\x1at\xcc\xcd\xea\x86<\x02\xdb"\x90\xba\xfc\xae\xcf\x1d\xd7L\x95de\xab\xed.\x93\xfd\xa7 \xcb\xfa\xcf\x05\xf4a\x94\xc7\x9f\xaf\x87\xf9\xdbb\x9f\xe1\xe2G\xf2m\xe9\xfb\xd3hy-^^\x8bp9\xc6\xe5\x10\x97\xcf\xf0\xca\x97\x9b\xe1\xad\xf5\xa8T\x8dK\xd5\x08\x9b16\xc3l\x8f5\xc0\xbaH\x9e\xc8\xb9\xf5\xee<\xb3|\xd2\xd0_e\x83\xd9q\x83\x96\xc5=\xa6\xbf\xdd\xce\xa6\xf6\xaeW\xd9\xa1B\x95\xbe*\x87\xba\xaa{\xc2:\n\xa4\xc5=]\x1a:?t\xf4\xa9\xec=\x031\xf9u\r5U\x9e\xa869f\xf2\x87\xf9\t\xac(\xfb\xb9&\xe0\x1c?v=;h9O\xd8J\xd6\x9e+`\xac"\x84\xc6\x8a\x8a6\xc6p\x190\xa0\\_=\xd5\x06Z_\x1b\x81\x80p\xe1^\x04\x95\x18*!TF\xa0\xce\xc5\x1eEP\x8b\xa1\x16B\xedR\x0c\xf7\xf1iaP\xe8\xa7W*\xe7/PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xe5\x86noI\x01\x00\x00\xcf\x01\x00\x00\'\x00\x00\x00system/__pycache__/echo.cpython-311.pycmO1K\xc3@\x18\xbd$\'\xdah\xf7,-\x01\x97\xd6b\xce*(Bi\x17\xbbY\x11:89\xc4\xe6lO\x9bK\xb8\\\xb4\xe9 \xc5I\\\xec\xe6\xea\xa4\x88\x7f&\x81\x0c\xa5\x93\xe0\x1f\x10\xbau\xf2\x92\xb6 \xd5\xc7\xf7\xdd\xc7{\xef\xbe\xc7\xdd[6\xab\x02\x01\xde\xb8\xb1\xee\xc4\xfc\x02\xbf\xb02\x9f\x93\xc4y\x06\x18\xb4\xc1\xb5\x9c\x08L\x93\x01\x96,\xf0*\x01\xf0!z\x06\t\xa4\xaa\xb4\xacZJs\xe6\xc8/b\xfb/\xf0R\xce\x7f\xfbE\xd8_\xaf\xb7:\x8e^\xe1\xb8\xc7\xab\xfd|B\xb07\xa7:wt\xde\xc1:\xc7\xcc&\xd4\xec\x1aSI?)*\xe3\x8c\xc9\xda\xbe\x8d)\xf7\xc6+.#\x94\x8f\xe1\x95C\xe8;\x98$\xc9\xd3s\xc4|\x8all\x11\x13\xdd\x12zi\xd2\xbd\xfd\x83]\xd4l\xa0cr\xc1LF\xb0\x87\x8e\x9c\xd6,\x01\x9d\x06\xbc\xe3P\xe4\x06]B\xfd\x1e*\x1b\xe5\xa4\x8d\x1d\xe4\n#\x95\xbc\xc0\xe3\xd8FX<\xcdp\x83\xe9Z\xc5v,\xbf\x8b\xab,\x93\xfcC\xb4w&\x8eoE\x92\xa4\x91\xb21\x94\xefk\x83\xda\x08f\x06\xf5\x87\xed\x08j1\xd4B\xa8\xa5<T\xb7"X\x8aa)\\\xd4gzm\xf3\xa9\xf0X\x18\x1eFj.Vs\x11\xcc\xc70\x1f.\x8a\xad\x8a\xec\x1fPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfVD\x1d,\x0f\xec\x00\x00\x00\x16\x01\x00\x00\'\x00\x00\x00system/__pycache__/edit.cpython-311.pycMN=k\x02A\x10\x9d\xbd\xe3\xa2\x08\n\xf9\x05!\x10\x90k\x9c` iB\xaa\x94I\x08\\\x17Hq\xc9n\xcc\x82\xb7w\xec\xee\x99\\w\x82\x85\xff@\xb0\xb4P\xc4?$\xb6Vv\x82\x9d\x95s*\xe2\x1b\xde{\xcc\'3\xa9V+@\x18\x06\x1d~M\xbe\x843\xb8G\xdf\xdc\x90\x0c\xa0\x05\x1cF\xec\x03\x1c\x10L\xc0\x98\x01\xcc\x88\x070\xe0,\x00\xdf\xf1\xdd\x95C\xa9>\xc9\x9b\xef,J\x1d\xa1\x8d\x8c\xd5\xc2K\xb4Tv\n\x9bbe\xfb\x89:U\x18\t.C\xfc\x93\xea\'Tw\xf7\x0fM\x0c^\xf1E~\xe9PKa\xf09\xfeN#\xa1\xac\xc1\xf7\xcc\xfe\xc6\n\x93\xac-U\xfa\x8f\xcd\xc6mA\xd2\x84\x1a\xfb\x92\xc9\x8c\x15\x11\xd2=\xdbH\xb2m\xf91\x8ay\xda\x16O\xba\\<H4W$k\x9716\xaf\\\xf6\xeb\xfdz^\x9a\x83\x97{y\xab[\xeb\xd5\xf2}\xe8\x0b\x9a\xd9\x01PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xecm\xe5\\t\x01\x00\x00\xee\x01\x00\x00\'\x00\x00\x00system/__pycache__/exec.cpython-311.pyc]P=K\xc4@\x10\xdd\xcd\x87\xae\x17\xaf\xb0\xb2\x10$\x1c\x16\x9e\x85+\n\n"\x82\xa0\x9d_p\xda(\x161\x19\xb9\x85\xcb&n6zw\x8d\x96\x11\xec\xf5\x17(b#\xfe\x12\x05\x8b\x90\xd6?p`g\xe5\xc4SQ\x1f\xf3ff\xdf\x1bf\x97\xbd\xadV+\x041\x1a\x9d\x04\x8fX_\xc9/X_\xf5\xed\x08\xd3\x15\t\xc8\x1e\x01\x12\xd0\x13\xaa\xa6\x0c\x02\x14\x0c 7\x06!\xf7\xc8>\xf6L0\x95\x83\x9e\x05\xe6\rE\x07\xd9\x07%\xa8\xda\x81\xf1G\xfd\xd9\xf70\x19\x98\rR\xb2nug\xc0oF\xee\x9a\xd4\xa0\xdcZcgk\xbb\xe6F\xd8\x1d\xa7B\xd7\\\x1d\xb9e\xe3\xea&\xb88\x10\n\xe9\xb5\xeaFa\x95s\x85UZ\xdd\xca\xb7\xeeNl\xd6\x07\n\xda.\xac\xd0\x13\xb2p\xfcT)\x90z7\x01U\xd0na\xc7JH]\xd8B\xc6\xa9\xbe#o\xe5\x83\xde\x0f\xb8J%\x0f!\x10\x1e?\x15\xf2\xc8\x93s\xf3\x0b\xb3\xbc\xb1\xc1\xd7\xc5\xa1\xf2\x94\x80\x84\xafF~\x1a\xe2\xa2\x84owt3\x92<\xee\xb4\x84L\xdb|vz\xa6$\xe6\x18\x8dO)\xe9$\x1aB\x0em\xf0\xa7\xe3\xce;[\n\xa3 m\xc1\xb2\xaa\x96\x9f\x82L|L=\x93R\x9a[\x8b\xe74\xaf8\xd9\xd9Se\x1c#g\xc3\x99\x95\xed_\x8f<\xb3\xb1\x176v\xbe\x92\x0f\xb2\x1e\xa1\xf6H\xce\xaa\x99\x9dy\x17\xec\x92e\xac\x7fh}\xcf\xf4\x86\x883\xfc\xb9\xe1_(\x07\xef\xf9\x00PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x06\xd1]<\x8c\x02\x00\x00\x19\x04\x00\x00\'\x00\x00\x00system/__pycache__/help.cpython-311.pyc\x8dR\xcfK\x1bA\x14\x9e\xd9_1\xd1\x14\nF\xd2\x8bMP!\x1e\xcc\xaa\x81\x9a\x83\x04\xb4\xe9\xa9\xb6\x08\xde\x04\x9153\x89\xdbnv\xb7\xb3\x1bk\xc4\xcaZ,DI1\x9e\xea\xa5\xe0\xc9*\xed\xa1\x7fJ\x16\xf6\x10\xf6Vz\xf2&x\x93\x1e:\xb3\xb1&\x11[\xfaf\xde{\xec{\xdf\xbcy\xdf\xbc\xfd\x12\x8dF\x00\x95\xcfs\x1b\xe8\x17\xf5?A\x97\x84n\xfc\xd5:\x04\xe0\x13\xe0\x00f\nOi\xe8\xeb-\x08\x81\x12\xdc\xa2\xfe\x14\xd2(\xd5\xb6,s\x14\xc9\xf7"!;- \xd8Fv\xa2\x7fA\x8a\x98\xebE"\xee\xb5\xc8<\xc9#~\x8f!$$\xdc\x8f;\xe5\xe97\xff\xe7;\x0f\xda\xd5;\xbda.\x0fV\x12\xcb\xa1\xa0\x1f\xf1\xa4\x0f\xdc#8\xd4[\xf5n\xd7\xf5\xa4>\xfc\xaf\xf3w\xbb\xfa\x1f\xd6HZ\x02\xe3!_\xd2\x8c\x92Q,n\r,\x12\xa3D\x94rbA\xb5\xec\x0b6\xa7\x02\xec\xbaA\xa2\xcaH^M\x036\x9e\x12\xd8\x06+\x83\xef\xa0\xdd\x05\xd9\x86\xdb\x10\x016\x9e\x0f\xdc\xa3\xdb\xe8\x11W\x8f\xd1\x8b \xa1\xa7\xa9\xf3y\xcd\xb2\xc79\x9fKO\xfaP\xb58\x1aL$\xaeWdR\xd1\xe52F\xaa"\xbfU\xf5\xa2\xa2g\x9e\xccL\xcbK/\xe4\x05u\x8d(D\xc5\x96\x9c7\n\x952\xd6mK^\xac\xda\xeb\x86.\x9bUM\xd5+\x9b\xf2Tz\x8aizR6i"\x08YU\xcb\xc6ey\x1dkf\xda\xac^Gf5J\xaa`\x94\xcd\x1c\t\xdf\x90\xb1F\xa9q@\xb3?\xdb\xde\xc7s\x1f\x9f6`#\xd9\x98?\x1amH\xf5\xe7\xb7\x89+\xc6\xe2\x82\x99k\x98x9\x1e\xf6%\xcb 6F\xfe\x10+\xba\xaa\x19\nR\xd64\xbcj\xb6\xdf\xcf"\xec\xbf\xf1y\xa4n\xf8\xa2IT\xdd\xa6\x94\xb1\xee\x8bD\xd1K\xd8\x17T\xda\x98/\xbc2T\xfd\x1c\x10\xf6\xcc\xa4\x8f\x95\xee\x9b-\x1b\xa8\xa2\xe1\x1c\x19b\xd3a\r\xfe\xa0\xe6\x92\x87\x10\xb6\xa4\x01\xa7\xd8\x8c\x8e\xd0\xedF\xc7\xbc\xe8\xd8Y\xfc,\xe2F\xa7])\xe3I\x19\x87o\x01\xde\xe1w\xc5=\xd1\x11[\x80\x1aGwA\xcc\x03\xb1&\x88u\xa7x\xc9\xc98\xd6nv/[#\xefsN\xae\x15\xd0;\x89\xd1\xf5\xe6l\x84\xae\xc2y\xea[\xea\xfb\xbc\x9b\x9c\xf1\x9234\xe5\xf6g\xbd\xfe\xac\xb3\xd4z8x\t\xa0\xf480\xb5\xc1V\xf8A-V\xb3\x0e7\x0f6\x8f\x85\xfd\x9d\xfa\x8e\x1b\x1e\xf6\xc2\xc3\xcd`_\xf2\x0c(\x011\xe2<\xab\x8d\x1c\xa6\x0eR\x8d\xcc\xfeD}\xc2\x15\xe2\x9e\x10o\n\xf1NG\xc1\n\x9e\xe07PK\x03\x04\x14\x03\x00\x00\x08\x00\xb0\xb1\xd0V\x9f\x19\xbe\'\x01\x0e\x00\x00\xed \x00\x00+\x00\x00\x00system/__pycache__/installd.cpython-311.pyc\xb5Yil\xe3D\x14\xf6\x95\xd8I\x9c\xc3M\xd2\xa6ea\xddmJ\x92.iX\xb6\xb0\xdcKw[\xcar\x94\xa3Ka\xcbQ\x85\xd8\x94@\x9b\x04\xc7\xbd\xa2\x14-\x88\x1faUDvUD\xb9D@\x1cE\xfcA\xe2\x07\x08\xfep\xdfH1\x18\x08\x96"!!~\xc0\xafV\x14\t\xf1\x8b7N\xd2\\\xa5\x10\x0e{\xf2\xfc\xe6\xcd{3\xdf{s83~\xc9j5cp-\xe6\x97\x85\xa7m\x18\xf6\x03Vs\x19\xca\xcf_x\x1c\xc3\x1e\xc3\x04L\xc0\xa7\xb1\x89\xd2\x13\x9f\xc0\xf5\'1A\xe8Or\x82$\xb0\x11L \x1e\xc4\x04R\xa4^$1\xec\x15\xf8\x95\xae\t\x83`\x11\x0c\x0f\xe2\x13F\x91\x96\x0e\n@\xe70\xc9#\xd29\x06\xdb\xe6\x12\x8c/\xe2`\x8dW\xf28&\xd0\x13\xa6\x18!P\x13&\x02\x13\x8d\x02\x933og\'\xd2\xf5v\xa2\xe9E\x02\xf2DM=\xf8\x18\x065X^\x84\xdc+\xd8\x96\x1c\xc9X\xc1T\xb2n\x90\x9a\x1b\xa5U\xfb\xfaz\x03\xecO(3\x1a\xa9\x85Ti\xfb\x97]\x18\x8a\xa0\x88\xa1\xa8A\xc4\x0c\x02\x01\xd1 \x05\xf2Al\x82\x12(\xb06j\xb6#\xb1\xa4\x1c\x9e\x9e\x16\xa5aI\x8aK\xbfw\x1e\x8e\xcfN\x0b|,.\xf3\xd1R\t\x9f\x90\xe2SRx&B44A\xa2&\\z\x13i<\x8dMVC\x89\x8da/\xe3\xa3/\xe3\x1a9\x93\x9c\n\x10\x1a\x95\x14\xa7\xef\xd4\xe8\x191\x99\x0cO\x89Id\xcc\xf3\xbf\x87C\xd2l,4#\n\xd1ph>\x1a\xbb3\x1c\xdb\x7f\xde\x81sBc\xd7\x84\xae\x8e\xde!\x85\xa5\xa8\x98\x0c\r\xc5#\xb33bLN\x86\xae[\x94\xef\x8a\xc7B\x89\xc5\xe9hlv!tN\xff\xd9\xe8\x074\x01\x05\xba(\xb9\x98\x94\xc5\x99P\x19\xb6\xd0\x9fX\xd4\x98\xc9\xc9h,*ON\xa6:\xea\xfd\xec\xaf\x14\x18\x01K\xd2\n\xe48Vpve\xa8e&\x03\xf7/\xc8\x8d\x08^\xe30^q\xd8Qr\x18\xbb\xbbR\x02\xceJ4<$4\xac\x02\xb8dF5"u^b\x81j\xf4\xe4dR\x96\x00B{\x03\x84\xb2\x9cA\xfa\xa6\x12\x02\xbbsy!c\x97l\xa8K\xa1*\x03\xaa\xd1\x80\xbc\x88\x85g\xc4\xc9I\xcd<99\x13\x17f\xa7\x11\xcfNN\xde;\x1b\x9e.\x95HV\x84\x00a{\x19\xd3\xcd\xf5\xb6%\xaaB\x0c\xa8\x91\x03\xa8\x91\xad{\x9d\xc0\r\xa7\xadc\xf5\x84\xc2\r\x1e\xe0\x9a\x08\xd4Y\xae\xe9\xf2\xbaq@W\xc2r\xb6\x15\x85\xc5\x84\xc95AK\xc3\x10\xad\x9f\x0c\xe7bKD\x9a\xc8\x81N\xf3U?\xbc\x97H\x01Cw\xe3d\x8aYz\xb0}X\x92\x9a\'\x16\xc8c\xd8<\x8ec\xc70\x1cn\xd9\xf0\'5\xa12\xbaZv7\xb55J\x89\x86IV\x87] \x05j[\xec5\xed\xd4xJ6\xd6\xd5"\xfa\xba\x96\xb7\x8b\x9al\xad\xf1\x81\xdej\x17&u\x93.\x95\xa6r\xcc_G\xb8U\x8c\xadi\xd7\xc5\xdcT\xf5\xad)\xe6\xc6\x1a\xbd\xad\x056g\xf9;K\xb4t\xb1\x8c7\x97\xfe\x83\xb1fh\xcd\xb7\x98]\xee\xaci\xb7\xe1\x05\xf0\x00\xde\x92OL\x83O\xa3u>1\xff\xd4\xa7\x9c\xf5\xafu\x96\x8c-\xfaML\x81MK\xde\x99\x1a\xbc\xbb\xb6\xce;\xd3\x7f\xeb]\xe3ks\x89n\xd1\xbf\xfa~\xb5\xfc\xab~e\x1b<\xbf\xa4\xces\xf6_\xac\x8cL\x8b^\x11\x02\xd8\xb4\x84\xdd\xda\x80\xfd\xa0`[2\xd5\xe1\xb7\n\x86\x7f\x8c\xdf\xdc2~\xfb\x92\xa9%\xfc\x8e\x06\xfc$\xe0\xb7\xe8\xf5X\xd2\x86\x9cm[\x1bNh\xabG\xb4d\xf8S]\xe76\xbax\xf2\x0by\xf7\x0e\xef\xa0\xee\x1a{W\xe3*\xf8\xb7-\xddiZh\xaf\x0e\xd2\'\xb1\xa7\xcbo\xb1?\xd1\xef\x00}O\x0b\xfa\x9d\xa0\xdf\xd5\x82\xfei\xa0\xbf\xab\x05\xfd\xd3\xd3F\xa4\xd3\x92\xff=5\xf6g\xd4[\xe6\xda\xfe\xc6xc\xa1\xe7w/\xb1iV\xd8}\x0f\xa9\x8f\x07\x98\x11c\x7f\xf6\xaf\x80o\xc4\x966\x0ea\xb7u-Ye_U_\xf6\xd7`\xeaN[\x91O\x8d\xe3y\xf9\xb4\xb4I\xba\xb5\x0e\xfd\x9e\xfa\xba\x01\x8f\xae/\xed\x95\xf7\xfe\xbd\xfeO\x9b\x9b"\x17\xfc\xc7\x96\xa1\x9dJM\x18\xf4lOg5\x8a\xb6\xb4\xedOV]o\xc9\xb6\xaa\to\t{\xda\x06Q\xf3.9\xd2\xf6\x9cg;+y\x7fM\xeb\r\xf3\xb5\x11\xcbro\xda\x8e\xda\x97\x07\xaa6\xb5\xb3\xa0V^;\xda\xa7\x88r\x7f\xb7\xd5\xad\xeb\xbdi[\xf3\x18|\x00\x8f\xf5\xf7`\xf2yU=/&u/q\xb5\x96\xf2\x055\x98\xb9z\xfb\xc6\xda`\xcd\xe5\xee\xe3\xe6\xf1y\xac\xb4\x9a\xa5-\x12-\x9c\x996<\x89\t\xbe\xa7\xc9\xa5\xb6\x98Q\xf0Wsi\xa6\xfe\xfd\x90nk\xe9\xdf\'\xf3/\xff}\xb6\xb2\xb6\x06\x1a\xd6\xd6\xa3U\xdc\xd5\xd2\x06\xd4\xa7\xff\xf5,\x85\xd1\xd2\xf1\xe7s,mm\x9a]\x1eS\xab^\xd6\xaeC}\xcd\x11\x1b\xc3\x9a\xfa\x7f\xef\x12Wk%_R\x13\xa7\xdd\xdb\xfbQ_/j\xbb4\x12P\xfd\x8dc"\xb0wT#\xa4;4R\x9eI\xa4\xac\xe5mv\x7f2\x15M\xec\xd7\x88\xf9;4\\J\xb1\x15)\xda\xe6\xa5N\x1f\x8d\xf3\xb5\x02\xfe\xce\xe8\xb4\x88$sQA\x14R\x0eI\xbcw6*\x89\xfa\x86\xb9_^\x90\xab\xe6\xb0\xbd\x8e\xff\x8e\xa7\xcb5Te\r5\x98+e\x89\xc5\x14\x93\x14\xe5\xd9\x04pG/\xd7\x8cc\xc7\xc6\x8e\x0e_\xf3;\xcek\xd8\xef\xb89\xe5(oe\xf9\xebJ\xfa\x07S\xc6Q\xc0s!/\xa1\x8eH\x99\xc6E)\x19\x8d\xc7.\xe4\x7f\xc2Q\xdev\x838-\x86\x93"?\x14\x96E\x10\xeaJ\xcc\xe0,\xec\xe8%\xc8\x92\xba\xce\x90\x98\x10c\x82\x18\x8b\xc0\xbe\xffB>E\xdf\xb2\x18\x8a\xdd\xc6{5|1E\xf4\xf7\xa7\xec\x89{f\xb6\x8e$\x82\x8b|\xaa\xeb\x06q.*\xce\xf3:L>\x19\x91\xa2\t\xf9 \xaf[\xfd\x04\xcb9\xe0\xecOu\x8e\xc6c\xc1\x99\xb0\x1c\x81\x13\x82)\xfe\xda1~\x0bX\xca\x14N$&\xef\x8aN\xdd\x15J\x91\xc8]\n\xf2\xa1\x14\x0b]\x11*9\xbe\xb0\x90\xda=6\x1b\x89\xc0\xa1\xc5\x9d\xb3\xd3\xd3\x8b\x95\xc6Ea+\x82\x01^\xa3\xe2\x80Z\xa3$1,h\xa6\x08x)\x1d\x15g\x12\x1a\x11Oj\x86\xc8]BT\xd2\x0c\xf3RT\x165\x1a\xba\x15\x82\r\xccD4q9b\xcc\xe2\x82,\x85#\xa8N\xcd\x08\xbd\x16\x9f\x135*\x11\x96\xef\xd2\x8c\xd1$R\xd5\xf7\xdb\x9a!\x99\x98\x8e\xca\x1a-\x89\x89\xe9pD\xd4H!:\xa7\x19\x12R4&k\x86h,1\x0b\x8f\xe9\xf8\xbc(i\xd4L8\x1a\xd3,\x91YI\x82\x11pc\x12Ddd:\xa9\x11w@\x99\xb8 F4c8\x81\x82\xac\x91\xc8\x98\x9e+\x05C3\r/D\xc4\x84\x8cX\x12\x8e$4\x13\xf2\x06\x8eY\xc4\xa4fB\x08\xc5;\xc2\x91{4\xf3\x9dq\tB9).D\x02N)\xa4\x1fm,\x8a\xc9k\xe2\x82\xa8\xe1wj\xf8\x82F\x82\x8b\x1a\x05\x03\x13\xfc\x10\xc4DR\xa3\xd0\x10\xd3\xe8r\xb84\x93\x1eXdPf\x0f#\xd6X:\xb7\xd1\x88\xc8]`\x808|N\xc3S\x1a\x1e\xd5pQ#\xee\x8c%\x9d\xe80\xa5\xe9*\x1f\xaf0\x95\xf3\x1ei\x1c\xb2\xfa\xe1\xcb\xcf\x0c\xa6\x9fo\xdc\x86\x1b\xce,Z\xb9\xac7+?4\xb9<\t\x07\x19\xa6\xce\x1c^pp\x8f\x19O\x19O2+Lfp\x9d\x04\x19\x14\x94\xc9\x06"\x9bzvG\xf2\xdbo\xbfm\'\xfe\x91\xe1\x1e\xb2,[2\x96"c^f\xb2\xee\x87\xec\xcb\xf6\x8c\x1dA\x08\xe5\xbc\x8a\xd5\xa7Z}H\xafcm_\x81\xb5>2rb$;\xf8\xd0\x95\xcbWf\xaeD0:\xa0\xa8L6\x10\xd9\xd4\xb3;\x12\x1dF\xb3\xf8\xc7\xfa\x06\tS\xf7\xda\xbe"\xe7Y\xd9\x9d\xe3r\xfb\x15\xce\xa7r\x08\x86\xb5{m\x7f\xc1\xe1|\xccv\xca\xa68x\xd5\xc1\xe7\x1d\xfc:\tb(+\x93\rD6\xf5\xec\x8e\xa4\x84\xa3\xb9\x8c$L\xc0U\xc8\x06"\x9bzv\'R\xaa\xadY\xfc\xab\x113Y\x96M\xd9\x90\xc2\xecQ\x99=yfO\xd1b]>\xf0\xc8\xa5\'.]\xedW,\x01\xd5\x12X\xc7(\xd3!\xbc\xc8\xb9\xb31\x85\xebU\xb9^\x04\x83_\xe3\n\x1d\x9e\xc7\xe6N\xcd\x9d\\XY\xc8R\xc8G\x1e\n\xcad\x03\x91M=\xbb#)\xf9\xd8,\x06X\xce\xee|\xf7eJ\xdb\xa0\xda6\x98g\x07\xb7P\xe5\xbb\xceR,A\xd5\x12D\xb0\xda\x01U\xbe\xdd\xafp\x01\x95\x0b K\xff\xda\xf55\xb0\x1e\xbb\xef\xd4}J\x87O\xed\xf0\x95\x00\xfaA\xa5L6\x10\xd9\xd4\xb3;\x92\x12\xc0f\xf1\xba\x11s\xb5g\x86\xfe^\xb0\xf6\xaeq\r\xa8r\x11\xa5\xa3O\xed\xe8+\xe1\xda\x0bJe\xb2\x81\xc8\xa6\x9e\xdd\x91\xe8\xb8\x9a\xc5;\x04n\x15\xe2\xe6S->\x84\xf04\x04p:7\xa0p~\x95\xd3=\xeaY\x1b,t\x9d\xf6\xcc\x99O\x9c\xf9\xb8\xff)\x7f\x96F\xb0z\xa0\xa0L6\x10\xd9\xd4\xb3;\x12\x1dV\xb3\x18\x85\xab\xe3\xb4\xccH\x15L\x9fb\xe9U-\x10\x1d\x83iW\xa1\xbd+s\x04!\xba;\xe7,\x05\xad\x84\x88\xabEd\xfa\x1f\x10\xed\x82f\xb7\x10\xf9\x15K\x8fj\x81R\xd2\xd4Ypvd.\xcf\\\xfe\xbd\xd3\x93\xb9\x1c\x8e\x8f\x1fI\x9fH\xaf\x1e\xce\x11\x8a\xbdG\xb5\xf7d\xa8\x82\x95{\xe4\xd6\x13\xb7\xaezW%\xc5\xbaG\xb5\xee\x01\x91\xbd}\x1dcM\xee"k\x7fhxy83\\d\xb9|\x9bWa{U\xb67\xcf\xf66\xc8W\x07r\xf8S\x07\x80\xa9\xd5\xd1\x8b|\xabBn\xdfSS\xc0@RX\xbf\xca\xfa\xf3\xac_/:+7\xb0\x86?\x7f\x00\x18H\n\x1bT\xd9`\x9e\r\xeaEg\xae\x1e\xcdu?u\x130\x90\x14\xd6\xa7\xb2\xbe<\xeb\xd3\x8b\x02\xb9\x01 \x90\x14\xb6Oe\xfb\xf2l_\x15\x0b\xd7\x9e]T\xb8n\x95\xeb\xfe\x96\xf3}\xc9\xf9J\x13)s(s\xe8{\xce\x959T\xb0X\xb3\xce\x13\x17d.\x80xd\x07~dm\xcbWd\x8f>4\xba<\x9a\x19-xv\xa18^\xa4\x93,Ut\xb8\x1e\xbd%\xdf}\xc1\xab\x03@ )\x8e\x0bU\xc7\x85y=\x15\xecp\xdam\xb4\xf2E\xa7\'\xdfy\xae\xe2<Ou\x9e\xf7F\xcf\x97\xceK\xf2\xceK\x8a\xae\x8e\x93\xc3+\xc3\xd9\xe1\xa2\xabs5\xa0\xb8\xbc\xaa\xcb\x9bwy\x8b\xae\xf6\x93C+C\xd9\xa1\xa2\xc3\x9d\x8dn-\xa4\xd0J\xf6\xd8I\xfb\x8a=k_\'\xcc\xd6`\xc1\xe5Y\xe5VF\xb2x\xc1\xe5~l\xe4\xd4\xc8\xea\xe1\x93W\xaf\\\x8d\xb2\xed@:\xbb\x00\x1c\xd7\xab\x93\xec R\xb9\xe2\xd4\x15O\x8f\xe5\xb8\xc7\xc7\x9f\x1a/7\xa5\'(\x02u\xa7\xeb\xe9\x8e\x1c\xf7T\xd7\x0b#k\x83\xcf_\x99\xf7\x84\xbet\x86\xf2\xceP\xb1\xcb\x9f\x0f\\\xf1\xf6\xf5@ )]G\xd4\xae#y\xd7\x91u\x12s\x9d\xfd\xdb\x8fN=\n\xc1*)\xb6{_\x18[\xe3\x9e\x1d\x7f~\\i?Km?+\xef8\xeb7\xb8\xd0\xe8\r\xc2\xf3{\xbb\x1bF\x98\xf5\xcc\x82\xbb/\xe7\xca\xbb\xfbJ)Kd\x89\xef\xdd\xbd\xabCywo)e\t}D\x11\xd6\xde\xa2\xbbsu\xcf\xea\xd1\x93\xb7\xad\xdc\xa6\xbb\x92\x0bW\xbc\x1d\xd9r\x02jG\x8eV\xc8\x06"\x9bzvG\x02x\xb6\x13\xffh\xe7\x96\xe7\x1f\xb9\xef\xc4}\xab1\xc5\x1eT\xedA\x848\x84p\xf4+\xee\x80\xea\x0e\x00..\x04+-\xdf\xfd\x92\xe59\xcb\xb3\xd6\xe7\xad`\xe7\x0e\xe9d\x95*zv=}\xcb\x9aK\xf1\xf4\xab\x9e\xfe\xbc\x9e\xd6ITL\x82\x15\x98\x96\xc9\x06"\x9bzvG\xa2\x83l\x16\xa3\x17\x97-o;[a\xf6\xa9\xcc\xbe|%\xfdV\xb4\xb8\xd0\xb7\x953\xab\xa4\xc8X\x1f\x8e\xaa\xb6=\x8a\xcd\xab\xda\xbc\n\xd3\xab2\xbd\xf9\xedR\xa9\x9f\xc0\x02\x9e\xc9Oq\xd8p:\x8e\xf1\xd8)\xf7~\xf2%\x16\x98\xd7\xa8\x03\xf4\xeb$0o\xe2\x07\xe8\xb7\xce\x05\xe6\x9d\xb3\xdb\x0f\xb5\x91\xef\x1aQ\xe9\xbbm\xd4\xa1v\xfa\xddv\x12\xf1\x9d8\xe2\xbb\x9c\x88\x0f\xb6\x1f\xbe\x88|\x8ft\x1f\xf6\x1a\xde\xf3\xb0\x88\xf7R\x87\xfd\xa6\xf7\xfc$\xe2\xf7\xe2\x88?K\xe7C\xa8\x9e\xf7.\xa2\x0e\x1f\xa4\xdf;\x88\xeay\x9f\xc0\x81\x7f\x9f\x1c4@\xe6\x03\xc6=\x1c ?8\x9dE|\x80\x1a\x0e\xd2\x1f\x04I\xc4\x9f\x8d#~\xdf \x0e\x99\x0f\xcf\xf1\x8d\xf4\x92\x1fu"\xa5\x8fz\xa9\x91\x00\xfdQ\x80D\xfcY8\xe2\x83\x03\xc0\x7f\xdc\xed?\xe2&?1!\x9dO\xdc\xd4\x91N\xfa\x93N\x12\xf1\xbbp\xc4\x9f>H@\xe6\xd3\xdd\xee\xab0\xf2\xd3\x01\xa4\xf4\x19F]E\xd1\x9fQ$\xe2i\x1c\xf1\xcc\x01\xc4\x1ft_\xcd\x93\x9f\xbb\x90\xce\xe7<u\xb5\x97\xfe\xdcK"\xde\x87#\xde?\x14\x84\x8c\xd2q\xc8\x0e\x8f\xaf|\x83\xe7\xdf\xc8c_\xefF(\xbf\xe6\xcd\xe3\x16\xf2\xeb\xbe]\xe3F\xf2\x1b\xa3\x01\xf8o,^\x90\x7f\x13j\xbf\x89#\xbf5\xa0\n\xbf\xe5\xa8\x9b\xdc\xf4\xb7n\x12\xf1\x1e\x1c\xf1\x9d\xfb\x80/\x98\x83\xc7(\xb2p>\xd2\xf9\x8e\xa2\x8e1\xf4w\x0c\x89x\x0b\x8ex\xb6\r\xf1\xbcy\xc2M~\xd7\xc7O8H\xcda\x00>E\x04\x17\x8fJ\xbb\xd0\x96hO\xe5\xaf-\x7f1\xda\x16\x84\xe4x\xa8\xb2\x07\x91J\xdb\xc4KS\xa7\x95wbI>\x1c\xe3\xc7&\x8e\\7\xb6\xbf\xba=\xc1/\x0fX%?\xfa\x97l\x8a\xce$\xe2\x92<\r\x1fV\xf7\xa2]\xfb!D\x0en}"\x1c\xd7u\xc2\xd2T\xe9c\xab\xd4\x8f\x84CHH\xdd\x1d\x8f\xc6\xa4\xfd(?\x80\x88\x0bH\xf5\x03\xe3\xef\xcc\xc5\xa5\xef\x91\x97J\x13\xe5\x8f\xa4I\x1a(\x8cM\x1c/`\xa6\xe3\xfa]\xc0\x1c\xf9J*`\xb6\xe3\xfa]+\\\'(\x1cV\xdef\x92=\xb6\x81\x1e\x9bU\xa9\xf9v\x1c\x87\xc9\xd2D\xef#0\n\xe6\xb6\x057\x17hKf1O{ \x15\x18\xee[\xc6\xf3%\xe3Yu)\xcc\x19*sF\x9e9\xa3\xe0pe\xe8\x0c\xfd\xbd\xc3\x9d\xa1\x0b\x14{\xfc\x8a\xcc\xd8#7\x9f\xb8\x19\xd6n+\xafZ\xf9\\\x87B\x05T*\x90\xaf\xa4\xef)\xfa\xf8\xe1\xfb\x87\x1f\x1c>>\\\xa0L\xc7\x87\xf3\xe6~\x85\n\xa9T(O\x85\xca\x02\x9fB\xf9U\xca\x9f\xa7\xfc\x85-e\xfd\xd6\x03\xf5\x07PK\x03\x04\x14\x03\x00\x00\x08\x00\xf5\xb0\xd0VLv\x1e\xf3\xd6\x01\x00\x00\xc0\x03\x00\x00%\x00\x00\x00system/__pycache__/ls.cpython-311.pyc\xadO\xcfk\x13A\x14\x9e\xc9\xbet\xcdJN\xa1\x08\x9e\x16\xb3\x81\x16\xdc\x8cDP\\J/\x1a\xf0\xa0"\xf4\xa6\xa7\xb8;mF7\xb3\xcb\xccF\xdd\x9c"x\x08\xbd(^\xaa"\x98SE\x04\xff\x96]\xd9C\xd8\x93\xa0G\x0f\x85\xderr\xb6\xd4\x1fM\x93B\xa1o\x987o\xbe\xf7\xde\xf7\xbe\xf7\xa9Z5\x90\xb2K\xbf\xb6\xbd\x8b\x18\xa1\x1f\xe8?\xab\x1c\xbe\xfb_Uf\x07Q\xe4\xa1-\xfc\xa4T@\xe2r\tQ\xbc\xab\xa2/\x7f\xcb1RX\xc9\xc3\xbbX\xa1x\x06-\x1dG\x8f\xf7{\xb0\xa1\xa6\x88\x07\x0b\xb9\xb5\xb1\x86\xe6\x18\x85qy\x1e\xbe\xb0\x1e\x1dQs\x8a\xdfb\xddg\xa5\x99.\x9d\x85\x9a\xd5\xf2`\xc9\xb6\xbb\xd4\x0f\x07\x17|\xe9\x98>\x93\x914\xdd\x80G\x94\xab \xd84\xc9\xc0\xf6\xa5\xb9\xe61A\xdd(\x14\xf1\xfa\x9c\xa2?\xe9@\xa5\xa7\xd8\xbc\xb7\xaa\xe7\xd0\x11[2\xd7<\xf64/\x87\x82\xf1(\x87\xc7\x01\xe3y)\x90\xb9^\x10\xa8\x8e\x1c\\\xe5?\xa3\xfdB\xcf\xf4!\x11}Nz\xd4c\x1d\xf2\x8c\xf1\xcd\x0e\xbfz\xedz\x8bl\xdc%w\xd8#\xd1\x11\x8cJr+p\xfb\xbdb(\xb9\x1fG\xdd\x80\x930\xf6\x19\xef?\'\xad\xe6\x95\xe2*\x1f\xaa\xc4\x01$c\x19\xd1\x1e\xf1e3\x8c\xa7\xe7\xd6z\x81\xd7\xf7\xe9\xba\xa8\x16\xbb\xab+\x7f*\xb7\xa7a\x8c\'\x9a>\xba=r\xbei\xcb\x89\xb6<\x01}x\xf3E\xfbe{\xd8\x9e@e\xd8N\x8cz\nV\x06V\x02\xd6!p#\x05\'\x03\'\x01\xe7_\xf1\xc1\x99\x94+{H\xc7\xc6,\xc7\xa8\xfeje{\xe5uk\xc7y\xe3\xbcu?v\xdfw\xc7\xd1;\xfe\x81\xa75;\xab\xd9\xa9\xd1\xcc\x8cf\n$\x03\x92\x00\x99\xe1\xfc~\x12\x97\x97\xd6\xeaY\xad\x9e\x1aVfX)42h$\xd0\x98a\x10\xe7\xd5\xa2\xbf\x01PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xb4\x81\xed~\xd5\x00\x00\x00\x05\x01\x00\x00&\x00\x00\x00system/__pycache__/lsd.cpython-311.pycMNK\xaa\xc2@\x10\xec\xd1\x17|<\xf4\x9d\xc0\x0b\x08\x92\xf6\x03\xba\x11W.U\x04\xb7nbf\xc4\x81d\x12f\x125\xbb\x08\xde\xc1\x1b(\xe2\x85\xc4\xad\x17\x10\xdc\xb9\xb2#*vSUTW-z_*\xfd\x01M\x01\x17\xfc\x9f\xf4\x02_\xf3\xf3\xd2[\x95h\x0b9\x10\x19\xd8\x8e\xdc\xf1S\xda1r\xec\xed\x18p\x18C\x85\r+\xb9\xb3\x15j\xa9\xa2s\x9eK}\x80[\x96\xde\'\xa8c\x85\xbe\xe0\xd2\xc1\xa5T3G5[\xed\x06\x8e\x07\xd8\x97S\xedh)\x0c\xf6\x027\xf6\x85\x8a\x0c\x8e\x92h\x1e(\x0c\x13O\xaax\x85u\xbb\x9e\xc1\xaeaH\xc1\xf3d\x12\x13\t\x1f=\xc3\xed0\xb9\xffv\xfc\x80\xc7\x9e\xe8\xeaB\xf6\n\xc1\x94\x89\xaey\xc6\xd8\t\xac\xd4J\xdd\xd4]\x8b\x8dX\x177\xc5\xf4\xb9\xda\xa2\xc2\x03PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xe2s\xa2\xad\x8b\x01\x00\x00]\x02\x00\x00%\x00\x00\x00system/__pycache__/md.cpython-311.pyc\x8dO=K\x03A\x10\xdd\xcdm\xfc\x88\xc6\x1f`\x9a\xeb$MV\x14\xa3\x85\xa4\xd0\x04,4\x08Z)\x16\xa7\xbb\xea\xc6\xdc^\xd8\xdbh.M.\x10DE\xd0\xce\xd6*"\xf9\x01\xfe\x05\xcb\x04R\x1cW\tVv\x81t\xa9\xdc\x0b~\x04C\xc0\x19\xe6\r\xf3\xde\xdb\x9d\xdd\xa7h4\x02T\\\x9a\x15\xf2\xa2\xfa;\x18\x08\xed\xabw_\x15<\x00\x02\x08\xcc\x83=@\xa1\x98#\xa1\xc7\x10\x18\x0e\xa5\xd5!\x00\r\xf8=\xef\xc1\x10\xa0 \xa7\x8d\xd2\xa1\xbas\x07(\x0f\xaa\xab\xa9\x01~\xf8\x80\x0b\x13\xed\x8f{\xb4\x13\xfd\xc7\x19\xec\x8a\x87?\x82!\xdb\x83zy\xc6$\xfa>a\x82\x1eIK8\x07\xe5\xf8\xba\xa0\x86\xa4\xf6 \xa9\xb3c\x9dI\x9dX\x8a\xe6\x96\xd4i\x89\xd92\x11\x1f\xf3C\x96\xed#C\x9c(\xccY\x8c\xfba\xf3L\x9d\xf25\xc2\xce\xfdpA0.\x9fA7X\xd5\xdb\xc7\xa2\xc8\xb1I\t3\xf0\x05\xe3\xc7\x06_L./\xe0\x9d-\xbc\xc9\x0e\x85!\x18\xb5q\xda:*\x9a\x94K\x1bo;\xf2\xd4\xe2\xb8\xe0\xe4\x19/\x96\xf0Bb>(\x85\x05%\xf4)\xdb\xb1%5\xb1I\x12\x05\xa77\xb1jZ\xa4\x98\xa7)\x11\r\xfe\xa8\xca\xae(\xe8h\x10B\x0fL\xba\xfd\xf4\xb4\xf1\x0e\x98\x80\x11oj\xe6n\xe5f\xe5>}\x9d\xbaM\xb9i\x0fM\xbbk\xb5\x8d\xab\xddj\xb6\x96u\xfb\xf9\x86\xc6\xdd\xf5j\xa6\x96q3\x1e\x9at3\xcd\xc8l\x0b\xc5\xda(\xd6D1oH[j\xa1d\x1b%\x9b(\xf9\xab\xf5SL\xa97|\x02PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xfem<\x98\xa5\x04\x00\x00\x12\t\x00\x00\'\x00\x00\x00system/__pycache__/peer.cpython-311.pyc\x8d\x15Mk\x13Atfw6\xd9l\x1b\xad\xb6Vm\xd5F\xaaB\x14\x1a?\xb0\x8aJ\x05m\x15D\xab\xa0"\x06e]\xb3\x93\xba\x92\xec\xc6\xdd\x8d\xb5!B\x84\x1e\xa2\x14\xac"(\xa8\xd0\x93\x1f\x08\x1e\xbcy\xd4_\x90@\x0ea\xa1 \x88\x07o)\xed\xa1\x14\x0f\xbe\xd9|4_~\xccd\xde\xec\xbc\xef\xf7\xe6\xbd\xc9[\xbf_B0>\xfe\xba\xa7\xces\x08}Gu\x83T\xf6\xc5k\x18\xa1\xe7HE*\x8e\xa10R\xb9i\x14\xc6\x1c:\x8dT~\x1a\xa9\xe4\r\xc8}\x80U\x1ea\x8e\xf2\xa6\xa2\ns \xdd:(\xff\x06\x037\xaeq\xf3\x14\xdd\x16j\'\x81C\x94{\x03_\x1fP\r\xe7\xa1\x1e\x8a\xe4\x1a\x0fpx\xa9\x08z\x1a\xacbD\x85&._\xa3\x1e\xccp\x92\xeai\xb4\x8f\xdbqB\x9c\x17\xff\xac\xc1\xfb?\x1a\\N\xf1\x7f8\x99\xad\xa0\xef\';\x8cG\x80\xb76<\xb0x\x96\xfd]n\xf6\xed:Z\x1a\xa4\x1a\xe3?\x88\xee\xe34\x9e\x03\x9e\xd6\xd1h\xf1>\xa7"6\x9b\xf3\xa7w\x0c\xa2}\xc8"\x93\xdc=\xfe*\x9a\xc4\x18]E\x18f\x9a\x9b\xe3\xdaiU9\xb5\xe9\x0e\xee\xf3M>\x92\xb6>\xf2\xed\xb4\xa5\xf9\xe6\\5z\xb9\x8a\xbd\x88\xda\xf8Y\xa1\x04\x85q\x07\x9b)N\x92V\xb0\xe4\xe0\xc9 q\x88\x91\xa0\xbaCL\xaa\xa8\x8e\xd7\xa4\x89\x98\x12\xa1\x8e0ij6\x05\xaa/\xaa\xc5\xa8\x9cP\xec[\x0ea\x9f\x8e7b\xe86\xd5mgm$F\x15\x9d\xaar\x05a\xb1r\x0e\xc0X\xb9\x1e2\x93z(NUM\tMjzT\xd1\x0f\x0c\x1f\xda\x1f\xbax.tV\xbbi*\xa6F\xad\xd0\xa8\x11I\xc6\x99T\xe8\xc2\x94}\xcb\xd0C\x89\xa9\x98\xa6\'\xef\x85\xf6\x0f\xede\x0b`\x02\x08.\xca\x9a\xb2l\x1a\x0f%(5\x87\x12S\x8e\xe4\x1a\x96\x997f\x17\xabdX\x96\x0f\x12\x93A\xf3>\x7fV{\xd1\x9d\xf7m-\xf8\xb6\x96\x10\x16\xb6\xcd\xf5\x14\xd7\xf7>\x0f>\r>\xd9\xf3lO\xd6[\xe2\x01\x07\x84\nX``\xc9=\xfe\x15,//\xb7\xa5y\xd0\xc6m\xcf\x8d\xa7\xc6\\\xf4\x9d\x9a\xef=P\xe8=\x909\xff\xa3\xd9\x87\x1d\xe0\x83\xd8\xf9Xz$\xcd\x1e\xcf\x8b\x83\x05q0\'\x0e2Gv\x00\xb5\x02\x16\x18Xr\x8f\xff\x06\xe0\xcd\xdf\x19\xacm\x90\x92\'\x1b\xf6\xf3\x9f\xc8\xb0\xf73\x1e\xf6~\x19\xec=\xe1\xe1\xbfz\xc8\t\xc9\xfb\xd5\x8f\x01F\xeak\xabZ>\x8b[\x10k$\n\x8f\x97\n\xcf\x94*\xc0C\x86\xc3<{\xc4\xc2D%P>\x1e\x87?kL8\x84\xddE\x84\xabWQ\xed\xc5\x1eWE\x1a\xa7\x91\\\xa5\x95+\x0f\x8f\x071\x08B%\x059\x87X4\x1657\xb0\x9b\xe3\xdc\xb21\xd7\xc2\xe6\x88\xb2\xac\xe9\x9a-\xcb\xa9N03T=u0>?b7\\\xec\xd9\x94%3\xbe,\xccE\xa6\xba\xc1\t\xa1\xea\xc4\r\xd4\xf4 \xb8\x0e\xdd\xae\x9e[\x9a\xc6\x16\xea\xda\xb6\x81\xf3%\xb4\xf1\xeb\xe6\xd6+\x07\xc4\x8f\xa7H\xcc\x98\x08\xa5\xc8\x10lA\xde\x11a\x1b\xbb\x0bE\xed\x06\xe6\xd6f\x903{Y`|\xdc\x9a\xa8\x8f\xd4d\xff))\x1f\x0b\xd2\xed4?\x8bp\xd8\x8dp^\xec\x9a\xed\x9e\xbd\xf4\xecj^\x1c(\x88\x039q`^\\\x9f\xeb\x0e\xbe\xd8\xf1*\x08[\xf9\x97\x17w\x17\xc4\xdd\xb9\xea\xcf\xdc\x04\xa2\x90_\xb3\x9b\xd9\x14X\x1eu%Ne\xd9\x91d9n\xa8\xc9\x18\xfb\xee\x94\xe5;I%V\xa6\x98\x1b\xabn\xbcG\xaex\xd9\xaf\xf5U\xc0(\xd6!\xe6Qm\x968,l.\xa1F@8aO\t\xb5\x02\xd0Y\xd1\xb4\x82\x03\xa9\x1e\x88t\x82\xaa\x01+\x19\x89P\xcb\x8a&c\xb1\xa9\xa1\xd4\x1aVF\x81c\x11#\x1eWtu$5t\x85\xe5\xc2\n\xd8\xb7h\xc0H\xda\x89\xa4\x1d0\xa2\xab\xf4\x80m\x04X\xc2\x99\x94\x9b\xf2\x0e\x87\x87\xb7\xc1\xec\xaaZr\x88bNX\x0e\xb9mh\xba\xe3\xb1l\x15\x948|\x8c\x15l\\\x01TG$i\x9ap?\x97-j:\xbc\xaa\xddu\x84\x84\xa9\xc1}\r\x80\xf0j\x12V\xc4c\xe5\x9c\x8d\x98\xbb\xd9u\xbbU\n\x10z\x16\xe3"\x922\xee,q^\x0c\xedV\x03]\x02\x86\xc8[\xc1\x02\x03K\xab\xb8ND\xc4\x12Z\x8b\xa5b\xc7\x9a\xc7\x87\x1f\x1d\x9e\x1d}823\x92\x19-\xfa\xbbf\xc2\x99SE\xc9\x9f\x1d|\xb8sfg\xe6dq]O\xe6\xe4\xf4\x99"\x113\xa3\xd9\xfe\xd9Ky\xd2W }9\xd2W\\\xb7\xb1L\xf0fN>\x18\x9b\x1e\xcb\x8c\x15\x89/3\x96\x93\x02y\xb2\xbd@\xb6\xe7\xc8\xf6U\x9a;\xbf\xb5\xb0\xf6\xe5I\x7f\x81\xf4\xe7H\x7f\xab\x9a#yr\xb4@\x8e\xe6\xc8\xd1&5n\x8e~\x03PK\x03\x04\x14\x03\x00\x00\x08\x00k\xb6\xd0V\x99G\r\x9b\n\x01\x00\x00^\x01\x00\x00&\x00\x00\x00system/__pycache__/pip.cpython-311.pycmP=K\x03A\x10\x9d\xdd;B\x12He\x95*\xc1\xd8\xa4\xc9\x86(\xda\x88\x95\xa5\x8a\x10\xec\xd2\x9c\xee\xaa+\xb9\xdde\xf7\x0e=K\x1b\x1b\x0b\x15!\x82\x08\xa9\x14\xf1\xcfD\xb0\xd0k\xfd\x03B\xba\xab\x9c\xf3\x8b\x04\xf2\x98y\xc3\xcc\xf0\x98\xc7<V*e@\xec\xbc_\xf0\x05\xac\x1f0\x81\xc2o\x1d\xf7\x90\x06 `H`\x068p2\xa4\xb36\xc2{@\xc5\xf3\xbf\xea\x0e\xee\xe9\xf4\x84\x00\xa7]hz\xa7\xbe\x91\xa6\x9e\x91\xfaV\xd3O\xa9vi\xc1%.\x12a\xea\x1fi\xa9R?\xb0\x07\xee\t\xc6\xb9$\xeb1\x1b+\x16\n.\x03v,\xd5~\xa0\x16\x97W:\xac\xbb\xc96\xe4\xae\r\xac\x14\x8e\xad\xeb\xbd8\x14*rl;\x89\x0e\xb5b&\xe9K\x15\x9f\xb0N\xab\x9d\'\xb2\xc1\xc5\xf7\xe8\xe7\x12C\x03-\x93d\xc5\xd5P\xf3\xb8/\xd6l\xfe\x98\xdc\xa8k#}z\x84\x907\xa0\xe7\xa5\xb3\xd2\xa8<\x7f97\xa8^Wo\x97\xaej75l1^\xa0\xf1\n\x8d\xd1_\xd8"\x8a\xbe\x00PK\x03\x04\x14\x03\x00\x00\x08\x00F^\xcfV\xe2/\t\xc7<\x10\x00\x00.\'\x00\x00&\x00\x00\x00system/__pycache__/pkm.cpython-311.pyc\xc5\x18io\x1bEt\x8fY{\x1d\x1f\xb1\x9d\xd3i\x9bls\x9b$v\x9b\x84B\x02\x14R\x12(W\xc4}\x84#8\xdeMb\x9a\xd8f\xd7I\x88I\x90A\x08\xb6\xc8\x80\x0bE\x04(\xc2\x1f\x10\x84C\x02\t$\x10HH\x1c?`\xb7Z\tkQ$$\xc4\x07\x10\x1f\x8c\x00\t\xf5\x133\xe3\xf5\x15;\xa9\x91\x90\xf0\x8e\xdf\xce\xbc\xf7\xe6\xbd\x99\xf7\xde\xbc\x99\xd9w\xed\xf6:\x02\xfe:\x7f{\x8e\xff\xcaM\x10?\x11%?\xb3\xf1\xfe\xa3\xd7F\x10\xaf\x12<\xc1\x93K\xc4\x0c\x11"\x02\xe4\x02\x11\xa0p\x9b\x9e\x01<\xf541\xc3\xf04\x84&\x1e@h\xe6\x19\x08Y\xfez\xde\xfc49c\x11\xeaxv\x81<E!Q\x92\x19\xb6,\xf9\x96x\x8c"\x04\xeb;\xb0\xf6AA)I@\x9c\x8d\xaf{\x87\x84X\xb2\x88\xdd\x93\xd3Z\x0b\'O\xdeA@\xcd\xb6\x82\xe6v\xc8e.\xe7\x9a$\x1et\xcd\xd8!\xde!\xd4\xf3v\xc1\xfe\x06\xf1&\xf5\x0e\x059\xa8\xa2\x9c\xa4\xdb\x90\xe4(HB=,|}q\x14E\x8d\xbcS\xa8[%\xc4_!\x07\xac\x95s\xf0\xaeS\x0c\xee\xff\x03\xef\xc6\\\xadB]\xdaET\xf9\xf1\xee\n\xd9\xf53\xee0\xc5\x9bf\xdc\xb0OC\xd5>\xc4\xae>p\xccp~\xaf\xe1\xf9\xd9\xf8\x064;\xbe\xf1M\xba\x8a\xed,\xe5V\t\x90\xb8G\x13\xee\xd1\\\xd9C\xb0\xc7\xa8\xa2\xdetc\xb5\xd1\x94K\\%\xc5\xb6=\xbd\xd9\x82\xf5\xb4V\xeaI\xceB:S\xa2\x0bj\xf6\x14\xe7\xeb)\xa9\xb7\xed\xf6\x9a\xe0\x16\x1d\x86_\x0f@O\xd1\x90J\x97HN\x1a\xb4\x83Uh\xaf\xef\x13M\x87\n1p\xcf\x9e\xf3i\xaf%:1gG\x8es\x17\x96\xab\x8a=\\\x15\xdbY\x8b\xae\xfc\xd8\xf9\xae\x05\xea\xa2\xab\xb0\xbb\x16\x89\x98\xb3\xa7\x16N\xbc&\x0e\xe1h\x0f\xf0]\xf8\xfd`\xd5\xb5\xd1k\x8cl\x1aR\xd9]\xf1H\xc5@I\xbc5\x11\x95?4?W1\x1e\xaa\x8c\xcc\x04\xff\xcd\xf0\xdf\x92\x97U\xe4\xab\xa5Ub\xc5\xbe\x1a\xac\xd8_\x8bm0\xa7\xb7\x16Nl\xc5>l\xbd\xde\xea\x99\xc5\x18Q\x8b\x11\xd7\x97\xc0\x91\x0e\x14\xedQ\xcck{x\xa6\xef?\xf1\x8c\xeb\x7f\xf6\xcc`\xc13\xbe=\xec\xcdV\xe4\x7f{.?\n\xf6\x8a\xec\xe3\xd8g-\r\x15\xf2\xc0V\xb5\xbd @\xe2\xacU\xd4r\x1f\xd2R)-\xa7\xb9\x96\x08@\x9c{fB\xdfn\xfb\xd6\xd8\xcf\xbfw\xbf\xe4Li\xaf\x10a\xcc\xb6i\xcf8>R\xcb,\x0c\xeb\r\x16\xac\xf7r\xe5\x9e<\xd3\xba@\xccx\x84Vh\xb5\x81\x996\xc1\xb3\xc7zoK\x1f\xa8\xba\x0b\x1e\xe5\x87s\x91\xbe\xe7\xcc\x06\x05\xcfL\xab\xd0*\x8e\xee9\x97\x91\xf4\xc1\xaa:[\xcbe\xd5:\xe3=\xf5\x8c\xd6*\x01\xda\xccY\xc3\t\xea\xd2Z\xe4a\xcec\xb5p\x1a\x9a\xfbj\xd0|Y-\xf20\xe7\xe5\xb5p\x1a\x9a\xc7\n\x9a;\xaa\x9e\xdd\xdc\x85\xb3\xdbx\xee\xecVe7o\xd8\xd7\x03W\xd42\x1a\xccye\xcd\x9cWU\xdd\xa9\x8fW\xc5^]\x15{MU\xecDU\xec\x89\xaa\xd8k\xabb\'\xabb\xa7\xaab\xaf\xabe\xbe\xc8\xb6\xde\x93\xbf\xa0\xc6t\x90"\x8a?\x00\xff\xc8\x0b\x7f\\\x07\xc1\xabD\xac\x84\xf4HAf\x1a\xf6\xa8\xfcm\x10\x1bd\xc5^E@=\xe4\xb4\x97\xd6M+\xe2\xd2RhN7\x8b\xc2\xa3+\x82\x14\xd3\xad\x10!\n11$\xac\n^J\xa7aSg\xe7CK\xc2t`Y\x90\x90\x0c\x8e\xbb\xf0\x80_\\\t\xfb\x97\x05>\x14\xf0\xaf\x85\xc2\xf3\x81\xf0\xc8\xb1\xcb\x86\xfdw\xdc\xe2\xbf94\'\x06`g\xc9?\x19\t\xae,\x0b\xe1\x98\xe4\xbfu=\xb6\x18\t\xfb\xa3\xebK\xa1\xf0\xcac\xfea\xdf\x11\xf4\x870\n\t\x18%\xadK1a\xd9\x1f=\xb5\xec\x8b\xae\xeb6>\xb2\x16^\x8a\x04\xf8\xeb\xa0Z\x11]\xaeX\xf8\x978\x08\x12\xc4\x0e\xa8{z\xfa{\xd0~\x1e\xb4oI\xe9\x93*\x18\xd2\xc0\x90\x92/\x7f\xa0\xf9\x05\xc9\x92\xe9\x9b\xf2\x96{*g\xb9"\rZ\x9b\xdf\xb5\x8b_Jl\x921\xba\xc4\xb6\xd4\xbeV\xc4O5\xdbv\x11G\t\t\xacQ\x8f\xd1\xf7\x11k$I\xdc\x07\xf1\x86\xd5\xe9\xe9\x0b\x8e`$<\x1fZ\xc0\xd3\r\xce/\xe8\xd4\xda\x1c\xf4\x04\x88D\x85\xb0n\x8a\x86\x82\xa7\x96\x04\x1d\xf0+\xcbQh\x7f\x8a\x9f\xd3\xc9y\xc3\xee\xa2\x05\xbet\xb3\x14X\x15f\xf99\x11]\x14\xac\xc82\xcf\xe4,c\xb1+\x8e\xf6\xad\x98j\xe9\xd6,\xddY\x82d\xda\xb6\xc9\x1d\xd6\x91\xb4\xa6N\xa4\x1eUY\x8f\xc6z\x14\xd6\x93\xa5!\x01R\r\xf0;\x02\x7f\xe2\xe6\xc5\xc1\xdf\x7f\xff\xbd?\x83d\x83C9\xd3<J\x7f\n.7\x7fI^n\x0e\x96\x86"\x9b\xf7E\x16\xfbb\x81\xd8\xc4>X\xa06\xc9\r\x12\xe6\x9f\xd9M\xaa4\xb2\xd3d\xd5x\xa6\xcaW\xd2&\xbdA\xc3\xbe\xd7l\x82\rP}\x05\xf0\xbbnB\xa2w\x83H\xd3\xd58\xa1\x04P]\x02\x0f.\xb2\x0bN$\x1f\x8eYK$\x95s \xcf3\xd3:\x1d\x88Fu\x16\x82\xd9\xc5\xd0\xc2\xe2\x05\x1aE;\xe15\xe9TD\xd2\xcdK!)\xc6\x87D\x9d\x15\xc2\xbc\xb4\x16\x8a-\xea&\xc8\t\x1bhqF\x97\x02AA7I\x111&\xf0^F\'\xe3:\x80\xcc\x92N\xf2:\xf9\x98N\x86$\x06\x87\x08\x97\x8f\x12\x16\x89\x9b\x85\x02\xc4\x1e\xd8t\x14\xc3$\xc3\xd6%&26W\xea\x12\xc5z(1\x99\xb1\xbb\xb2\x04`|\x18\xc8\xe4\x8e\xcd\xf1\xe2\x8d\xcf\xdd\x98z\xf4\xf4-\xc9[d2\xe3rg\t\xca\xe2\xc3@\x9e\xc8\xd4;_\x8c?\x17\xdf\xeaQ\xeb9\xad\x9e\x83.\xb7\xfb2N\xd7\xab\xecK\xec\x96\xeb-\xcf\xeb\x9e\xf4\xa5\xdbn\xd53\xa8y\x06U\xe7\x90\xe6\x1cR\x9cC\x7fg\x19\xd8\xf7/\x13as\xa7\x0e\x9f\x1eK\x8e)\xa0QD\x96\n\x12\xd5\x96\xe9\xa784,\x17_\xa8D\xf9B\xdd\xcb\xf0A\xaa\xea2\xddw\x91v\xc1w\xcc\\\xea\xfe\x05r\x97\xc31.H\xdd\x07\xb9s\xfd\xbd`Z\xb4#\xc3S\xe2\\|t1\x16\x8bJ\xe3\xfe\x92\xe4\xe8;r\xe4\xc8\x9a0\xb7\x18\x91b\xd0)\xbe`\x04\xa7\xbb\x11\x9c\x04\xf89\x94\x07\xbc@\xacG\xd1\xe9DR\x00\xca\x7fx\x85{I\xb1\x01y\x0f\xe96|kY\x89\xf2\x81\x18\xce\x01^\xd8nA\xe4\x8f\xb1s\xb3\x14\xc3\x9c$w\xec.\xc5\xdd\x99\x1eU\xed\xfd\x9a\xbd\x1fz\xc9\xd2\xb9=\xb1\xd3\xe09{\xc5\xd6\xa3g\x8e\x9f=\x9e\xa5!\x06\xa3\x8b\xe0w\x04\xfe\xc4\xcd}\x01L\x01\x17a\xc8\x02\n\x8d\x81\xadW\\\xd7+\xce\x93*{\x83\xc6\xde\xa0\xb07d\x9c\xd7)\xf5\xd7+\xacQ\xa0 \xa9\x17\x0e\xfa)\xe7\x04A\xbc\xd48B\xbfc\x83\x95O\xc0e\xe6\xcfhX\xf9\x82\xbc\xcc\xfc%\xaa|M4M\xb4\xd0\xd7\x95%us>Z^\xa0v\'\xf5][jY\x94\xf0\xbb\xbd\xb8\x7fOf/\xda&\x19"6\xa9\rB\xfc\x04\xa7\xad\x8f6iK\xb9\x1ej\x83~\x03F\xc8\xaeO0\xbb\xa2j\xa3\x98T\x8atK\x89\x14\xc03\x15Q\x0fJ\x93\xcc#\xa6b\xe2\xda\x95\x14\x99\xeaQ\x1f\xb6V\x8f\xfaX}i\x82\xdd(\xd7\x0b\xe7\x9a\x94\xba\x88\x98\xb3\xc8\xd3M\x88G6M\xa5s\x8e5\x94H0\x95\x8f\xe6\x91\xba\xe2\xc5\x997m\x98\xde *-s\x1f\x1c\xed\xa6\xe9\tSr;\xf7^#\xd7\x8c\x95\x15\xbe\xd3\xf2\x9f\xd9\xe5\xdff\x83p3\xce\x05-%\xda\xcd\xbb%\x16s\xc0\x06\x05\xd3<;\x1do\xbc\x0b\xad\xcfPx\x81\x83\xaf\xc0\\@\x12|>_\xbcy\xd28\xd6 \xc2\xa4A\xe0\xfa.\x80>D\xb5\x1b\x87\x02\x98\x0b`J\x10\xfb\xa0\xe885\xce\xdd\xe9\xb5\xe94\x1fZ\xd5\x99\xa8\x18\n\xc7\xf0z\xc7G\xa2b\xae\x10\xfbqNX\x16\xc4\x05a2\x14\x8c\xe9\x96\xa9\xc7\x82B4\x16\x8a\x84u\x10[\x8f\n:;;\x1b\x86\xa7\xb7\xd9Y\x9d]\x08\xe1\xb3\x83\xe45\xeb\xa6H\x18\x1e\xc8\x04\x9d\x86M\xd1\x8d\x93N\x08\x9e\xc2p\xb6\x11\xbbP\x9b\x14$3\xdeU\x8a\xfb\x8a8\x9c\x07\xed\xf0/\xfdB\xe6\xced\xe6\'\xa7\x9e\x9eJL\xed\x00\x8bR\xc7\xa9\xe0\xb0\x06\x0e+\xe0p\x11_\xd7pz 9\x90\xb86c\xb1&Nd\xcc\xf6,Q\xcftf\x1a[\xb2\x04k\x19\xc6@\x9e\xccRf\xfb\xf0\x8e\xb3Ii\x1e\xdb\x8eA\x90+\xaas\\s\x8e+\xce\xf1\x1d\xe7\xc1\xad;\xd3~\xd59\xac9\x87\x15\xe7\xf0N\x93g\xcb\xbf\xdd\xad6\xf9\xb5&?\xcc<\xae\xbe\x8f\x8f\xee\xb4\xb6\x9f\xb3\xa6\'^s\x9cs\xa4&\xb24\xc4A\x82\x01~G\xe0O\xdc\xdc\x17\xe0\x04W\x89\xfe\xb9\xa9}KL\x1f>3{v6E\xa5\xa8\xbfw\x1a\x0e\xa2\xedo8\x0f\xf0\xd0\xdfl\xdc\n\xbc\xd6r\xaeE\xf3x\x95\xe6#\xb0l\xdf\x96{\xab\xce\xa3\x9a\xf3\xa8RQ\xfeF\xdah\xd8\x19\xbd\xeb\x91-\x1a\x81\xa5s\xc7\xd5\x94\x8a\xa4y\xd55\xa0\xb9\x06\x90\xec\xde\xedGwZ\x0e\x9d}<}\xf4\xcc\x13g\x9f@\x1dz1\xba\x08~G\xe0O\xdc\xdc\x17@={\xd3\xb2\x80\x84\xca\x1b\x0elM\xa2]B\xb1\x1d\xce\x15\xd8\'c\xb5\'n\x90\x96\xa0\xcb\xbf\xa6GN\x8cP_\x1fk:\xd1\xc2|c\xb5\xc1\xfa7-\xe0\xc4\x01\xcb7\x07hTo\'Q\xbd\xa3\x01\xd5G\xea\xae\x1db\xbe\xb9\xaa\xf7\xda~\xe6\xdb~\x06\xd6\xbf\x1dvN\xfa\x89\xef\xa8\xc6\xc9.\xfa\xbbf\x1b\xaaw\x81\xc9>\xf3w}4\xaa_B\xa2\xfa\x00\xae\xfb]S\x14\xad\x9bW\x05Q\x82q\x1c\xa7\x86V\xe3\x96[o\xba\x85\xc3\x17\x87\xb8\x0fU\xfb\x83^n\xf8\xc8\xf0\x08wO(|]n\x93\x1d\xe4\xa4\xc8\xb2\xc0\x89\xf0p\x15\x938Q\x90\x04qU\xe0}:\x13\\\x12\x02b\xdc\nW\x16\xc4.GV\x05N7\xe56\xd1;us(\x0c\xf7\xe4\xa5\xa5_P>\x80\x9a\xd6\xe3\xd6\x1br\x18\xb4P\xe34Z\x9dM\xa5k7\x1a\x08\x9e\n,\xc0\xa5+\x0e\xa0\x1e\x07\xa7D1"\x8es\xd7\x06\xc2\xe1H\x8c\x9b\x0f\x85\xf9"\xcb\x05\xb2O4#.{l9\x8a7{)\x1e\x8a\x8e\xc4=\x86R\x9e\x1bZ\xe7\xcaI-\x05R9Atc9h\x0e\xfc\x1cw\x7f@\\\x90\x1e\x8c\xd7M\x88\x0b\xb9k\xd6x\xbc\x15\xad\xd2\x00\xcf\x8f# q\x81B\xf6\x89\x1fB\x14t \x1c\xc7\x10\xd2\x96\x96\nT)\xde\x0e\xa9\x86]\xc6\x8dwiw\x9d\x86\xf2\xe2NC1\xacs\xf7\xc3[\xe1\x83\xf1\x03\x13PM\xae\xce\xc5"\x05v\xac\xe2\x17\x1a%\x10SNX\xbc5\xd77o\xfb\xfb\xf3\xac\x0f\xc6\xb9\xdbs\xea n\xeeAn^\x8c,\x97\xcb\xf1\xc5\xd9\\\'\x9e\xfb\x85\xc49\nau\x1aN@\x070\xa9\xa1\x9b\x92 \x05\xe3\xee\xe9\x88at(k>\xb2\x12\xe6}b+JU\x1e\x08.\x90\\\xbc\x191\x88\x91\x051\xb0,q\x86\x85\x05\x1ez\x16\x0e-\xdf\xe6\xee\xcf\x89\x80\xe3\xea5B@*\xe2\xb8\xd0<\x17\x8aq!h\x9a\xd5@h)0\xb7$\xf8\xe2\x8d\xc5\x90*\xe9\xed6fUD\xf9t\xf3J\x14*\xe7\x85x}\x89F\xe4\xfdx\x1dD\xe4\xfd\xd9\t#\x1b\xa9\xb8\xd5\xb8\x1a\xf7I\x85XZ\x0e\x84\xe1K\x84C\xbe5"\x85Pz\x0f,q\x81\xa2\xfb;\xa0\x13\xf3r\xc7\xf3\x158\xd8\xbc\x80\xf8\xc1J7\x97P\xbd\x88\x8a\xd7I\x9e\x88\xc3\xa4h\xab\x82}\xe3\xbd\xe5\xe1\xb4\x8b\xaf`\xe6x\x1fdC\xb4J6l\xbd\xa2@\x0e\xfdr\xebq<\xf7\x86\xcac\x8bB1\x82\x07\x11\x87a\xc1q\xa3r\x91\x01\xf2s\xe3\x86\xcd\xa4b\xacs\xc8\xbe\x81`P\x90\xa4<\x9f\x91c\xc69(\xc6\xd0\x9b\xc7q\x91y\xd4\xc1K^\xe7=\x94\xdbk\xdd\x08\x8c\xa2@t\xe4\xbe\x9c\xf8\x8c\x0f\'"(\xec\xcc\x8d\x08\xf4 \xe0\xcdo\x96:@\xee\x15\x07Q{\x08\x81K1r9\x10\n\xeb\xd6\xe0\x8a(B\x17\xde\x05\xb3\x95N/\ta\xf1j|\xcd_\x17\xa4["<\\}\xd1HT\x07\xa7\x84uI<\x84\xbaN *-\xc1o4\\~\xa7\x16\xbb\x11h\xc72\x1f\x89\x84\xc2\xef\x11\xf8\x86\x85w\xec\x0b\xec\x95\xcb\x11~eI8.\xde\x0e\x9bh\x11I\x8f\xc2\x9b8\xdcEH2C\xd8\x13\xf8\xc9\x9a\x08\x13\x9b\xa02\x10\xd0?\x12MJ\xbed)\x92\x84\xb7\xbf\x020Q$\xbc\xe9\x17\x80\x89%\x9b\xb2D\x01\xb8M\xe4I2K\x94@G3\xe9\xc8\x12\xe5\xc0G\x00V\xbeA\xbe\xe2<\xdd\xac\xd0\xcd[\xdd\xe9\xd1t\xef\xeb\xbe-_\x06\x98\x13\xd7\xe6\x0e\x0c\x19`IL\xc9\x03*h\xd6@\xb3\x02\x9aw\x93\x94\xbaq\x15\\\xa1\x81+\x14pE\x91\x86\x9f\x0cc\x91\x17\xe4\xfb\xce3\xcd\n\xd3\x9cq\xb6\xa6\xd83ug\xeb\xd0\xd7\t?\x062\xc8\xb06\x19\xc8\xf7+\x9e\xa1t\x0c\x02XT\xd6\xa7\xb1>\x05\x97,\x9d\xe7\xfc\x11JZ\x94g\xce3-\n\xd3\x92\x01\xb6\xc4I\xf9\xce\'\xa7\x9f\x9eN\xe0\'\xc38R\xdd\n\xd6\xb25\x02\x9f\xd8kc\xe7\xc6\xb6\xc9\xd7\x8fo\x1d\xcf\x98\xadr,\xb1\x91\xd8\x80\x9a^\xb4>gMM\x16\xbe\xbed\x9c\x8d\xb2Y6\xff\xe8l\x92\xcd\x19\xc0>{\xf2\xa9\x93\xf2mO\xde\xf4\xf4M\x89\x9b )K\xd8\x98\t2\x07\xd18\xed2\xa38z\xb6&!\xc8\x15\x95\xed\xd5\xd8^\x85\xed\xcd\xd8\x9b\xe4{O\xcf$gd\xca`;\x92\xe6!\xc8\x15\x95=\xaa\xb1G\x15\xf6h\xa6\xbe\xe1\x15\xf1\xd5\xb5\x97\xd6\xce\xac\x9f]W\xea9X2\xb6z\xf9\xda\xd3S\xc9)y\n~\x05\x90\xa7\x14\xf7\xe5\x1f7B\x90+\xaamL\xb3\x8d)\xb8\xfchk\x95o~\xd3\xbd5y\xae5\xdds\xaec\xbb\xa3@\xcc\xd47g\t\xda>A\xc21\xa7@\xea~\xe5\xf0\x95\x9f\xdf\xa9:Oh\xce\x13\n.?\xe6\xf1\xe3\x9f\x8f\xaa\xcek4\xe75\n.U|\xc5\xcbw?\xf5P\xe2\xa1\n\xe7\xfbU\xd0\xa6\x816\x05\xb4U\x90\x06U\xd0\xa2\x81\x16\x05\xb4\x18\xc1\xd0\xad\x82\x1e\r\xf4(\xa0\xc7@xUp\x89\x06.Q\xc0%\x06\xe2\x12\x15\x0ch`@\x01\x03\xd5\x86\x90\xbaT~\xe0<\xe3Q\x18Oe\xa0\x1dT\xc1!\r\x1cR\xc0\xa1JZ\x9f\n\xfa5\xd0\xaf\x80\xfe*R\xefL<\x90x %l\xc5R\xcb\xa9\xe5m\x1a>\x93\xefY>\xb4||\xdb\xfb\x8emG\xa6\xaeA\xf6\xe6\xce\xc4\xf0\x94\xfc\xec\x8dO\xdd(\xc7R\x13\xc9\xb5\x92\x99Y\x13\xd7\xcb\x93\xf2d\xaa!\xd5\xf0\xca\x1dgZ\xcf\xb6\x9e\x9eNN\xab\xe0\x80\x06\x0e(\xf9\x92\x1b\xfd\xe5\xf2\xecy\xe6\xa0\xc2\x1c\xac\x1ca\xd12\x95\xb4\xc1\xc2\xc7\xd3\x8a\xd1\xdbS\x8d\n\xd3\x04\xcbV\x17|\xf8\xd7\xbc\xe7\xbc\xe9Gsk\x94ML\xca\x07\x94&o\x1a\xa4o{\xdb\x0c+\xb0\x18\xd6\xce\x97\xe2\xec\x17\xd3\xddJs/,\xdb#\xf0\x89\xbd7\xf6\xe1\xd8\xe7\xe4\xfb\xc7\xb7\x8f\xff\xa7\xf3?&?x\x9eiS\x98\xb2HqzR\x963\xd6\xb3V\xb4\x94\x1b10V\x94\xcc\x9f\xb6&\xad2|\xaa8M\x90\xefyj61\x9b\xb1\xb8\xe4\xd6T\xf7\xe9\xf6d{\xe2\xc4\x8e\x13~\x04c\x18\x0e\x03$\xc4*\xd3\xa7\x99$#3e\xf2v\xe3\x9f\x9fK5&\x17S\xab\x9a\xa3]e;4\xb6Ca;\xf6 \xe0\xb2c\xb6\xc8\xb7?\xf5X\xe2\xb1\xdd\x82\x14G\xa7\xcavil\x97\xc2vU\x19\xf2\xbc|\xefy\xec\xab\x0c\xeb\x94\xd9\xd3uI\xf4}\x8fE\xc0\xee@\xf3\xee\xc5\x00~\xcbc-/\xb2\xcf\xb1)\xd7\xab\x9e\x97<[\x97\xa6\xdd\xaa\xab[su\xabl\x8f\xc6\xf6(\xb8dLf\xd8\xcd\xccf\t3\xe3\xa8\x98g\xf0\xc5\xc5\xe7\x16\xe1\x97\xc1S\xc9S*\xdb\xa6\xb1m\n\xdbVd\xc2\xcf\x8f\x15C\xefU\xd9>\x8d\xedS\xd8\xbe]\xach\xe8!\xf9\xfe\xf3L\xab\xc2\xb4V\x06\xe7a\x15tj\xa0S\x01\x9d\x95\xb4a\x15\x8ch`D\x01#\x95\xe6(f\xec\xca~\xc5\x9bi%\xad]\x05\x1d\x1a\xe8P@G\xa5\xcc\xe28\xcb\xf6\x93\xcb1(\xd9O\x8en\x8fB\x00\xcb\xc7\xd0\xaa\x97i\xece\n.Y:\xcf\x0bwY\x86\xdd+\x97U\x8e\xc9\xa7\x02\xbf\x06\xfc\n\xf0\xefg\x1f\x03\x017\xcbA\r\x0c*`\xd0@\xf4\xab\xc0\xab\x01\xaf\x02\xbc\x06\xe2R\x15\x1c\xd3\xc01\x05\x1c\xab\xb0\xa3\x81\x18Q\xc1\xa8\x06F\x150Z\x91"\x0c\xc4\xe5*\x18\xd3\x00\xfc\x86;V!\xe3b\xce\xc1G\x92\x7f\x00PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV|,\x19\xee \x01\x00\x00}\x01\x00\x00&\x00\x00\x00system/__pycache__/pwd.cpython-311.pycmP=O\xc30\x14|N\x1b\xf3!\xfa\x03:7K\x97\x1a\x15\t\x96\x8a\x89\x11\x10R7\xc4\x92\xc6.\x98&\x8ee\'\n\x99\x08R\xc5_\xa0#S\x11\xe2\xcfPT\x89*+\x13\x1bR\xb7L8\x15\x01\x86\x9e}\xf7t\xf6=\xcbzO\x8d\xc66\x18\xdc\x07\xb7\x94\x98\xfa\x01\xff\x80\x7f\xearh\xe4\x01(P\xe4\xc39X\xc0\x90!\\[Upj\xf8\xf2\xdb\xf6X\x835`ujM-\x93\xfb\xebB\xc6\xa1\xca!\xf3z\x1f\xda\xb5\xcf\xd2\x9c\x16\x88\xb4\xed\xdc\nunK\xc5E\x94\xe3K\x16y\t\xcd7\x14\x93\xbe\xeb\xb1\xbc\xeeQ\xae\x9eaY\xc6\x8b\x0b\xa2bA\x02F\xb9K\x12.\x86\xae\xd8\xdb?\xe8\x92\xfe\t9\xe6\x03\xe5*\xce49\n\xbd8`"\xd2\xe4,\x8d\xaeBAd\xeas\x11\xdf\x90ng\xb7\xa4Qi.VG:\xd5\x11\x0b\x88LhG\xa6\xc5f/\x08i\xec\xb3C\xb5S~\xd4P\xf7\x8c|\xd5\x10B\x0b\xd8\xcaVk\x01vfg<\x1b\x8c\xf9\xddh<z\xc7\xcd7\xdc\x9c8\x13=\xc3\xad9n\xcd\xc0\x99\x83\xf3ZmUN\xfd\x1bPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x18\xba\\\xe8\xaa\x04\x00\x00S\t\x00\x00)\x00\x00\x00system/__pycache__/pylink.cpython-311.pyc\xa5T[k\x13A\x14\x9e\xddL\xdaI\xdaT\xeb\x05\xb4\xde\xd6\xaa$A\x93\x88\x8aB\xd5\xaa\xbd\xe0\xa5\xd6\x0b*\xa8/\xb2\xcdL\xd3\xb5\xc9\xee:\xbb1\xcdRK\x94\xa2U\x04/\x08\x16\xb4P|\xa8\x8a/>\xfa(\xfd\x05\x1b\tX\x16\n\x82\xf8\xe0\x93\x81\xbeH\x1f\xc4\xd9lbsi!\xe0d\xf6\xec\xcc9\xdf\xf9\xce\x993g\xf3\xd6\xe7\xf3\x026~\x9dL\xe1I\x08\xc0wP6\xdc\xc5\xf7\xc2\x1f\x0e\x80\x97\x00\xaf\xc2\xdc8w\x1d`\x9ep\xb7\x01=H\xb8i\x1e,3\xb0k\x86\xe1?p\xa5=\x07x@\x00\x86\xd3\xae\xe5\xd0\x84\xabDc\xf7\x0c\xcf\xf6\xfc\x927n\xb9d3\xc0\x19\xb6\xfb\x00*X\xdd\xb8\xa1*\xd6\xca\xc8\xc6\xba\x91\xa8n\xa4\xa7n\xa4\xb7\x1ed\x0c\xe0\xa67\xdc\xf5\x86\x15Y\x9a\xeba) }+T\xbb\xaa^\xf5\xf0\xd9\xf5\x0f\xae^\xe4\xc2\xd1\xf2\xeb\xb6\xdb\xc6\x0e\xb1p\xbf\xd0\x1c\x1e\xa0\x97\x19\xa7\x99\xaev\xe8pi}\xf3_z\x98\xc3<va\x88\xd9e\x8e\x82XM\xf1uOYk5\x8e\x82W\x00\xa3\xa9\xea\x16\xfb\xbf\xe8\x1e\xec\xc5M\xa3\xdc+0\xc5\xb3\x0c\x1a\xeb\xc8\xa0\xb96\x03\x0c.\x81\x1d\x15y\xdct\x97V;\x01\r\xdd\xe1+x|\x05\x9e\x96Z\x9er\xd4(_m\xbd\xc6\xe2\xdc\xe1\xc7x\x16\xad\xb8Jq)0\xe2\xba\x06R\\p\xd59\x83\x0f%,\x97*\xa9\x16\xc2JJ\x8e+"6ZB!Y\tE\xc5\xe8\x10\ta\x89\x1aM\x85\xfd\x80$\x8b4m\xb8;\xc4x\xbc\xc3@\xfd\nN\xc6\x89\xe07\xda\xfcB\xc9\x93`AKF\xa3D\xd3\x06\x93\xf1xz\xbb\xd5(\xc9\x9a\xce\xf0\x86\xb7@!\xc9\x98\x8c\x18\xbePh\x90\xadBqI\x1e\xd6\x8e\x1a\x1b\xfdB\x11U\xedn\xec>!\x0b\x84R\x85\nJ4\x9a\xa4\x94\x01RC\x12\x8b\xea80\x82\x98\x90(\xe5\xc1\xfb;\x82\r\x96WK\x0e\xa8T\xb1I,/;@t\xf8F\x94!-\x97\x96f\n2B\xa2I]\x1c\x88\x13\xcb\xadRI\xd6\xad5\xdd\x85\xc0\x17\x1c\x97^;X\xd0ey\x1d\xd6sb\x82X\x1e]\xa41\xa2\xf7H\xd4\xe2\x88f\xf7\x81 \x08\x8b7"4)G\x12\x04Kb$%\xc9\x83\xa2\xbc\xff\xe0\xa1}\x91K\xfd\x91\xb3\xd2\x00\x15\xa9D\xb4H\x8f\x12M&\x88\xack\x91\x0bi}H\x91#j\x9a\xa5\x9c\x1c\x89\xec\x0b\xef\xb5\x1f&Uf(\xa8Xz:I8\x88\xe1\xb0\x9a\xb6|\xc53:u\xa6\xad\xf6e\xb2G\xfb\xc5D\x06\xe4y\xe4n\x9dGk\xbe\xa2-_\xd0\x96)\xed\xf5\xd8;\xfd\xe3\x95Og\xccSW\xcd\xeb1SRM:jn\xbd\x93Ec94f\xa2\xb1y\xe43[\x8eM\xb61\xe1\xcc,:\x9eC\xc7Mt\xfcG\r\xc9\xe9\xcf\xa3\xe6\x15\xd5$\xb2-\xaf,\xcb\xd4i3u:3\x8b\x8e\xe5\xd01\xb34\x7f\xcf7\xad\xcf5\x05\xf2\x80w\xb7.\x89\x82\xd7\x19\x96_KqfQ_\x0e\xf5\x99\xa8\x8fY&\xc4\x87\xe81\x9a\xa8\xf8\xfdf#\xeff\x9e\xec\xadm`g\xbe\xd7\x05\xba \x98\x85\xab\xba\x81kvm{\xd7a\xd7\xeca7[\xd3\x06f\xfci\xf7\xfa"\'\x18^\xa7\x80\x11QU\xad\x06gm\x1c\xbcPx\x0b\xac\x98JJ\x13\xd2JR\xd0\x95R\x0b\t\xa2\x8c\x05)\xa1*T\x17\xd4\xb4*\t\xaa\x18\x1d\x16cD\x0b\x1b\xeb/\x97\xa1J\xfa\x0ec\x83C\xfb\xcft\xa4h\xe94\xd60\x07\xfb3(C\x07\xa1\xe1-\xb2\xb3\x1b661\x11VE}(\xcc\xbc\t\xd5\x03{\xf7\xf8\x1d:\x7f\xd0\xf0\x15\x81\xc5\xb4\xdb)\xb9\x95$\x9a\xae\x15\x15a\xc7\x1c\xf0\x97\xf4\xcce\xd3\t]\xd0\x87\x08;\x8f*(\x83\xf6\xd1\xa8\xc0\xba?F\xc5D\xc7"\xe7=\x17\xe4\xa8\xfd\x17\x1cl,\xf4\x8f\x05Y\'k\xeckWT\x0b\xdeT$\xd9ra\xe96m*\x98t2\xa2\xbf\x07\x0bv!\xe9j\xbb\x9a\xe8\x88\xf3\x11t\xd2-\xa5\xde\xebg2\xef\xe28.\xcf{8v\xb1\x95b\x1d\x80\xbe\xa7\xd0t\xadcs\x0e\xa2\x07\xa7\xee\x9d\x9a\xb8x\xb7o\xbc/\xd37\x07[3\xfdOw\xbc\x0c<\x0fL\x1ex\x16~\x11\x9e\xde\x9c\x85\xe1\x1c\x0c\x9b\xa5\xf9\r6f\xba\xef\xf6\x8e\xf7fz\xe7\xa0\'\xd3;\x11\xb8{~\xfc|\xe6\xfc\\\x95\xde\xf4veaw\x0ev\x9b\xb0\xbb\xd6\xb6=\x0b\xdbs\xb0\xdd\x84\xed\xb5\xb6\x9dY\xb8+\x07w\x99pW\xadmk\x16n\xcb\xc1m&\xdcVf\xcb\xf3\xeefo\x1e\x94D\xa6\'\xdf\x0c\xdc\xa8\xca\xd3\x9f\x85\x81\x1c\x0c\x980P\xcd:\xb1\xf3I\xf0Q\xf0i\xcf\xc3\xc8\xe3H\x16\xb6\xe5`\x9b\t\xdb\x96@\x85\x1f\xdd\xcc\xca\xfa\x17PK\x03\x04\x14\x03\x00\x00\x08\x00/\xb6\xd0V\x91\x17X,X\x01\x00\x00\xfa\x01\x00\x00)\x00\x00\x00system/__pycache__/python.cpython-311.pycUP?K\xc3@\x14\x7f\x97\xc4\x92\xb6\x16j\xbf\x80\xb4\x93YzRE\x17qrp\xb0E\xe8\xd6\xa5\xc4\xdc\x89\x91\xfc\xe3\x92\xa0\xd9:t\xf2\x0b\x88\xa0kE\xf4s8\xa7\xd0A\xb2\x8a\x83\xe0P\xe8\xe6\xe4\xbb\xd0\x7f\xde\xdd\xfb\xbd{\xff~\xef\xee=W*%\xc0\xd5\xf8\xb9c\xef\xa8?am)s=\xdbA\xb8\x07\x06\x8c8\xd0\x03\xa6\x0c\xa1G\x14\xe0d\x84\xfe\xd7e:\xc1x\x17\x0c\xf5[\x1a\x1dk\x9dICQ%\xd3i\xce\x14\x91U\xe8zy\x8f6V\xde\xff\xccodD\xd0&k\x9d\x00;)\x1d\x83d\x1b\x8eo\x99\x8e\xa1f\x9a\xe53\x9e\xe9\xb6\x17qaZQV\xc8\x03\xe1\x0b\xccd\xc9o\x9f\x8a\xd8\xa3.g\xb6Iol\xef\xd2\xf4\xf6\x0e\x0e[\xb4\xdb\xa6g\xf6\x850\x85\xcdCz\xe2[\xb1\xcb\xbd(\xa4\xe7It\xe5{4H\x1c\xdb\x8boi\xab\xb9+\x051\xc0@\xee\n\x930\xe2.\xda2\xb1\x19$Y\xd5\xf1M\xd6\xcf\xdb\x07\x82#\x8a\xf2\xfc\xd7\xe16\xc2\x00\xbe4}\xd8~*<\xe8\x8fz\xaa\xd5\xc7Z}\xa2\xd5\xd3\xc5\x11E\xcc1\x14!g\x90\x17\n]BQBI\xbe_?r}\x16;\xfcXl\xca\tH\xda}\x84\xa9J\x08\xf9\x80\xf2 \xdfSM!\x8d),\xa1\x04d+\x85\xea\x18j\x13\xa8\xa5\x8b\x93\xb3\xfe\x01PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x009y\xdbt\x01\x00\x00/\x02\x00\x00*\x00\x00\x00system/__pycache__/python2.cpython-311.pycmP\xbfK\xc3@\x14~\x97\xa4E#\xd5Z\xb4 \x888\x086K\xafT\xd0E\\\x14\'-\x85.\xd2E\xd3\xe4\xc4H~q\x97`\x03\n\x0e\xfd\x1f\\\x9c+\xd2\x7f\xc41\x85\x0e\x12prr+\x14\x97N^\xd2\xa6d\xf0x\xef{\xef\xde{\xf7}\xc7{+\x14d\xe0\xe7\xea\xa3\xa7\xd7\x10\xc07d\x8e0\x8f\x93\x1a\x87\x17\xd0AG&\xb4g\x11\xb5\x91.\xf4\xa0-\x08@\x84>\xef\x0f\x16\xcf\x10\xef\xb7@\x11\x7f\xe2KC\xcb2\x8as\x9f\x9c\'\x8c^\xa6u\x8f\xd2\xec\t\xbc\\\xa6.\xa6\xd9#\xf4\xf9\xcc\x00et\x80\xeb\xa0\x86"E"\x0bX$\x93.\xd1|O\xed\x98$\x92\x99\xdfq\xa9\xa3\x11\xc6\xa2\\\xd3q\x89\xad\xa0\xa8\xe4\x06\xde\x9dc_\x1b\xb6G\xa8K\tG\x16\xd3\xedNo0\xf5ml\x11\xddP\xf1\x83a\xdf\xaa\xf6\xc1\xe1Q\x1d\xb7.\xf1\x85\xd1\xa1*5\x08\xc3g\x8e\xe6[\xc4\xf6\x18n&4\xd8\rL\xc3\xf6\xbb\xb8^\xad\xc5\xce1\xe6OJ\xfc;\x1e\xb1\xf0L\xaf^u\x83\xa8h:\xaa\x9eU\xa6\xf2|\x19l\x8f\xc33|mm\xbf\xee\x84R\xf97\x0f\xb9\xb5\x91\xb4\x11n\xee\x0f\xa5\xcaH\xaa\x84\xa9M\xf8\x1c\xdf+\xcd\xf3@%\x0e\t\xc5;\xd0\x958_\xe60]:\xb6\x1c\xdd7\xc9\t-\xc4\x1b\x8a\xd9O9\x8cE\x84\xd0\'\x94\xc3\xffl,IH\x19\xc3\x02V\x01\xad\x87P\x1cBi\x04\xa50\xb5D\xe4\x0fPK\x03\x04\x14\x03\x00\x00\x08\x00p\xb8\xd0V\xbcTC\xd8e\x02\x00\x00R\x04\x00\x00*\x00\x00\x00system/__pycache__/removed.cpython-311.pyc\x95P\xdfk\xd3P\x14\xbei\xd2&\xe9X\xc7\xc4M\x11V\xc2&v\x1b\xd8\xc8\xc4n\x0f\xa3/k\xf1\xc5_X\x9f|\xd1\xd8{\xd7f\xb67\xe1&\xdd\xd6<\x8c:\x06j\x19\xcc7\x0b"\x14\xc4\xa9\xec_\xf0\x8fH \x0f!O\x03_}(\xec\xadO\xde&\xad\x9d\xab\x83\xed\xe4\xbb_\xce9\xdf9\xf7p\xcf\xb7\xf1\xf18\xa06\xfb\xbb\t\xbf0\x00\xfc\x02\xa7,\xda\xff\x9f\xfc\xa4\xcaG\x80\x00\xf9\nA\x9b\xfa#F\xb5C\x9a?\xfa\xab=\x07(\xb2\xc1\x0e\xa26\xf7\xbf\x1e\xc8 \xf0\t\xc0\xc8g\xf6\xdf^r\x03E\xda\xd1\xcbt0\x00\xdf\xbf\xc0<\xf6\xd2\xf3\xd8s\xe7MD\x00\x8aA.\xd0\xa3g\xf5]\x86\xaa<\x8c\x05*?\xda\r\xe3\x05@+\x84C\x1a\x1d\x81a>\xe8\x12\xceT\x9f_)^\xa4\xb27ka\xac\xcbH\x16\xa7\xe8\xbal\xb1i\xbdn\x89\xd4}QVKe\xd9\x9aZS0\xd6Li]\xc5P\xd2\x95\xe2k\xa5\x84\xa4T\x97IYS\x85Z\xb1\x88\x0cc\xbdV\xa9\xd4%\x82\xaa\xda&\x82R\x97I[\x93\x83`U\'Z\x89(\xd5\xac5\xf34H\x19\x92\x82%\x15\x1b\xa6R\xa9P\xbd/\xa7\x1f-\x88>\xa7\x90\x92\xe1s\x1b\x9a\x8a\xfd\x88F=]1\xcb~\x0cm\xab\x86i\xf8\xb1\xf0J\x9f\x7f\\\xc8\x13\xa2\x11?\xaa\x13\x15\x9b>\x0b\xd5\xcd\x1f\xe0\xa4\xf7\x96\xeeK\x99\xd4\xb0\\EPU\xe4-\x15\xaf+\xf8nfyI.<\x94\x1f\xa8\xaf\x88BTd\xc89\xadX\xab"l\x1a\xf2\x93\xbaY\xd6\xb0\xac\xd7+*\xaem\xcbK\xe9;\xbdCY\xa7B\x902\xea\x86\x89\xaar\xff1t/]a\xb5\xaa\xc1Z\x05e\xc9doy\xf4\x18)\xca\x1d\x96a\x18\x8f\xe5; \xc1\xc4\xbd\xb1\xc4\xc1Js\xe5C\xee}v?\xdb\xc8y\xbc\xb8\xb7\xf5vgw\xc7\x9e\xbe\xd5zF)\x84\xc3\xa7\\>\xd5\x01\xd1\xe8\xb2\'\xc4\x0f\xc4\xa6h_\x99m]\xa5\x14\xc2\x11\xe6\\a\xce\x0e\xe0\x89c\xfb\xd7\x0e\x92\xcd\xa4}\xfdv;G)\x84#\xa6]1\xdd\x01\xec\xa9+R-H)\x84#\xcc\xbb\xc2\xbc\x1d\xe081\xf5\xaedO\xdf\xfb\x0e)\x85p\x12\x197\x91\xb1\x85\x8c\xc7\x89\x8d\xbc\x1d_h\xdf\xa4\x14\xc2\xe1\x16]n\xd1\x1e\xe0\x98\xe3\x1bko\xf2{\xf9F\xbe_<\xe3pI\x97K\xda\\\xd2\x1b\xd1\x86\xddC-\xf8\xc8\x04]\xd8\x1fPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x9d\x84\xb2j\x8e\x01\x00\x00H\x02\x00\x00(\x00\x00\x00system/__pycache__/shell.cpython-311.pyceQ?O\xc2@\x14\x7fW*! *e\x90\xe0B\xe2b\x17N\xd4\xe8B\\t\xf1\x1f1a#FR\xdb3\xd4\x94\x96\xdc\x15\x94\x04\x12\x06\xbf\x83\xab\x13\xc6\xe0`\xfc$`H$]\x9d\xdcH\x88\x0b\x93\xd7\xa6T\x12\xde\xdd\xbd?\xbf\xf7\xee\xfd.\xef^\xe2\xf1(p\xf9\xc0\rm\x13\x01|\xc3\x9c\x08\xbe\x9dlq\xf5\x04\x1ah\xc8\x80\x12h\xc2#\x94\x90\x00\x04u9\xde\x0b\xca\x11\xcf\x17A\x0e\xfd\xb8AA\x9d\xef\x14\xf2\xcf\xe4\xca\xeb\xa4C\x1bl\xf4\x9f\xbe\x0b\xfc\x16\xbc\xa1.\x8fz\x01\xd2F-\xf4\xcc_\xb2(\x0b\xec\xc0\xd9\x85\x82\x8c\x9c\xb0a\xa9\x8a\xc1\xe4\x90#\xaa\x96F\x1c\xe9\xc4\xb4\tUT[o\x90#\xcbd\x96A\x9c\x88\xeec\xb2\xe0D\xbd\xfarC\xa1\xcc\x89yx\x8d\x12\xae\x99\xcb\x9b\xc9L\xaf1\xad\x9b\xb8J4]\xc1\xf7\xbay\xab\x98\xbb\xfb\x07;\xb8x\x81\xcf\xf5\x1b\xaaP\x9d0|l\xa9\xf5*1m\x86/\x9bv\xc52q\xadi\xe8f\xfd\x01\xe7\xb29\xf7d\xb7q\x8d\'<\x885\x99M\xaa\x98U\x88adkM\'\xc1l\x85\xda\xe59f\x1a\xf3\'\xc6\xf6\xb8\xea\xc0(\x91\xec\x9c\xfe\x86!\xb9>\x94\xe4\xf7t_\xca\x0f\xa4\xfcP\xcaw\xceF\xe2\xea\x97\x98\xfa\x14S\x031=\x14\xd3\xfd\xd9\x9e\xf0{|\x1ct\x89\x1b\xaf\xdb+\xd0e\xd7w\xff{\x1a\xc9W-\xadn\x90C\xba\xe2\xcenF4\x0e!\x84F\x10\xebxk,.\xa1\x8d1\x04j\r\x90\xd4\x87\xc4\x00\x92CH\xf6g\xdb\xeb\xfa\x07PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfVk%\xda\xb1\xd5\x00\x00\x00\x05\x01\x00\x00&\x00\x00\x00system/__pycache__/sys.cpython-311.pycMNA\x8a\xc2@\x10\xec\xd1\r\xbb,\xba/\xd8\x0f\x08KzU\xd0\x8bx\xf2\xa8"x\xf5\x123#\x0e\x98I\x98I\xd4\xdc"\xf8\x07\x7f\xa0\x88\x1f\x12O\x82\x1f\x10\xbcy\xb2GT\xec\xa6\xaa\xa8\xae:\xf4\xa6X\xfc\x06\x9ac}\xca\x7fHO\xf06\x1f\x0f\xbd\xfc\x11\xad \x07\xc2\x82\xad\xc9\xed^\xa55#\xc7\x9e\x8e\x01\x87>\x94X\xb7\x94;8\x91\x96*>\xe4\xb9\xd4[\xb8\xd8\xf4:@\x9d(\x0c\x04\x97\x1e\xce\xa4\x1ay\xaaZ\xabW\xb0\xdf\xc1\xb6\x1cjOKa\xb0\x15\xfaI Tl\xb0\x97\xc6\xe3Pa\x94N\xa4J\xe6Xv\xcb\x16\xee?F\x14\xdcO&5\xb1\x08\xac\xb8Qz\xfdj\x04!O&\xa2\xa9?\xed+\x04\xf3Kt\xce3\xc6\xf6\xe0dN\xe6g\xfeB,\xc5\xa2\xb0,d\xf7\xd5\x0e\x15nPK\x03\x04\x14\x03\x00\x00\x08\x00$\xb1\xd0V\x9b\xf3A\x0e\xb5\x04\x00\x00\xb4\t\x00\x00\'\x00\x00\x00system/__pycache__/user.cpython-311.pyc\x8dSIo\xd3@\x14\xb6\xe3g2\xcd\xd2\x05\x926mY\xdc\xb2\xa4ei(;\x11 !V\xa1\x82\xd8%\xb6\x83\xc1C1$N\xb0\x93\x02>\xa0 q\x08\x88C\x0eH\x04(RN,\x82\x03?e\x1cY\xc2\xf2\x95\x13\x12\x87\n.\x88\x133\x8eS\xa0u\xa1\x93\xf1\xcc\xbc\xef}3\xf3\xde\xf7&o\xe2\xf1\x08G\xdb\xf0\xd7\xc7J\x1d8\xee3\xf7GC\xfe\xfc}=\xf5<\xe30w\x91\xc3\xbc\xc2M\xf2\xb7B\x0c\xd6\xcf\xe2\xd0A\xee\xca\xa1\x8bB\x88\xc3\xf0\x9a"\xefg\xb7\xf2\x1c\xc5D\x85\xc7\xc2\xcd%m\xec%\xf7*\xf4\x9a\xa7,~\x0e+DY\xe1\xff\xb2\x04\xcaB\xffb=9\x1c\x14\x87\xd2w\x86E\r\xb3Q_]0Zq\xee\x89\x0b2\x97\x04F\x18\x0eDQ \xda\x11\x88F\x16\x13\x01\xcbH\x01\xccOqz\x89\xfa;0\xff\xf7.%zK\xf42\xc5\xc1^_\x87$\xe6\x1b\x11.\xa0)\xb1\x80(\x98\x86\xb1\xfe6\xc4\xac\xf8\xac\xc5\xfcQ\x8aD\x7f#\x7f\x9f\xf0Z\xa0\x96\xd0\xb6.\xc6(?\x8eC8\xf6:D\xf1\xd0,\x1e\xa2x\'\xf6\xeb:\xaf\x82\x9d\xb3\x15\xdc\xb1`]\xba\x16\xa3\x9f\xc7\xec^\x0c\xd3S\xba\x13wQ\xa5\xb7zZ\xce9_\x89\xfb\x11\xad\xf1\xfe\t\xab.v\xe3\xee\xdf\xef\x1dw\xfd\xa9\x98\xcfd\xb9\xf7\xd0\xdc\xbb\xfd\xdc\x7f\xbf^\x89\xde\xb6p\xbc=\x81\xefe\xe9b\xb2\xf0\x98\xcb\x02\xf7\'\x02\xd1d \xda\xbb\x98\xbbX\x0e\xa3)\x17r\xaaQ2#\xe7\x0c\xackr\x1eg%3rR6\x8c;\x05]\xa1kq\xe2\xfcDVr\x05YQ\xcc5e\xca\x91\xe8J\xdaS\xf6\xd9\xfb\xa4=E\x9f\xbcO\xba\x94\x9b\xca]1#t\x87t\xa4\xac*8kvl\x966\xd15\xa6\x17\xa0q\xbad\x97\x98h\x0b]\x9d.\x14Jfx+s\x17\x94/\xec\xbd}\xe1\xd9\xc0Tv\x97\xe88_\x98\xc2\xe6R\xef\xc2\x96\xd1\xbas\x9f9x\xda3\r\xdf\x96\xae\xeb\x85\xbcd\xdc3J8?fF\xbd\r\x97d}\xd2\xb8b\x8e\x9c\xd4\x0b\x93\xba\x9c\x97\xae\x17t\xe9\x9a\x8e\xe5\x92\xaaMJ\xb2\xa6HyY\x93\'\x99\xc1\xe8\xc6\x98\x19\xd9\xafO\x96\xf3X+\x19Y3!\xd1Fs\xcc\xb2\xc1\x90d\x8fc\xf63\x94\t\x95\xf5F\x8a\xe7r\xad\xdd\xe6\x00\xf5\xf81f\xfd\xb9\xbd\xed\xc4\xe8R\x17X\xcen\x87\xdc\xbe\xc1E\xcc3A\x0fqA\xa5A\xbb\x82\xa2N\xb9bQW\xb5\x12\xf5\xf9\xba\xba\xa8-\xab+PU\xe9\x805w\x89\\,b\x8d"\x8c\xca\x97\xdd\x88\x97\x14\xf6.\x88\x19\xf2\x14]\xb5Of\n\xb8\xbc\xeaFX@-\xc7;\xee;\xab\xfb\xcf+\x19\xbd\xace\xf2XQ\xe5\xcc\x1dU\xbb.k[w\xec\xdc\x929s<3\xa1^\xd5e]\xc5F\xe6`\xe1Z+\xda\xcc\xc9{\xa5\x1b\x05-S\xbc\x97S\xb5\xf2\xdd\xcc\x96\xb1\xcd\xec\xa3c\x91:<\xa8\xa5}\x86E>V\xbc\xf7\x13\xed\xc9\x17\x94r\x0e\xef\xd3W\xb0WF?\xe3\x1b-\xea\x8c\xc0\xf3\xbc\x13\x8eV\xc0\x11b\xb5\xde\x1aj\n)"\xa4\x9c\xee\xd4\x0c\x07\xe2\xb07T\xc1A\xd1\xaa\xf0H|"VE\x07\xc5\xab"\xe9\\_\xdf6\xbd\x97N\xb4[h\x83\x8d6\x10\xb4\xe1\xff.\xa9\xa6<\xbdA\'\xda-4d\xa3!\xe2u\x07\xc2\x95\x03\x0f\x0e=<T\xf1~\x8e\xd8Y\xdb^K7\xc5~"\xf6\xff\xe1s\xa0\xa3r\x88D6[0n\xc38\x81\xf1\xb9\xbe\xeaF\x0b\xfal\xe8#\xd0\xd7\xb27X\xd0kC/\x81\xde\x96\xbd\xde\x82\xa4\rI\x02\xc9`{\xd4\x82\x84\r\t\x02\x89y!E\xaa*\x11\xfbh\xaf\x1f\xa8\x1fht<?1}\xe2\xad\xdc\\\x9e!\xcb3N8R1\xaa\xbb\x1f\xdc\x7fx\xbf\xde\xd3\x0c\x0f\x90\xf0\x80\x83z>\xa1T\x13\xa5\xea=\x16\x1a\xb4\xd1 A\x83\x0e\x8aU\xa1z\xa1v\xfb\xc9\xe5\xfahc\xff\xf4\xc6\x86\xd10\xde\xee\xfex\xea\xc3\x1e+\xbd\xcbN\xef\xb2\xd0n\x1b\xed\xae\xecw\xba\xfa\xabf}\xa41nu\xad\xb5\xbb\xd6V\x8e:\xd0]\x99\xa8\xa5,\x18\xb0a\x80\xb4;\x93iWm}S\\N\xc4\xe5\xf3eZi\xc1*\x1bV\x11X5\xdf\x97\xb6`\xc4\x86\x11\x02#\xf3\xf2\x8c\xd7\x12DL\xd2^_M\x7f\xca\xf3\xd1\xe9\xd1\xc6\xed\x17c\xf51\'\x9e\x9c\xe1B\xe2jo\xa8\xf2N4\xf6$[O\xd4\xe5\xe9\xbefT"Q\xc9\x89\xf5V\x8f\xd5\xee6x+6l\xc7\x86Il\xf8\xc7\x8c\xd8\xe6\xcf ND\x7f\xd7j\x93\x05)\x1bR\x04R~P\xdb,\xd8n\xc3v\x02\xdb\xffQW\x9f+Y0d\xc3\x10\x81!\x1fXk\xc1:\x1b\xd6\x11X\xe7\x03\xeb,H\xdb\x90&\x90\x9e\x93\xa2>H\xdf\xfe/PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV54\xd2W\x1d\x01\x00\x00w\x01\x00\x00+\x00\x00\x00system/__pycache__/userlist.cpython-311.pycmP=O\xc30\x10=\'\x8e\x14\x10]\x80\xa1\xecH\xa8\x035*\x12\x0c \x16\xc2V\x10R\x17\x04b\x08\xc4\x08\xa3\xc4\x89\xec\xa4\x90-H\x0c\x0c\xdd\xf9\x07E\x88?\x03\x12C\x94\x95?P\xa9[\'\xce\xe1\xa3\x0c=\xdb\xef\xac{\xef\xfc\xe4{n4\xe6\x01c\xed\xac\x1f\xec`\xfe\x84\x7fA\x7f\xf2\xf8\x04\xe1\t,\xe00\xc4\xdb\xeb\x9f\x80\x00\'\x1e\x9c/\x9eZ\xc8\xd9\xdc\xba\xa1\xbf\xcc\x90\xa0\x8eLu\x83\xa5Y\xdd\x01\xf4\xa0E\x8eZNe\x07\xa2_\xb9\x99\xe6\xaa+tZQ\x91\xf2\xa8r\x12%d\xfa]\x96~\xc4_`l\xfa&>S\x99d\x11\x0f\x84\xcfn\x85\xbc\xf2\xe5\xe6\xd6v\x87\xf5\x0eYW\\(_\t\xae\x99\x17_f\x11\x97\xa9f\xc7yz\x1dK\x96\xe4\xa1\x90\xd9\x1d\xeb\xb47\xccAL\x90\xa8K:\xd7h\xc7\x8cM\x88\xee\xed$\x9f\xb8\xbbQ\x1cd!\xdfSf<\xe6#z\x1fad\x13BJ\xb0\x0b\xfb\xdeyp\n\xa7\\X\x1e\x01!+5\x14^I\xe7\x8a\x83\xc7\xd5\xc1\xfa;m~\xd0\xe6[\xbd\xa7\xf2z)\x17\xdf\xf9\x02PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV]\x9e\x92\xe4b\x01\x00\x00\xe9\x01\x00\x00*\x00\x00\x00system/__pycache__/version.cpython-311.pycmNMK\x02Q\x14\xbdo\xbe\xfc(\x83\xc0\xd6\x19m\x14\xc1\x97\x05\x05\x11A\xe0\xc2EE \xb9\x10\x82\xacy\xd5\x0b}3\xcc\x879\xae\xa4M\x06.,"\x83\x08\\\x15\xd1\x9fQp!\xb3\xed\x0f\x08\xee\\\xf5F\r2<\xdc{.\xf7\xf1\xee9\xe7#\x14\n\x02G|\xbb\xa4\x1e\xf3\xf9\r\x7f\xa0L\xe6\xe0\x99S\x13\x08\xe4\xd0%\xe4\x04\x82Rp\x12\xc9\x89DhI0\x03\x02\x10\x99\x88\xef\x08\xe0\x8b\xf7\x18\xd3\x1b\x82\xfa\n\xff\xa5\xa8\xa0\xa2\x96o\x96\x06\x11\xa6/^\xe1M\xf8\xaf\xa1\n\x19\x88\x89\x95\xc0\x91c]Qf\x97#C\x948\x8c\xf9]_\x89\x18&\xd5\x98\x8b\xca.\xaa\xb8\x88\xbaJ^\xd7\tS]\xd1\xb4\x0cW\xd6\r\xca,W\xba\xd6(\xfb\x84\x81\xa75<\xc5\x86\xcdp\x91\xa84\x8fo(\xbb\xc8\xb3\x8d\xcd\xadu\x9c9\xc0\xfb\xf4\xcc\xc8\x1b\x94\x988\xa5\x9d\xdbE\xc2,\x13{\x86\x1a\xc3\xbaS\xf0lq2\x91\xf4:\xb1\xc6_\xc6I\xb0\xe9\x98\x16)\xe2I\x90\x84\xee\x0c\xfd;EM\xb5\x0bd\xd7X\xf0\xc2\xf36UN}\x11!\xd4\x93\xe6\xaa\x9c\x14N\x81`\x1f\x10Z\x1aQu\xaf\'\xc9w\xe9\xdbt-S\xcb4\x16\xef\xb3\xf5lG\nw\xa5p{T=\x90\xabr[Yn\xac6\xa3\x8f\xd1\x97\xe4C\xfc)\xceW^\x1d\x88t!\xd2\xfe-c\x9e\x1b\xfd\x00PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\t\xb0\xa7\x8d\xa3\x02\x00\x00"\x04\x00\x00&\x00\x00\x00system/__pycache__/xax.cpython-311.pyc}SAO\xd4@\x14\x9e\xb6ow\xbb\xdb\xad`$\x10\x0c\xc1n\xc2e\x13\x97\x8a\x1aM\x8c1lB\xc8F\x90\x10\xe1\xa0\xabI\xad;\xe3R\xddm\xeb\xb4\x8bl\xe3aM8p\xf4&\x07\x0f\x9e\x10\x03\x07\x8f\x1e\xfd\t]\xd2\x04\xd2\xc4\x84\xc4\x8b\xde6\xe1\xc6\xc9iwAP\xf4\xb5\xef\xcd\xcc\xfb\xe6\xbd\xf9\xdek\xe7\xa3,g\x10\x93\xfe\xe9e\xfc\x9eC\xe8;:!\xc9\xdex\xf0\x83\x99w\x08#\xcc\xd5P\x19a~\x15\x959\xc2c\xe1\x05\x1f\xc1\x14\xf3\x88\xa0\xe7\xc2Q\x18\x86\xed\xc4\x06\xcb\xb5\xc5\xb4+e \xf0!\x81\xce\x10\x9c\xc4),\xe2\xf4vf\x03X\x04\xd3\xaep\xe8\x9f\x11\x12\xceb\x99$\xb7\xcf\x9d\x11\x91:+b\x83\xe9\xd6\xf1\xaa,2\xb6\x1c\x11O3\xe4Xm\x0b\xb1\xe6\xfb~F\x8e\xb9\n\xc3\x8eE\xe8\xe9\xc1\x93\xb8\x13\xeeo\x8c\xc5\xfc\x91\xe94\xca\xff\x0f}\x8d\xfeb\x81\x18\x03a\xce\x1b(\x91Z\xcd\xba\xac,\x12\xc7U\xe6\xa9U\xa5z=\xe7]\xb8O*\xc4X&X\xd1i\xb5Q\'\xa6\xeb\xdc\xcasa\xc2\xa6\x86\xe9\xb2\t0\xb7\xe3D\xe9\x94\xc3\xc7*m\x98j\x9d`CW_\x19\xe63\xdd\xbcv\xe3\xe6Uu\xe1\x9e:k<\xa5:5\x88\xa3NY\x95n\x16u\xbe\xe9.Y\xa6j7k\x86\xd9XQ\'\xc6\'"\x1d\xbf\xa2\xda\x0c\x88]N\xd3qI]]\xd1W\xc6\xedf\x98u\x191\xcd\xee\x12\xa3\xa9^{\x1c\x95\x99\x16\xfa\x06i?\xa3\xb4!\x17@\xce\x87\\\xbc\xbc\xd4\x06%\x00\xc5\x07\x85-\xd7\xc6\xde\xcc\xac\xce\xb4\xe2\xe7 *<\x145\xad\xae\x1b\xa6\xa6y\xd9\x93%\xb3\x9a$L\x9c\n5l\xd7\xb0L\x8f/\x98^\xb2P0\xf5:\xf1\xd2\x0f\xad\x06U\xa2\xe9b\x9e\x0fa\x89\xd4\xecP\xa4\xe4e\xc3\xa0\x04\xb3\x9d\xba\x97(\x14\xf4*\xf1\xc4x#\x9b\xe5y*E\x87\x81\xdb\xb4I>\x1d\x8a\xac]\xb6N\x1dBS=\x0eQ6M\x0b\xcf\x15{\xed\x9d\x8f\xd10iw\xc7\xac\x8e\xb1v\xd4\xfaP0\x98\xc9\xc4P\xe4th\xf4\xbf~BT\x8c\xeeDtw\x0e\xc5\xdbu\x0b7j\xe4\x0e\x1d\x8c\xben\xd4\xa1Mf:\x02\xc7q{\xa8\xaf\x15?\x1d\x10\xb8\xfe\x0e:6\x19\x04\xd95oG\x18\xf6\x85\xe1=yl\xedA \x8f}\x1e\xf5\xe5\xc9\xb6<\x19\xc8\x93\xad\xe9=\xc8\xec\xc2\xd0\x0e\x0c\xad\xc3\xfa\xd2\xe6\xa3\xaf\xd7}\x18jC)\x80\x92\x0f\xa5\x93`u\xf3\xee\x97\x85\x18,\x06P\xf4\xa1\xb8/\x9d\xdf\x95Fv\xa4\x91\xb64\x1aH\xa3\xad\xa9}\xe8o\xcd\xbe\x1dh\xc3`\x00\x83\xfe\xd1\xdb\xe9Cp\x91\x9d\x1eW\xf2\x0bPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x04\x9ex\xefv\x01\x00\x00{\x04\x00\x00\x0f\x00\x00\x00system/alias.py\x8dS=o\x830\x10\xdd\xfb+N\x9e\xe8\x90JM7\x94\x0fEU\xd7\x0eY\t\x83\x85\x8f\xd6\x92\xc1\xc8&Q*\xc4\x7f\xaf\xbf\x80\x14\x8b\xa4\x0c`\xecw\xef\xde\xbd;\xf3\x12\xa8\xfa:WX\xb7\x1a\xb6[\xc8\x88\xe0\xba%y\xfa\x04\xe6a\xfc\x92<\xbbU)\x15\xf0\x16+\xe05P\xc1\xa9Fm \xe1i\x14\xaf\xdb\xa4$\x9dE\xf4\xb0Z\xed\xa0\x0b\xa0\xccn\xe5=\xf1,&\x9b\xdfw\xb9\xba~NA>\xe5\x08\x10\x922d/&rR\x82"\xd6K\x19\x9b\xc9\x9d\xe8\x1c\x17\x18\x04l\xdcr\x07\x9bBV\x15\xad\xd9\xce\xf3\xc6!\x1fWZ5\x02S\xb2@\xb4\x87o\x14\xcd\xdf\xd3\xec\x88\x8c+,\x8c\xa4\x13\xd9\x9f\x08\xb4\xd2,,\xeeD\xf2\xb8\x00\'\xd9\x1a9Ub\x14\x81\xc0:\x19w\x9emqo\xbe\xac\xc1\xca\xf10{\xcds\xd8\xc2\xf4\xbf\xce\x1dP\xd3\x0b\x1e<8\tA\x93g\xc1\xaeB U\xc6\xb0(\xa0\xeb\x17\x1cy\xb7\x11\xc8\x06\x19\x8f;\xa2\xb0\x92\x17|\xd0\x14\x0f\n}Y\xec\xc6\xd1\xa1\xf4\xd8\xbeR\xc9\xea\x8e\x90\x90\xfa_\xe6\xae\xbd\xbcV\xfd\x8cS827\xb2In\xdd\xf6\x89\x16,\xf6\x87x-\xb0i\xa3;1N\xb4\xb9A\xe7\x9a\xa5\xd0\xdd\xf2\xf6\xc4\n\xd7x\xd7\xa9\xcc6/_r\xe80\xd0\xcd&\xd6.\xedUN\xdd[\x1b\x11b(/\x02\xda\xc1N\xed\xcbz\xe5P1&4,\r\xdf{H7b\x03p\x9ey*\xe2\x17PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xaa\x0c\xbc\x88\xa3\x00\x00\x00;\x01\x00\x00\x13\x00\x00\x00system/autologin.pyu\x8f\xb1\x0e\x820\x10@w\xbe\xe2\xd2\xa9\x1d\xac\xbb\x11\x13\x13G7G\xe3P\xf1\xa8g\xa0Gz\x85\xef\x17DD\x12\xbd\xe9\x92\xf7\xee%Gu\xc31\x01KF%\xb8\xe8\x05\xf2\x1c\xcej\xb5\x8a(\x98\xd4e\x93A?,6b\xcd\x1djUp(\xc9\xaf]\x9b\xb8bO\xc1\x16\xa5W&\xc3\xea}?\x1e\x88\xebp\x7f\xd4\n\x94}0\x05=\x10c\x06\xd2\x9b\x82\xa3t\xa3N\x9b\xd7\xd6D\nI\xabO\x14\xb6\xad`\x0c\xae\xc6]\xdf\xfe\xe9\x9e0\xc9\x97\x06N \xdd\x11\xe6\xc4\x84\xec\xbf\xc2\xacN\xdf.\xb0>\x90\xb8k\x8527\xcd"\xf5\x04PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x95\x1ea\xa4\x9b\x00\x00\x00\xfc\x00\x00\x00\x18\x00\x00\x00system/basic-terminal.py]\x8eA\n\xc2@\x0cE\xf7\x9e"\x04\x17S\xa8\x1e@p#\xf4\x06\xba\xb2.\xc6v\x8a\x816S\xa7\x19\x99\xe3\x9bV\xa7\x82\xd9\xe4\xf3y\xf9\xf9\xad\xeb@\\\x18\x88mo\xd2\x11\xb18l@\x87:H\xc0^\x80\x18\xae\xe8\x12\t\x96\xf8\x8c\xban\n|g\x0c\xc4b\x06Kl\x9a\x18\x82c\xb9L.\x94\xa9(2\xf2\xcb&\x1e\xa3\x18\xbc\xdb\x89\x9a]va\x8b\xca\xb6\xf42\xc5\xe6\x13\x86\xa7\x19\x80s\x06\xaa!\xf6V|\xc0?\xacb\xcd\x80ziV#x\xd5Zo\xd1\xe2aV \x0f\xb7\xbe\xdf\xaf\xf7\xd9Q\xf9\x06PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xc3\xaf\x88Jl\x00\x00\x00\xa8\x00\x00\x00\x0e\x00\x00\x00system/calc.pym\x8d1\x0e\x80 \x0cEwO\xd10\xc1\xe2\x01\x8c\xbax\x01\xaf@\xb0j\r\x82\x81j<\xbe\xa0\x8b&vj\xfb\xdf\xcb\xa7\x11t\x98bU@\x9a\xbcA\x03\x02D\xb9xr2\xdf\xeaN\xb6@\x8e\xe5\xe0;m\xcd\xf3V\x05\xda\x88\x8f7\xd0!\xdf\x9c0\t\x83\x9a\xf1\xe4V\xa8\x7f\xa4\xc70\xfa\xb0F\xd0.\xf5\x12\xcf+2\x19\xc8\xe6n5\x93w\x1f\xf3\x02PK\x03\x04\n\x03\x00\x00\x00\x00\xdd]\xcfV\xa9[\x03;\r\x00\x00\x00\r\x00\x00\x00\x13\x00\x00\x00system/check_sys.pyprint(dir())\nPK\x03\x04\x14\x03\x00\x00\x08\x00\xaf\xb1\xd0V\xbc\x10\n\x9f%\x04\x00\x00\x9d\x0e\x00\x00\x12\x00\x00\x00system/installd.py\xa5WK\x8f\xd30\x10\xbe\xf7W\x18\x8bC"\x95\x94\xd7\tQ\x10\xe2!q\xe0!\nH\xb0T\x957\x99\xb4\x86\xc4\t\xb6\x93\xb6\xbb\xec\x7fg\x9c\xc4q\x9bG\xb7\x08_\xbak\x7f3\xf3\xcd\xc33\x0eO\xf3Lj\x92\xa9I\xf3W\xfd\x93\xf0K\xbbq\xc5\xf3\x98\'`\xff\xd5\x92\x85p\xc9\xc2_\x930aJ\x91\xb7Bi\x96$ _K\x99I\xef\xf5.\x84\\\xf3L\xf8O&\x04W\x041Y\xad\xb8\xe0z\xb5\xf2\x14$\xf14\x05\xa5\xd8\x1a\xe6\xf4eV$\x11\x11\x19\xda\xacu\x90\\fk\xc9Rjd\x9beD\x82T\xad\xc9\x9c4\x82\x07j\x95\x96\x8d\xd6\x03\t\t\xba\x90\xa2\x15\x9c \xd4\x1a\x88\xbc\x9c\xe9\xcdt\x0f\xea]\x16\xc1\xfc\rK\x14\xd4\x92\xe8\xd6\xde\xa9\xd8r\xbd!Y\x0e\xa2\xc6SyI}\xc2\x14\x89\r\xc4\xad\x1d\x92\x8a\x03\t,\xf2\xfc\xf6 L\x80\xc9\xcf\x90\xe6n\x0f\xa3\x1b\x84\x9b\x88K\x8f\xea4\xa7\xfe\x80\x1d\xda\xb8\x1e(\x0c\xf7#:\xa5\xdbA\x93hn+\xb9\x06ow\x96\x92\x1eo\'a\xd3\x1a|\xe7\xf9\x1b\xfc\xf5b\x84Whs\xd2\xe0\xdd2\x9b\x01\xecL\xf2M \x8f}\x93\x90f%t\xcd;\x08\x8f\r\xca\x842\xe0\xca\x18uP\xc1R\xb0\xe9\xee9t\x0cs\xaet\x969\x1c\xca\x04`v\x8f\xd1\x92q\x05\xdd\x8a\xa5\xef3rh\x87\x18\x86f\xa7\xe4\x11D\xa7\xdd\x90\xf0\xbb\xe0\xe8>\x08\xad\x02\xbd\xd3\xa3\xae\xf4\xa1\xa3\xeeD\x90\xab\x03w\x02\x95\'\\\xf7\xdd\xeaK\\,\xcf\x898\x17qvF\xc4\rl\x94\xa29\xecS\xa4\x7f\xe8\x7f\x05\xdfh\xfd\x97\xe0[\xb9|\x7f\x86?\x08:\xbe\x0f\x9d\xd5\xe0\xce\xab#\x07~\x9f\t8\xc5Qa3\xca\x07\x18V\xfbU\x13\xfa,\x0b\x18&\xdfH7\xd4G\x99W\xa0\x97F\xd5\x19\xcc+p\xdb\xfcNR_|[|~\xfd\xaeG|\xaf4\xa4\x8e\xb53\xd3G56\x8e\xefi\xf5\x83D\xf3\x84\x85h\x85\xa0o.\xcd\xd5\xe1\xfc\x18\xf1C\xd4\x10G\xb5\x9a\x19u\x13\xef\xde\x04^6\xee\xbbTq\x81\xa5\xd9\x94\x1d\xf9Xg\xee9\xf5\xcf\x92\x8b\xe9{\xe4\xf2\x84\\\x9b\xda\xbc\xb8\xbf\xbc\xa1\xc3\xa8\xaf \x15\xce<\x0b|0\n\xfc\x048\x1e\xf0\x1a\xbcb\xbaU\xfbp\x14\xfd\xa2\xd0\x9bLZ\xdc\xa3Q\xdc+\xc0r\x89@\x84\x1c\x14\xa2M?\xb8\xb9\xd5\xc3p\x83\xc9\xe0"/0<\x17\xfb\x99X\x92\xbb\xd4\x0f\x92l\x0b\xb2[B}9\xba\xa7\x07\t1{w\xaaM\x07u\xa3\xb8\xbe$}\x85\xfd\xe9\x18\x04\x1d\xd6q&\t\xc7JB\x9eU\x97\xebW\x7f\xca\xb8\xf0\xc2BJ\xec\xab_\x14\xc8iL\xf3_i\xfb\xa2\xb8\xb7\'\xd7F\x81\r\x87\xe3\xec\xae\x82S\xeaNm`>A\xc9a[c\x89\n%\xcf\xf5sRE\x0b\xef\xe3|\xc0e\xf7\x0cP\x07Q\xec\'\xad\xbd\xb5\xc3\xa0K\x93\x83\x7f\x96\x84\x1d\x84C\xe7\xee\x81\xd3Y%\xa6\xb2\xaa\xad\xc7\xcb\xc1\xb3\xd2\xb6v\x97\x18\xb7\xae\xdc\xcc\xe9\xe5\xcc$\xac\x1c\x8e\xccU\xc0rS\xae\x9eq\x86\xfb\xfe\xa0\xe1\xab\xa1\x9c\x94\xa6\xc8.\xca\xfa\xae\xe1m\x9c\xda?\x1f,\x97\xce\xd6\xad3\'\xa6X\x90\xf7R\xa6\xc3\r\x17k\xf2aA\xdc\xf5-\xbb\x85\x02\xd5{\x96\xb4\xcfZ\xd3\x84\xb1b\xce2\x84\xcfS\x0f\xfcn\xe15\xcd\xb1\xaf#\x16f\xfaP\x8c\xcej\xc3\xd7\x9b\xd9\xb5\xe9\x837\xa6\xfd7Pw\x81N\tw\xe5\x9ce;\xb7\x9et\x85[\\\x7f\x06\xc5b\xe4-\xda\x7f\x936\xdak\x7fG\x07K\xf5\x06\x9e\xd5\x93m\xb7\xc3\xf12n\xfc\x18z\x9a\x83k\x14\xcd\x00O\xb8\x00\xe5\x1d\xa8\xbf\xb5s\xa0|K\xde\xf5\xd6E\x11\x86\xf8\xe1\x11\x17I\xb2\xb7m\x05"\x1bJs/\xce(\x93ZY\xfb\xe9\x14 ]\xac\xbf\x15JyX\x1f\x18#&\xd7E\xf54\xacep\x87\xde\xdbS\xb4wtR\xafv\xab}y\x1bl\xcb\xdcN\xc6zF\xb7\x15\xd3=v\xc3\xb9\xfd:2\xd38\xf8\x99aXZ\x0b\xbe\xfdX\xf2\'\x8d\x167K\xdct\xb5\n\xc8S\x93\xe8\x99\xcef6P\xb2\xfe\x18x\x86\xf4\xfa\xd3X\x11&\xc8\xe2\xfb\xdb\x8f\x8bG\x87\xf1t&\xfe\x02PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x8b_3\x14\x81\x00\x00\x00\x1a\x01\x00\x00\x0c\x00\x00\x00system/ls.py\x8dNA\n\xc2@\x0c\xbc\xfb\x8a\x90\xd3\xf6\xd0z/\xd6\x8f\x88\x07\xd9\xa6\x1aY6\xcbf\x11\xfc\xbd\xa9(\xa5\xa5\x85\xce!\x0c\x99\xccLx\x80[\xbe+t\x1d\\\xb0\xae\x1f\x14\x12^\xdb\x03\x18z~\xb9\xea\xcbR\xe6X\x1c\x06m!\xb0\x16\x05/\xb1P4"\x03\x1cqq\x04\xa7\x9e3\xf9\x92\xf2\xfb\xbcb\xf8\xcbb\xb2Y\xa7&\n\xbfg6\xea\x01\x9b\xa7pt\xa2\xcd\x18j)\xd3n\xb4U\x86Y\x9c\xd2\xfe$oc\xee\xff\x00PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x9dY\xec\xd7u\x00\x00\x00\xb7\x00\x00\x00\x0c\x00\x00\x00system/md.pym\x8e\xb1\x0e\xc20\x0cD\xf7~\xc5)S\xba\xe4\x03\x90\x98\xf8\x0c\xc4P\x11\x83\x0c$\xae\x1c\x0b\xc1\xdf\xe3\xa8\x0c\xadTO\xf6\xf9\xdd\xe9\xb8\xcc\xa2\x06i\x03\xdf0\xe9\xbd\x1d\x06\xf8\xf4\rG\x04\x84\xf4\x10\xae\xb1\xdfc\xff8\x99\xca3\xb3\xfe%z5Z,\x99\xdfqAf\xe5j1\x94\x8c\xb3\x83t5\xd1\xef%\x8c\xfb\xd4Ii2jk\x14^\x85\rY\\\xaeb\xa0\x0f7K\x9b\x80\x1fPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV>4J\xc6O\x01\x00\x00\xdd\x02\x00\x00\x0e\x00\x00\x00system/peer.pyuQ\xcdn\x830\x0c\xbe\xf3\x14\x16\x17\x82\x84\xe8\xbdZw\xdbm\xd7i\x97J(\n\x86f\n\t\x8aC\xabj\xda\xbb\xcf!\x0c\xba\xb5\xcb!\xc4\xf6\xf7c\x1b=\x8c\xce\x07\xa0+e-v\xa0\x0cJ\xdbt\xda\xa0\x88W3\xcap*\xf7\x19\xf0\xb9\xe8p\x027\xa2\xdd*\x15\x14\xbe(A\x12\xc4\x14\xc3\x96\xa3\x9c\rh\x03\x1c\xe6|\xedQ\xb6\xa2\xccb9\x19`\xdbl\x90\xe5\xc5\xa8\xd1H\x85\xa28\xda\xa3-X\x9ao&\xfdo}y`\x9d\x0c/^\x07\x14\x7f\xac\xcaL\x19I\x04\xaf\xaeO\xf08o\xd3h\xabC\xd3\x08B\xd3UQ\xf8\x90\x8f\x88>/7\xc9X\xaac\x89\x9b\x8d\x9f\x95<\xdb$\xe6@\xfd\r\xc3\xb8\xfe\xe5\xcc\x96\x82\xd3\xd5J/\x7f\xea\xbf\xb6\x9c3x\xf7\xb9\x82\xbej\x8e\xf32\xd3\x1dH\xdf\xd3\xac9\xbf\xd8<\x87\xbc\xfep\xda\x8a\x18\'5\n\xad\x9bx\x8b\xf1\x07\xd6)\xc8\x96\x0e8\xc9\xa3\x8a\x84\xdb\xca\x9c\xe6\xe2\x9c\x1c$k\xa9\xc9{n\xf5\x8d\xd0W\xb3\xee=\xfeF\xb7\xd5\xe7Eq\xf4\x9a\x07\xcc\xd9\xa2\xc7\x16hR\n\x89\xba\xc9\x98k\xcd\xedoX4\x84\xfb\x87\xdcy\xd1\xf0\xa4\xdc0H\xdb>\'\xd6=\xea=n\x99 \x9c\x10\xb8\x8b\x91;r\xdd\xc6\x82\xe0\xe2<\xbb\xa8\xb5\xacnS\xf9\x06PK\x03\x04\n\x03\x00\x00\x00\x00i\xb6\xd0V\x99"\x03b$\x00\x00\x00$\x00\x00\x00\r\x00\x00\x00system/pip.pyos.system(f"pip {\' \' .join(args)}")\nPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV6\xf9\xa3T=\x05\x00\x00\xbe\x12\x00\x00\r\x00\x00\x00system/pkm.py\xa5X[\x8b\xd3@\x14~\xef\xaf\x18\xe6\xc5\x04j\\]P\x08\xac ^@D\x11Q|(\xa5$\x99I;\x9a\xcc\xc4\x99\xb4\xdbv\xd9\xff\xee\x99[\xa6i6\xa9\x97\xc06\xb7\xef\xdc\xbes\x99\xc9\xb2\xba\x11\xb2E\r+~Vt6[W"\xcf*D\xf29\xfc\xa9\x19\xc9\xd1\r\xba\xbb\x87\xb3\x82\x8b\xc5r6s\xf8\xad\xac*\x96\'\x92\xfe\xdaR\xd5\xce\x08-\x11\x11\xb7\xbc\x12\x19y\xc7*\x1a\xc1\xfb9*\xe1\xeaSV\xd38\x9d!8\xfa2\t\xdcJ\xdaJFw\xe7p\x836:U\xb6\xa3+\x92G$w:nY\xbbA\xa2\xa1<\xc2\x85\xe0%[?i~\xd6IQ\xae\xf1\x1c\xdf\xe68F\x99B%@\xed\xe1\xc2J\xc8\xb6n@\xc7\xbc\x8c\x8d\xd6\x8a\xa9v\x955M\xe4\x94\x1eMl\xe6\x920i"\xc5\xf0\x1aT\xc2\xefj\xc3\xd6\x1bl\xdf\x96B"\x82\x187\xb0`e\x0f\x12B%Z-\xbc\x88\x88\r\xc0\x0b0-\xb0\xd7\xe8p\xb0\x12\xb1\x84r\xa2t<\x11N\x9a\x03\xd6\xbe\x9c\x1d\xc7\x04\xec\x03*b@ZSe\x055P\xf0\x0b\xc7\xd6\x06\x10\xb8\x95\x1c)H\t%\xd1\xd1\x86\xb7mH\xd6\x1a\xda\x9c\xceV\x1e\xec\xc5%\x06\xe5\x90\xc1`\xc5\x93\xa9s\x1c\x95\xd6>\xdd\x17\xb4i;t\x97\xaf\x05\xde\xb4m\xa3\xd2\'On\x19/3~\xfd\xfc\xc5\xb3\xe4\xea\xea\xea\x96\xe6\x1b\xa1Z\x08+)D\xad-_\x1b\xf3$7\x1e,Ak\xdf\xe6\xbf*2D\xac\x99\xf1FE\x82W\x8c\xd3\x9bwY\xa5|1\x12\xb6\x8b\xac\xb5F2\xdeF\xf8\x9bf\x8d\xf15\x82S\x96g\x8a&I\x82\xe33\xac\xe9\x83@\xb0{\xea\xbb\xc4e\xd6ZK\xfbE\xd0\xd2\xda\x14N~R7!7\'Gp\xa9\xc4o\\Ki\xb7\xde8\xb7\xd0\xa3;\xad\xec\xfe\x91\xf3\xaf\x7f\xf4\xbbP\x03\xe7>\xcd@\r0t&2\xac\x88\x00\x1d/\x88\x93\xc2\x1fVE8:nj*\xd7\xf4\r+Z\xdd\x84\xfb\x00\n%\x84\xde\x9a\x13\x13\\\x9b\xa3\xe3\x94\xdc\xb5\x87\x86F4NV+\x0e\xb3b\xb5\xbaO\xd1\x1d\xbdwa\xd1JY\xd9\xc0\xed\xffG:^\xfe\xa7-0\x94\x08\xf5\xf7Uni\xafaI>\x83B\xc9\xe4\x1a\xcaIO\x9b\x1d\x95\nb\xc7K$\xe4\xc9\xe3\xc7;\xbc\x1c)\xd7\xcf\x1f>"\xe8\x84\xe4\n\xc7\xe3\x80\xa8\x88\xd1\xb3\xabg\xd7\xe8;\xe3\xefl\xf3\xccaX\xd4\x14I\x18j\xad\x02w\x14\x95;J\xfa\x95N\xab\x9esEE3\xa9\x1d9+\xe6\xfe\x1cuG\x9d1\x1e\x15[))o\xbf\x81\xf2y\x89\x81`0T\x8b\x1dE\xb6t\xf1\xc0\x84\xed(g\xa3\xcf\x9b\xc3b\xc6\xa1\xdd\xab\n\x83a+\x98q\x82*H\xa5\xbe\x89\xd1\xcb\x1b\xf4\xccJk\xf0\xe3C\x87\xeb\\3w\x89u$\xd2\x88\x90\xc3\x03U\x1f\x05\xa17\xda^\xa8\xa3\xb3\xd7n~\xcc:U\x8dh\xa2\xab\xb8\xc7J0z^\xb7\xef\xad\xfb\xd0\xc9\x8e\x04\xdf\xbe\xa1MB\xdc\xf0|b\x124Y\xf13[?4\x08\\\xf8\\\xb4\'\x03\'\xf9I\x0f\xea4E\xfdr9\xb7\xf4VJ!S\xf4:\xe3ZM\xc98\x19\x18t\xd6\x02Q\xa3\x03\x88\xe4\x0b-\xb2\x84\x0c\xcb\n/\xe7\xb8\xad\x1b3\xa7\xd5\x915\xd7NO\xf0\xdc3\x1d4\x8e\x96\x95\xaf\x07\x82\x1e\x1fP_\xeb<\xb4\xdb\x89\x9b\x7f\xa7\xf4!\x95\x13-B\xf2\xd1F\x05%:\xbb\x0b\r^\x8e5\xeb+\xb9\xde\xd6\xe0\x85Jq\xef\xb9\xa95BR\xfd\x03\x15\xdf\xadM\x03\x94\xe9\xc5\xd4\xfc\x02\xae\xaa:\xa4\x1a@]/\xa6\xee\xdcS;\x1d\xe2\x1c\x83\x1b\x97\x02\x05\x08Z@\xb6\xc7c\x85P,\x02\xb5\xa23m\\\x1f\xda\x07\xb3\xfd\x8e\xd7.\x8c\xcc\x00\xed\xe7u:\xb9N+\xb7\xa32\x02\x8bgf\xbf\x11v-\xda\x85HQ\xbdJ\xa98~\x98\x01K\xda\x05\x12\xfc\xb8[\xf8\xe8F\xc9\xf8bs\x00\xc8|\x89J)\xea>!\x0f\xcce\xe7\xc1(\x07\xdd\x1c\x1cNb\'J\xd0\x9d\t\xff\xe9\xf2\x1e\x8f\xd0\xfc\x07V.2m5\xfc;\xd3\x1as\xca\xf3`\xd2\x9eZ=\x1f\xb8\x1a2Q\xcc\xd0!^u\x98\xbca\xc5\x19\xee\xda,\xb6\xd3\xf7\x90\xb5ID\x18\x84z\xd7\x82\x97\xe3\xef\tU\x85\x7f\xcfJ\xe3\x9e\xde\\N;\x80?\t?\xa5\x15x\xbe\xe5\x93+\xba\xa36|\xfc\x84\x85\xdc<\xdaw\xdfC\xe1\x03\xe6x\xf2\xb9s\xf1\xb3\xe4x\xb3\xf7\xfe\x1f/8\x8ep\xf2C@\xa1\x1e\xe33\x02\xbbu\xf8\x0f"\x97b-\xb3Z!7\xbe\xc3~f\x94\x01\x87\x9c\xecc\x87A\x0b\xcb\xech\x13\xfb\xb5]\x05\xa4\xf9\xc0\x83E\x18\xfaf\x97\xb1*\xcb+:\x95\x90?\x99*\x16r\xd9\x197Q\x02p\xd2\xf0\xb6\x01\xe6\x08\xfd\xcf\xdd\x9dg\xea\xf1\xc1mn\xfc\x82\xa9\xf37\x1e\x93[\x14\'v\xb0\x9a\xc1\xcf\x87v\xc3\xf8v\xffH\xf9\x12\x0778\x9cd2*)\x14\xd3\xdf\x12\xf0\x9f\x8cl|e\xf5n\xa7\xfe\x02\xb2\xe5M\\Z5\xa7\x90f\xbf\xec\x81f5\x0e\x85\xd9u\xe9\xe5\x15\xbc\x93\xe9\xea{(\x03\xef\x87"\xa6\xdc\xc6\r\xb9\xb1\x99\xda38\xd8n\xe8\xc4\xc6\xc2UH\xea.\xfe" \x98\x9a.S\xca\xeb\x87+\x9d\xd5\xac(\xa8zpo\xe2>\x84R\x04\xea\x9do\xfe\x19\x12\xa5\x16\xee\xe5\xfc7PK\x03\x04\n\x03\x00\x00\x00\x00\xdd]\xcfV\xf4}G\xe1/\x00\x00\x00/\x00\x00\x00\r\x00\x00\x00system/pwd.pyimport os\nprint(os.getcwd().replace(cdir,"/"))\nPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV.\x8al\xc0\x84\x00\x00\x00\xc6\x00\x00\x00\x10\x00\x00\x00system/python.pye\x8eM\n\x021\x0c\x85\xf7=E`6\xd3\x8d\x07\x10\\y\x01\xc1\x03Hh3N!\xd3\x0cm*x{c@\x10&\x8b\x17\xf2\xf3\x1e_\xd9vi\nI2\x85\x90i\x01\x16\xcc\x8fR\x95\xda\xde\xc8t\x8e\xe7\x00V\x13\xdc\x15\xed\x13+\xf8\x15\x93\x96\x17\xc1\xed\xad\xabT\xe8\xd4{\xb1>z\xa9O\xd0\x95<\x116\xc9\x83\xe9\xeb\xf7\xf9\xf4s\xce,\t\xf9\xe2\xda\xe7\x18C\x98\xe0\x8a\xcc\xee\\F\xb5l\x0bSq\x1a_\xfe\x11\x85#\xe2\x07PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xcc\xf6\xea\xfe\xc1\x00\x00\x00\xa3\x01\x00\x00\x11\x00\x00\x00system/removed.py\x8d\x8d\xcd\x0e\x011\x10\x80\xef\x9eb\xd2\x8bu\xa9\xbb\xe0"\xce\x12\x1e@&\xbb\xdd\xdd\xa1\xdaf\xa6\x84\x88w\xd7\xfd\x11\x04\x899\xb5\x99\xef\xfb\x86J@\xaed2\x804\xcd\x0bf\xa0@\xe9\x9d\'\x975\xffQ\xbbI\x98\x17\x1d0\xd6\xda\x9cI\xa2d\xa5\xc2\x10\xc6\xd7\x06\xb9\xe9pQ\xa3\x94\xe8\xa6!\xd9\x1c\xfc\xc9|B-c\xec\x8f\xdc\xb6\xa6\xaa\xfe\xab\xd9\x91\x9fa1O\x85\x91\xc4\xc0j\xb3d\xf6\x9c\xb4\x05:\xe7#\x94\xe4\n\x08\x98\xef\xb120\xec\x12\xc3>\x10\x98\\L\xe8\xe6\x98\xe7F\xa4<Z{\x81\xeen\x01\xfd\xb5\x84>\xef\x14t\xca^U\xf5\x80\xa7\x81}\xc5x\x98\'\xfc+\xb8nA\x01t@N"Z\x9b\xac^\xd2o\xd2\x1dPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xa1\r\x9e\xce\x9c\x01\x00\x00\x98\x04\x00\x00\x0e\x00\x00\x00system/user.py}S\xbdn\x830\x10\xde\xfb\x14\'&"\xa5Q\x93l( u\xea\x92!\x8a\xd4.\x88\xc1*\x06Y\x02\x83l\xa0\xaa\xaa\xbe{\xefl\x8c\x0b$\xf1\x80\xb9\xbb\xef\xfe\xbe;\xbfk\xae \x06\xba\x9eD\x01L\x95}\xcde\xa7!\x8e!\r*\xa1\xbb \x8b\x9e\x00O\xd1(\x10\x1d\xafAH\xe8\x11~F\x1bZ\xc6\x93\x8b!\xdcLR\xab\x84\xec\xc2"\xa0\xb0\x92\xd5<\x82\x1fr\xdd\xf5\xa3\xfc\x1b\xac\xb1\x17\xa6\xf5W\xa3r\x87mG\xf9\x16\xf6\xfcqv\xb0j\xa8\x08\xe1k\xe0\xd5\xba\x0f\x96\xe7\xd4\x86\x07\xf9`\x01\xd5\x04\x08\x80\x93\xab.\x81\x93K\x9e@\x8a\t2\x93`\xedKu\xc0[/r\x1e\x053\xfd\x0b<\xa3\x9e\xebn\xae\xde\xa3\x9a(\x99k\x0f\xa8\xbd6\xcd\x02{\xa4\x10M\xben\xcd4CC\xf0=2\x99C\xc5e8i6\x90\xc4p\xb4\r\xa3\xcb\xc2\x16[\xdbx&\xc3\x8e\xb5-\x97y\xb8\xb7)\xfbq-\xbcg\xba\xcf\xb6^8d[*\xd4+\x8e\xd9\xc6xN\xdb\x81\x01>\x15g\x1d7a\x9cv\xdb[\x94f\x03\x1a\xacn2\xde\x1e\x9f\xe2u3\xf0\xc7\x13\xb4\x18;\xc4\xe4\xde\xbc\xae\x06\xa4G\x14\x14\xaa\xa9A\x7fk\xda\xa35\xd1cZ\xc7\xf5\x8cf\xcb\xe2\xe1\xdf\xcb\xb8\xfd,0\x8c\x98\xb6\x9e\\\xd0\x97x$\x84?&\xd1\x82%AUh\xfe\xa8\xe5\x94\x82e\xf3\xb5\xb9\xa8\xa6T\xac\xa6\x9a,\xf9B\x96\xa6\xf0\x9aIV\x92@\xaezw\x8f\xa1W\xc7\xfcb\xa3\xf1\x8f\x1eID\x1fd\xc2DY#*j\xde|\x11SU6\xd7\x1c\xe6\xfb\x8d\xc6\xdb\x85\x9b\x95\xf4\x07PK\x03\x04\x14\x03\x00\x00\x00\x00\xd9P\xcfV\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00system_high/PK\x03\x04\x14\x03\x00\x00\x00\x00dR\xcfV\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x18\x00\x00\x00system_high/__pycache__/PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfVHo\x8ad\xcb\x00\x00\x00\xf3\x00\x00\x00/\x00\x00\x00system_high/__pycache__/compile.cpython-311.pycMN;\n\xc2@\x10\xddU\x11\xe3\xa7\xb3\xf2\x066\x8e(h#V\x96\xfe \x07\x90hV\xb3\x90\xdd\x84\xdd\x04M\xa7`\xe5\x05\xbc\x81"^\xc7Bl\xbd\x80`g\xe5$\x04q\x86\xf7\xde\xcc\xbc\x81\x99s\xa5R$\x18\x97\xdb\xc1.\xa3>\xc9_dR}\xd7\x90\x8e\xd82r\xc2\xea\xfa[\xa0\xc4&&\xa9\xd3q\x9d>\x8c\x85\'|\xee\xb2\x89y!\xef\xd8\xfc0P\xa1\x04\xc1ln\xc1\x9a\xcb\xa5%\xdb\x9dn\x0b\xcc\x11\x0c\xf9\\Y\x8a3\r\x03o\x11\n&\x03\r\xd3(p<\t~\xe4r\x19n\xa0\xd5h\xc6@\xf6\xd1HF:\xd2\x01\x133\x87\xaf\x1cH\x8f5\xfc\xe8S\xe8\t\xcf\x0e]\xd6W\xf9\xf8%\x84\xae"\xbd\xb2\x94\xd2;1\xb6\xc6\xae\xb4/m\x93T94\xbePK\x03\x04\n\x03\x00\x00\x00\x00\xdd]\xcfV\xed[\xd2y\x0c\x00\x00\x00\x0c\x00\x00\x00\x16\x00\x00\x00system_high/compile.pycompileOS()\nPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x8b\x83zbN\x00\x00\x00^\x00\x00\x00\x18\x00\x00\x00system_high/reinstall.pyU\xcaM\n\x80 \x10@\xe1\xbd\xa7\x10W\n1\xd7i\x1d)8\x94)\xf3\x03\xd5\xe9\x1bh\xe5\xf6\xbd\x0f\xdb\xe8$\xbe\xf3\xe2\xb9\xaa\xe0\xe9:\xc3^3R\x0c\x00!\xb9\xbf\x025\xa1Rb\x18\x8fT\xbc\xf4\xb6c\xb0\x1d\x06\xa7\xc8Et\xac\xf8n\x94cr\x1fPK\x03\x04\x14\x03\x00\x00\x00\x00e\\\xcfV\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0b\x00\x00\x00system_low/PK\x03\x04\x14\x03\x00\x00\x00\x00\x04\xb6\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17\x00\x00\x00system_low/__pycache__/PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xbf\r\xa7\th\x01\x00\x00\n\x02\x00\x00,\x00\x00\x00system_low/__pycache__/about.cpython-311.pyceR\xcfK\x02A\x14~\xe3\xb6\x9a\x91\x7f@\xb7\xedTJ8\xb2\x0b\x95\x10A\x10\x05Q\x11x\xe8\x18\xeaL9\xe0\xce\xda\xcc\xae\xa6\'\x83N\x9d<\x04\t\x15t\xb2\x9f\x87\xfe\x14\x05\x0f\xe2\xb5\x93\xb7\xc0\x9b\xa7fUL\xf2\xcd\xbc\xef}|\xcc\xfb\xe6\r\xccK$\xb2\x00*\xde\xdb\xb7\xa4\xa2\xea7LEx\\\xfb5\x05\xf7\x10\x00\n\r\xc5>&\x07\x90\xaf!\x024@\xd0\xd2D}\x00\x12P\x8a6\xa3\xccM+O\xc1\x06R^\xe8\x9f\x97>\xab\xce\xdeJ\x82)\x88\x86*\xe1\x93\xb2\x9bc\xdc\xbb2z\xbe>@\xf1\x9e\xdf\xd8\x0b(\xa8\xc4V\xb3Q\xc3L\x98\x96q\xca\xf8^\x9a[\xeb\x1b\xe6\x9a!\x1d\x9b\x1a\x82]\xe4\\i\x08*\xa9(R\x12?\x8ej]\x8d\xb0bW/\x08\xc6\xddn\xa8H\x85d\x0e\x7f\x83\xfe\xd07\x83\x85\xc7\xb1M\tK\xe3\x12\xe3\xe7#3\x9c:\xc2\x87,#\xd2\x82Q\x89w\x9d\xacgS\xeeJ\xec\x0f\xe5p\\(\xe7\xfd\xd1\xb0\x19O\xf8\xa9\xb00\x9e\x16\xcb\xb2t\xa9}\x96wJ8\x9dq<7^(\x0f\xe6\xb7l\x87xy\xba-\x16\xfd\'\xaa\x94T\xc1\x8f\x86\x10\xea\x80V\xd5\xae\xf5\x1b\xbd\xaaw@A3\xb8Y[\xa9/\xdf\xc5\x14Q\xbb^z\xbe|\xac\x8c\xf8\xeb\xfe\xd7\xce\xe7\xc1\x88\xb7 \xd9\x86d\x13\x92\xe3&\xb3\x05V\x1b\xac&X\x7f\x86\xc3%\xfc/\xf0\x0bPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfVtKylC\x04\x00\x00D\x0b\x00\x00+\x00\x00\x00system_low/__pycache__/area.cpython-311.pyc\xcdS\xdbk\xd3`\x14\xff\xd2|1\xe9nZ\x9dn^V#\xeb\xd4\xcdmu\x8a\neV\xd4UEtxC\xf0:b\xf3\xd9F\xdb\xb4$\xe9\xba\xe6\xa9\x8aB\x06>tR\xb0\xe2\x84=yA\xf0\x7f\xf0\xbe\xc7\x04\xf2P\xf2$\xf8\xb4\xb7\x81/\xe2\x93_\xd2t\xb3\xeb\xd4\xfa0\xf4\xbb\xf7\x9c\xdf\xf9\xf5\x9c\xdfi\x9f\xb7\xb66\x01<\xa2\xca8\xff\x14\x02\xf0\x05\xfc4h\xf7\xfe\xba\x93\x02\xe0\x11\xe0\x01O$\xc0e\x80\x08\xde\x13#n{l\x97\xb4\xdf\x03\x90\xe7\x19~\xbdZ\x08#\x00\xb6\x91<\xf9\x8c\xc0Vb\xd1\xfaK$l\x04\xc9\x13\xe7\x01\xefA\xc48\x90\xeec?DDm\x14O\xb9\x19\x8d{\xedx\ng\xb9j\xe3B|-\xd6\xf6\r\xe3\xdb\xc5\xd1\xbf\xc1\xd1.\x8e\xac\xe5\xab\x8dR\xa9jdm\xbe\xdd\x00\xad\n\x00\xa9\xf72m3\xe0\xcd \xba\x16w\xcb[}=\x01<\xf6>\x01O\xebt\xbb\x84\xb9.\xd3Wh\xcc\xe8\xbe\xb2D\x16L\x90\x97@\x96\xc0yx\x1b\xe8ES#\n;\xc8\xe6F\x90N&^\xa7\x17\xdao{\x91[\x99^\xf0-v\xd4\xcf\xfa\xffW\x1dim\xa0#m\x8d\xe8\xec W7\x82t2iu:\x12_\xb6#\xb4\x9b\xd1%o\xe5\xd7\x0cn5\xb9\xae?v\x88\xa7U\xe6_*\xfaKe\xd64\xa2\x8c\x83\xf4U\x90K\xack\x97\xb5\xae[\xd6\xda\xde\xc8w\xd9\xd9\xf7\xae\x9f\xb3?\x8c\xaa\x9e\x01I\xed\xe0$\xc4\xb1\x03\x12;|\x83\x93Q\x98\x1d\x8e#!\x16W\xc2\xea\xc6sH\xc9H\xa2\\u\xf4-\xb8\xe6H\x1c=G\xd8\x87\xdd1\xd5\x13b1\x95R\xa5R\xea\xa8\xb6V\xa9\x86\x82{0O\x1da\xac\x92\xdd\xe7C\x98&\xaa\xaeY\xc8H\xe2x!#\x87\xd5\xdd\xd5x%\x8eX\xc7\x9b\xba\xc9rlT\x90\xa2\t\xc4\xdal<\x9b\x12YA\x91\xd9J\x88\xda\xec\xa0\xaepRL\xbe\xa6R\xf6\x15R},\x1e\x03R\x88\x95PT\xe1\xc4X\x02\xa9k\x1c\x93\x12b\x15I\xa8X\xda\x1cK4\xe4\x92\xf76[0\xc9)q\x0b\xda\x1c\x16\xc9\x0b\xe3\x16\x95\x96\x04Q\xb1\xc8\x04\x12-\xeaf"\xc5)\x9672\x11EiEH\x89\x16\x81,\xa8\xe4\xd2\xc8b\xc6\xc6D.\x89\xc6\xc6,OZx\t\xbe\xda\x15~\xe7\x82RF\x0c&\x11/p\xc1\xac \xde\xe4\xc4\xbd\xfb\x0f\xec\t\x9e?\x1d<%\xdc\x908I@rp$\x15\xcd$\x91\xa8\xc8\xc139%\x9e\x12\x83\xe9\\B\x103\x13\xc1=\x83\xbb\xed\x8d\xcf4v8&9\'+(9\x96He\x83v\xc5\x83\xe9\xdcwf8\x99\xe23\t\x14\x96\xda\xed\x8e\xe3-\xbf\xc6\r\x9b\'\t\x82(\x83\xe6\xbc3\xcb$\xad\x8dh\xfb\xef\x86\xf3\xe12\xa4\xf3G\xefD\xeeE\xf2\x912\xf4\xe6#zS\xb7\x01\x03&\x0c\xe80P\xef\xeb1\xe0v\x13n\xd7\xe1\xf6E\x9f3\xcb\x94W\xbb\x90\xbf\x9a\xbfZ\x88\x16\xa2\xa5\xc0\x94P\x14f\x86\x1e\x8a\x05q\xdeCQ}\xe5\xb5\x1d\x85\x9e\x12,\x9d\x9d\xa6\xa7\x06\x8b\x83\x1a\xd4\xceN\xd2\xe5u\x9d\x85}\xa5\xf6\x127\xdd1\x15.\x86\xb1\x91\x9bd\xcaL\xabFi|a\xe8A\xac\xc0\x97\x86\x8a\xb1\xc9\x94\xc1\xf8M\xc6\xafW\xd7\xb7rs\xfb< \xa8\xbe\xc5\xc3\t*\xb4\xe3\xc9Mu\x14;L\xdf6\xbdm\'^3g+\xb7\xc1\xf4\x9aL\xaf\xbe\xdc\xfa\x86\xc7<\x899\xf0\xfd\x19\xd7\xc0k\x17\xef^\xcf_\xff;Uv\x19\xb0\xdf\x84\xfd:\xec_QU\xa2\x85\x91\x92\xafx|2Y\x1a\x99\xf1M\x1f7\xda\xba\r&`2\x01\xbd\xba\xfe\x914[\x0c\xd8e\xc2.\x1dv\xd5\xfb\x86\rx\xd0\x84\x07ux\xb0qiH7m\x8d\x7f\x10+\xad\xc7S\x999<\x9d}\xec\x9f\xf6\xbf\xf0\x19\x1b\xfb\x8c\xb6]\x06\xd3o2\xfdzu\xad\\\xdd\xf3\xab\x00\xc5\xd4\x94\xa4\r\x18\xb0\xd3\x84\x9d:\xec\\Z\xad\xb6\xe3\xce\xe8\xbd\xd1\xfc\xa8[z\x97\x01\xfd&\xf4\xeb\xd0_\xa7\x93k\xd8d\xc0\xcd&\xdc\xac\xc3\xcdK\xc4\x91O\xe2\xff\xed\x9b\r\x87=G6\x81\xb7\x9b\xa8\xa3\x0c\xf9v\xab\xff(I\xbe#\xed\xf7\xfb-\x87\xa9H7\xf8\xd0M\x1d\xf3\x91\x1fv\xfa\x8f\xb5\x90\x1f[\xec\xf7\xa7\x9e\x9e\x13-`\xb6\x85:\x11"g}\xfe\x13\xfb\xc8\xd9}\xf6\xfb\x07PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xe2O\x82:\x07\x01\x00\x00]\x01\x00\x00-\x00\x00\x00system_low/__pycache__/author.cpython-311.pycmN\xcdJ\xc3@\x10\x9eM\x88\x8a\xd0w\x08x*\x86L\xa9\xa0\x08\xe2\xa9xR\x11z\xf0(\xdb\xec\x8a\x0b\xc9&\xec&\xa6\xf1T\xc1w\xf0\r*"\xf8,\x15<\x94^}\x01\xa1\xb7\xe2\xc1Y-\xd5Cg\x98o\x86o\xbe\xf9yj\xb5\xb6\x81\xec\xf5k(\x0e)\x7f\xc0?\xf3\x97y\xde#x\x04\x0f$\x8c\xa9zY\t\x98\xe3\x98\x801#\x96\xad\xd8\xb5J\xc1\xfa\xd0\xf6\xeev.\x9a\xf2F\xe9j\x18\xd6\xdc\x86\x89\x91\xbc\x94"\x1c4\xe1\xa5\xd2\'\\\xef\xed\x1ft\xe3\xf3\xb67\xf3\x85\xba\x9d\x05\x85Q\xba|\x86\xb9[\xb1H\xd0T\x1a3)\x14\xc7Z\xe9\xeb_5\xf6\xcf\xf0T\r\x0c7JZ\xec\xe5I\x95I]Ztwr\x8dE\x93\xbak\xd8\x8d;.\x08\x8b\xe5\x03h\x1b[\xca\xec*\xcdk\xe4\x15\x89M\\4\x8b\xad\xa3,\x17U*\x8f\xcd\xa6{\x9b\xc2v\x08>}\xc6\xd8\x14\xfc\x91\x7f\x1f<\x04\xa3`\n\x04\x93\x8d\xdd7\x88\xde!\x9a@\xf4\xd7\xfbq\x13\xd0\xd07PK\x03\x04\x14\x03\x00\x00\x08\x00\xfa\xb5\xd0V\xf3J\x0b\x1a\xe6\x01\x00\x00&\x03\x00\x00*\x00\x00\x00system_low/__pycache__/cat.cpython-311.pyc\x8dO\xbfo\xd3@\x14~g\x9f\xf3\x0b9\x11\x08\x14\xd4\xa1\x8a\xcaT\x82rP\x04t\xa8"U$\x1b\xa0J]h\x170\xf1\x99\x18%\xb6\xb1\x1d\xd2t\n\x12\x83\x13Ej7\xd6JHA\xa8\x7f\x03C\xff\x83T\xea`yea`\x08*C\x94\x89wi\xa0%\x80\xdawz\xdf\xdd\xfb\xbe\xf7\xeb>\xaaj\n\xd0\x16\xbeu\xf5\xcfx\x7f\x813\x16\x9b\xde\xc7\x0b\x04\xe0=pp\x9f\xea\xb0\x87\xef\xbf\x0c\xb5>\xf2\xfb\xbf\xb5M\x90\x80K\xb3\xec=\xd8\x94\x91\xa7\\\xdeS\xfe\xd5\xa5\x8f\xbe\xff+\x98\xa9%\xa0\x13q\xfa\x12\xb2\xd2Yv\x1dn\xc0\x1d\xf0hS\xda\x927\xa0I\x08l \x7f\xa2\xe0\xb4\xd8I\xd7\xd3\n\xb1\x81.\xcdt\xff\x7f\xa6|\x91L1k\x91\x8eI\xee\xc9v\xaa\xa2\xf9\xb9\x15\xc3\xac\xf1\xe2\xf6\xfc\x9akZ\xbe\x97\xf3\xab<W\xb1-\x9f\x8b\xc06\xa6ra1\x1eQ\xcd}\xe9E\xf4\x95mZ\x11\xb5\x1dnE\xc4\x88\x14G\x94E\xd4\xe5\x9a\x1e\xc9\xba\xf9\xe6\x13\x1c\x8b9\xe3\xe7\xccmX\xac\xceuScM\xd324\xeb\xee\xfd\x07Kl\xfd1{d\xbep5\xd7\xe4\x1e+\xd9\x95F]\x0cbk-\xbfj[\xcci\xd5L\xab\xb1\xc5\x96\n\xb7\x85#:(L(\xaf\xe5\xf9\xbc\xfe\xacf7\x19n]pZ\xe3\xc4J\xdd\xd6\x1b\xb8\x9c\xab\x8a\x8f\xa1{_\x11\x862!$\x94\xe3CH\x92Tx)\xbd\xb3\xdc]\xde-u\x8a\xbdb\xbb\x14&\xd5\xe0j\xa0w\xe6zsC \xca\xf5\xdd\xd7aB\r\x94@\xdb1\xbaF\xa7\xda\xabv2\xbdL\x90\x19\xca\xa8a\xc2\x14\xbe\x0b\xf81\t\xcf\x87\xd1htNV\x0c\x94D\xfb\xe1\xdb\xf2\xbbr\xbb\x1c\xd2d\xbb\x1c\xdc:\xa4\xd9#\x9a\x1d\xd0lH\xe3\x7fH\x83\xd4\xcdC\x9a?\xa2\xf9\x01\xcd\x9fj\x93\xe3]\xc6\xcf~\x98_M\xcb\x07i\xbaz%~p\x8d \xfe\x04PK\x03\x04\x14\x03\x00\x00\x08\x00\xe5]\xcfV\xed\xd8\xc1\x13\xc6\x00\x00\x00\xe8\x00\x00\x00*\x00\x00\x00system_low/__pycache__/cls.cpython-311.pycMN\xbd\n\xc2@\x0c\xbe\xb3\xfe!\xb899\xba\xb9\x18Q\xd0E\x9c\x1cU\x84>\x80\xd6\xf6\xc4\x83\xf6Z\xeeZj\xb7\nN\xbe\x80o\xa0\x88/$\xae\xae\x0eB\xb7N\xa6E\xc4\x84|_\xf2}\x81\xe4R\xaf\xd7\x08F\xebu\xb4*\xc8O\xf2\x17\x85/\'M\x84\x13\x8e\x8c\x9c\xb1\xbb\xfd\x16(\xb1\x88N\xdat\xde\xa6\x0f\xcd\xb4\xd5\x95$\x99\x9c\xae@\x06\x02\x1cfq\x03B.6\x86\xe8\x0f\x86=\xd0g0\xe5kiH\xce\x14L\\3p\x98\xf0\x15,"\x7f\xeb\n\xf0"\x9b\x8b`\x07\xbdN7+D\x0f\x8d\\R\x91\xf2\x99\xb3\xb4\xdd\x10\xf0J\xc7\x8b\xd2\xea\xc8q\xad\xc0fcY\xce\xfe\xc0R\r\x84\xb7F)\xbd\x13-\xd6\xf6\xa5C)\xceS\x16\xd1\xf8\x00PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xfc\x1e.\xaaK\x01\x00\x00\xd3\x01\x00\x00+\x00\x00\x00system_low/__pycache__/echo.cpython-311.pycmO\xbfK\xc3@\x14\xbe$\'\xdah\xf7,-\x01\x97\xd6bO*(Bi\x17\xbb\xa9\x08\x1d\x1c%6g{\x9a\\\xc2\xe5B\x9b\x0eZ\x1cD\\\xec\xe6\xea\xa4\x88\xffL\x02\x19J\'\xc1\x7f@\xe8\xd6\xc9K\xda\x82T?\xde\x0f\xde\xf7\xdd\xfb\xb8\xf7\x96\xcd\xaa@\xe0\xde\xbe5oD\xff\x02\xbf\xb02\xef\x93Dy\x06\x18\xb4\xc1\xb5\x9c\x10L\x93\x01\x96L\xf0*\x01\xf0!r\x06\t\xa4\xac\xb4\xcc\x9aJs\xa6\xc8/b\xfb/\xf0\x92\xcf\x7f\xfbE\xd8_o\xb4:\x8e^\xe5\xb8\xc7k\xfd|2`o>\xea\xdc\xd1y\x07\xeb\x1c3\x9bP\xc3*O%\xfd\xa4\xa8\x8c3\x06k\xfb6\xa6\xdc\x1b\xaf\xb8\x8cP>\x86W\x0e\xa1\xef`\x928O\r\xc4|\x8all\x12\x03u\t\xbd4\xe8\xee\xde~\x055\x8f\xd1\x11\xb9`\x06#\xd8C\x87Nk\xe6\x80N\x03\xdeq(r\x03\x8bP\xbf\x87*\xe5\x9d$Eu\x85\x90R^\xe0ql\x9f[N\x17a\xf1\xbd\xb2\x1bL\xd7\xaa\xb6c\xfa\x16\xae\xb1Lr\x8bH\xefL\x94oE\x92\xa4\x91\xb21\x94\xef\xea\x83\xfa\x08f\x06\x8d\x87\xed\x08j1\xd4B\xa8\xa5s\xa8nE\xb0\x14\xc3R\xb8\x88\xcf\xf4\xd9\xe6S\xe1\xb10<\x88\xd4\\\xac\xe6"\x98\x8fa>\\\x04[\x15\xde?PK\x03\x04\x14\x03\x00\x00\x08\x00\x04\xb6\xd0V3\x80\xa5\xa1\xc6\x00\x00\x00\xea\x00\x00\x00+\x00\x00\x00system_low/__pycache__/exit.cpython-311.pycMN\xbb\n\xc2@\x10\xbc\xd3\x10E\xb0\xb3\xb2\xb4\xb3qEA\x1b\xb1\xb2T\x11\xfc\x00\x89\xe6\xc4\x83\xe4\x12\xef\x81\xa6S\xb0\xf2\x07\xfc\x03E\xfc!\xb1\xb5\xb5\x10\xd2\xa5r\x13D\xdcefvg\xb6\xd8K\xb9\\"X\xb5\xd7\xd1-\xa0>\xc9_\xe5\xbe\x1aW\x91N\xb82r\xc6\xe9\xf6;\xa0\xc4%SR\xa7\xe3:}Xk\xc3\xf5\x95\xc4\xa9\x9f8 \x8d\x00\x9f\xb9\xdc\x81\r\x17KG\xb4;\xdd\x16LG0\xe4s\xe9H\xce\x14\x0c\x82\x85\xf1\x99\xd0\n&\x91^\x05\x02\xc2\xc8\xe3\xc2l\xa1\xd5h\xa6@\x0e1\xc8,\x15)\xcd\xfc\x99\x17l\x80m\xb9n\x84QR\xec\xf9\x81k<\xd6\x97v\xfa\tBU\x90\xdeyJ\xe9\x9dX;ko\x1f\xec]\xd6\xd2\xc2\xe0\x03PK\x03\x04\x14\x03\x00\x00\x08\x00\x10\xb1\xd0V\xc7\xb9\xa7~\x9d\x02\x00\x00.\x04\x00\x00+\x00\x00\x00system_low/__pycache__/help.cpython-311.pyc\x8dSOK\x1bA\x14\x9f\xd9\xd9\xdd\xfc3\x85\x82i\xed\xc5&\xd5C<\xe8\x06\x85\x1a\x8a\r\xd4\xa6P\xd0\x16Az\x11D\xd6\xec$\xae\xdd\xecng7\xd5\x88\x95\xb5X\x88\x92b<\xd5\xa3\'[\xb1\x07?J\x16\xf6\x10\xf6\xda\x93\xd0\x83\xe0\xcdSg6Vc\xb0\xc5\x99y\xefe\xde{\xf3\xde\xef\xbd\x97\xfd\x1e\x8fG\x01]O~\xef(!\x08\xc0/\xd0\xb1B\x97\xf2|\x99Z\xbe\x01\x0e`F\x10s\x87\xf4~L\xa9\xbd\x14P\x82kT\xde\xd4\xce!\xea\xcb\x1f\xd2_\xc7W\x01!{/(\xb0\xedy\xad\xfd\x87\xa7\x88QW&\xee\xbd\xc0$\xc9+h\x8by\x84\x14\xfev\xbfCD\xef\xe8\xef=\x0f\xda\xd1\xaf\xb1a\x94\x07\xf3\xc9\xb9p\x80G8\x88\x80[\x16\x0e\xdf\x8c\xda\x8d\xba\x9e\xd2\xfb\xff\xf7\xbe\x1b\xd5]\xaaV\xc4Y0\x14\xf2E\xcd(\x19\xc5\xe2Z\xcf\x0c1JD.\'\xa7U\xcb>e\x93*\xc0\x8e\x0c"%V\xe4\xf9(`\x03*\x81u0\xdf\xfb\t\xda\x1d.\xebp\x1d*\x80\x8d\xe7\x0b\xf7\xe8J\xbb\xc7\xd5\x134\x11$\xf45\x15>\xd2,{\x88\xf3\xb9\x91\x8c\x0fU\x8b\xa3\xcad\xf2B\x96HE\x97\xcaXQeiE\xd5\x8b\xb2>\xf6t|T\x9a}#M\xab\x8bD&*\xb6\xa4\xbcQ\xa8\x94\xb1n[\xd2L\xd5^2t\xc9\xacj\xaa^Y\x95FG2\x8c(7\xa9!PYU\xcb\xc6\xe5\x05\xcdX\x91\x96\xb0f\x8e\x98\xd5\x8b\xe8\x84F\x0b+\x18e3G"\x97\x05Y\x83\x949\xa0\x19\xcb\xb6\xcf\xfe\x8b\xaf/\x1b\xb0\x91jL\xee\r6\xc4\xfa\xd4\x95\xe1\x9cUr\xca\xd8\x05L\xbe\x1d\x8a\xfa\xa2e\x10\x1b+\xfe\x03\x16\x94\xe6\x91\x15yQ\xc3\x0bf\xbb\x87\x96\x1f+T\x08\xa1`\xdfY\x98\x10\xf6G\xf2\x91\xa2~\xf4\x05\x93\xa8\xbaM{\x80u_ \xb2^\xc2>\xafR\xa4>\xbfl\xa8\xfa\x11 \xac\xef$\xcc\xf2\x84\'\xca\x86R\xd1p\x8e<d\xe3bh\xd9\x17s\x86 \x84-\xb1\xc7)6\xe3\x03\xf4\x1cL\xb9\xf1\x8c\x17\xcf\x9c\xbc>y\xe6\xc6\x9f\xbbb\xce\x13s\x0ej\x01\xe4\xa0MaKp\x84\x16\xa0\xcc\xd1]\x90\xf0@\xa2\t\x12\x9d&$:c\x8e\xb5\x99\xdd\xca\xd6\xc8\xe7\x9c\x93k\x05\xd5\x1e$\xe8\xfe\xf0c\x80\xee\xc2Q\xfag\xfad\xd2M\x8d{\xa9qjrcY/\x96uf[\xf7{\xcf\x00\x14\x1f\x07\xac\xd6\xdb\x8a\xdc\xab%j\xd6\xee\xea\xce\xea>\xbf\xbdQ\xdfp#\xfd^\xa4\xbf\x19\x9c3\xc4\x1cE D\x9dW\xb5\x81\xdd\xf4N\xba1\xb6=\\\x1fv\xf9>\x8f\xefk\xf2}\xd7\x88\x82\x1d4\xe1\x0fPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xc7L\\\xed\xc6\x00\x00\x00\xf7\x00\x00\x00+\x00\x00\x00system_low/__pycache__/idle.cpython-311.pycUM\xb1\x0e\x01A\x10\xdd=\t"hD|\x83\xe6FHhD\xa5D$:\x8d\x1c\xbbb\x93\xdd\xbd\xcb\xee]\xb8J\xe7\x17|\x82\xf8\x1b\xa5hU:\x89NeV\xae\xe0e\xde{\x99y\x93\xbcS\xa5R"\x88\x83\xda\xb3:\xfa\x9d\xfc\xc0\xcb\xfcUE9\x12F\x18\x95dN\x19\x9d\x91\xa6\xf7p\xc9\xa4\xe9\xdd\xca\x82I.\xc5\xd2w~+d\xdb\x99\xbc\xdc\xc3;\x00\x93hP\x9c\x89\x00\xb6B\xaf\x03\xdd\xe9\xf6\xda0\x1b\xc3H,M`\x04\xb70\x0cW\x89\xe2:\xb60M\xe3M\xa8!J\xa5\xd0\xc9\x0e\xda~\xcb\x115\xc2\xe0{\xb2\xa9\x8d\xb9Z\xc8p\x0b\xae\xc9\x8f\xd2w\xb1\xafB\x96H>0El\xa4H\xdb@y\xe6(\xa5WR\xbb\xfc\x8f\xc9c\xf6\x01PK\x03\x04\x14\x03\x00\x00\x08\x00\xe6]\xcfV$\xb1r\x10\xa8\x06\x00\x00\xcc\x0f\x00\x00,\x00\x00\x00system_low/__pycache__/initd.cpython-311.pyc\xadTI\x88\xd3P\x18~i^\xda\xa4\xab\xd5q\x197\xea2\xe2\xc2L\xdd\xad[ep_q=X\x15\x89\xcdS\xa36\xa9i\xb5\xb5\x07\x19E1\x8a`\x15\xc1\x82\nU\\\x10A\xc4\x937\x11\x17\\\x0e&\x92C\xc9I\xf0$x\x18\xd1\x83x\xf2O\xd2\xba\xd4\x8cV4y\xf9\xde\xfb\x97\xf7/\xef\xff_n\x86B~\x04\xcf\xe8\xf7\xa7\x84\xf5^\x84\xde\xa2\x1f\x1e_}\xfex\x07$\x17\x90\x80\x04j\x1fJ93\x95\xa2\x88G\xf0\xec\xa2\xf6z,\x15e\x17\x87<\x88\xd0\x02M\xf0\x1e\xa6a\xe0"\x12\xf0e\xfa\x06\x85\xd0m\xf8\x9cg\x06JyA\xd3G\xbc\x04\xdf\xf0\x80\x04>\xe7\xa1\xc0\xae\xf5\xfe\xca\xdd\x80\xc6\xa0)(\x87\x0b\x9e"\xbd\x19\x15(\nm\x06~CB\xd8\xb1H\x19\x93\xe2\xc0\xaa\x1f>jO\xa0\xb1\xf7\x06|\xb7\xbf\xa5\xf3s\x1c`\x03\xf6\xa7\xb8-\x1cX\xa9\xaf\nT\x01\xd9\x1e\xac\xdc\x98o\xb9\xcd\x04\xabA\xc7\xd6\xf7\xdd\x967\xc1\xdbl\xb3OM_+\x9aV$\xe0\x99m\xc13\xd7\x8a=[\xd3\xdf\x8a\xa6}\x06,\xf1\x1cD\xca+\x88\x00\xb57D\xc0\xad\xc7\xf2\xa8\xf5\xfa\x12o5\x84\\\x9e\x9f\xbd\xa6\xc2\xbbP*"\x04\xaa\xfd\xdct!\x8a\xa0@\x1d\xf7\xb4\xf7Q\xbf\x94\x87\x84\x17\xa1m\xc3RQ\xe2!\xd1\x83\x942\x90D\xaa\xfd]-E\x9bO\xe0\xf4p\xae\x8f^\x93\x02\xee\x9d\xd6W\xeeB\xc8\xb1\xd0\x94\xfd\x00\xd78"N\x1c\xff\xd6\xef\x02cU\xa9L)\xb8\xa9NL\xbdN\x9f\x89\xa7\xda\xe6\xe6_@.\x9d0\x90`!\xdcw\r\x9c\x1d\xdfs\xbe\xeci\x8a\xf6/n}\xab]A\xc2\xd5A\xee\xf1\xb7\x1agk\xff\x95\xffT\xeb\xc1\xae\xb1F\xfa\x884\xfcs\xa4\xff\xa3#\xa0\x0f\xfa}\xfbc\x0c\xae\xd74\xfak\xfc.V\xfb\xfek\xf4o\xe5\xafak\x0ehY\xb3\xcd\xd1l\xe2\x0et\xe5\x0er\xe5\x0en\xc5\x97\x95\xd7\x84!\xef,bM\xc9\xdb\xd9)Jb\xbe\xc4\xec\x963$^\xf2\xc5-\xaaK(1\x9d\x9d\xbc \x94\xda2\xbc(\xc5\xeculKZ\xcedxI\xd8V\x9a\xd2-\x08\xb9X~7\x89\xd5Y\xb1\xbcl\x93\xb9<\xaf\xe4c\xf2N\x9bp,\xc5v\x8a\xfbHW\x89\xed\xecTHF>HJC,\xbe\x10k\xd0?\x98\x1d\xb7\xde\xe6\xe4b\xfc7\xbb;\x159\xf3\xcdX,\x97V\xc4l\xfe\x0b\x15{g\xa5hR\x85R\xa4\xc9\xd8\x17\xcao\xa5tP$\x85\x12\x97\xe6\xf31\'\xad\xa0\xa3\xb6\x85Wv\xe5\xb6\x95\xe2\x0e%\x82#\xa9n\xf8P.O,G\xb0\x03\xd8\xca\x01)&KN6\x07\xb2]\xa5!\xce!\xcd\xb1\x04\xb9\x1fC)\x8dp|\xcd\x89\xe5v\xcb\x05\xfbH~\x12\x8f\xb7OnN\x0c\x00\x9c\xfdpZ\xbfhNn\xa4\x00NZ:\x85\tCL\x1a\xc26\xb9\xbc\xc2\xa7\xc9\x0e>\xbd\xd7\xc4Vz&\x96\xb3D2\x03\xe9\x03\x8aB\xa4\xfc\xa6\x1cQL\xf6\x00\xa0\xc4g\x88I\xed4\xfd\x90\xc4v\xc7\x86\xc9-.\xa6I6/\xca\x92I\x11\x93\xc9*\xa2\x947\xfd;e%\xc3\xe7\xb7\x93b\xda\xa4\x05\xf1\xa0\xc9)\x84\x17\xf6\x89\x12\xc9\x99\x94`RE\x13\xef\x91E\xd8!\x9a^>\x0b\xce\x04\xd3_P\xc4<qT\xe8\xac\x9c5\xb1\xd57\xa6W\x94\xc0q\xdedl\xf1-\xf4\xd1\xea\xb9/;\xe2\x10A<C\x04\x91\x8f\x17Di\'/M\x9b9kj|\xc3\xea\xf8*q\x87\xc2+"\xc9\xc5\x17\xc9\xe9\x03\x19\x08?\x17_{(\xbf[\x96\xe2\xd9C`\xfd@1>\xb5k\xb2\xf5\x01fA`\xb3\x9c\xe2m\xdf\'\x17\x9c\xc2ve\x0f}a\xe7ed\xe1\xc0>\x92TF[=\x0f_\xae\x08\xd7\xbd\x97\xa6(\xaa\x86\xfc=\xf6[C\xfd\xb4\xc6\xa8\xd1>u\x99:\xe75=P\xa3\x07\xf6z03\xae\x16\x8a\xaa\x1b\xb5\xfe\xb3*\x93\x8c\xa1]0;C\x0f%\x8cP\xa2\x17Q\xdc\xb8\xfb\xdd\xb5\xe0 uEy\x7fe\x98\x1e\xec0\x82\x1dZ\xb0\xa3\x97\x06\x01H\xeb\xf0\xc1\x82O6\xf9g\xf8\xfc\xf9\xf3\x1f\x14\xde\x04\xda`\xc1\x8c\xfb\x0e56\xa42Zx\xb4*\x1a\xe1\xd1zx\xac\x11\x1e\xab\xb3\x1d\x06\xdb\xa1\xb9\x8d\xcf\x96\x0b\x1a\xb6\xc1\xfc\x86\xe1\xd4]\xea\xe6\xd7\xcc \x8d\x19T\xc3\xbe\x9e\x85G\x16\x1f[\xdc\xb3\xb8\x86\xb9\x9e\xc5\x9a?\xa6\xe3Q\x06\x1e\xa5\xe1Q\xbf\xca\xe6\xeb8i\xe0\xa4\x86\x93\xdfe\xf6[\x03\x9b{\xd4\xad\xaf\x99v\x8di\xffu\xdfX\x1dw\x18\xb8C\xc3\x1d\xbf\xca\xa6\xeax\x9a\x81\xa7ix\xda/6#\xe5\xe9\x1a3\x18FeQ5zii\xb5\xf4z\xf8\x14m\xf8\x94\x1a\x17R\xdb\xb4\xf0\xb4\xf2^c\xd0D\x98\x9d\xa1s\xd3\rnz/\xf22\xc3\xefS5\x7f\xe0\xcc\xa4S\x93Nv\x9e\xeeT\x81\x08\x02D\xfa\x9f)\x9e*Vpe]e}e\xfd%V\x8f\x8c2"\xa3T\\\x8b\xf6\xefE\x1en\xb8\rjwm\xc0\xe0\xca\x94\xf2\xec\xf2\xecZ\xbf\xe8\x05\xf6\x1c[\x89\x9e\r\x9c\x0f\x94\x03\x9f{\x19K\x89\xf32\xa0\xd9\x80\x0f\x16|\xb2\xc9\xdf\x02\x9c\xba\xab,\x8c\xfca\x97T\xee.\xd4\xb9\x84\xc1%\xacB\x0f\x81fc\xb93\xc1S\xc1\xf2\xba\x93\x91\xd3\x115b\xd5q\x08\x88\xea\xf0\xc1\x82O6\xf9g\x80@~\xaf\xf0\x86\t\x96q\xcf\xf6#\xdb+m\x15\xfe\xd2\xe0\xea\xd2\xd7\xed\x93\xb4\xf6I5\xcc\x9eXvt\x99\xba\xee\xc8\xcac+{V\x02\xd9\xb3H\x1d\xa6\r\x9cU\xcd\xdd,^-\xde\xc5W\x0e_;\x0c$\x0c\x1d\'\x0c\x9c\xd0p\xe2\xf7e\xf20c\x9a\xcad\xa5\xc9\x9eb\xcb\xd1\xf2\xb4\x0b\x89s\x89\xca\xa2\xb3\xc9\xf3I\x9d\x1dm\xb0\xa35vt/\x03;`[\x1d>X\xf0\xc9&\x7f\x0b\x90\xb0\xab\xcc\xfb\xe7\x93\x1f\xe9\x9c\xbc\xef\x94\xaf\x8c/p\xe7\xb8\xca\xa8\xb3\xc1\xf3A\x9d\x1da\xb0#4v\x84U\x86\x91\xa0W\x87\x0f\x16|\xb2\xc9?\x03D\xf5{\x05\xeb\x8e\xeeVS\xaf\xed\xee\xffv\xda\xc9\xea0c\xd4\x0c\x98\x9d\xa1\xe3\x05\x06^\xa05\xc6\x9b\xa6\xab\xa5v\xe9\xb8\xdd\xc0\xed\x1av\xb9\x91su<\xcf\xc0\xf34<\xefw\xb7\xb5\xce\x98\xa0\xe3\x89\x06\x9e\xa8\xe1\x89u\xc6t\x1d\xcf0\xf0\x0c\r\xcf\xa83\xe6\xe9x\xbe\x81\xe7kx~\xd3%\xce\xf5\xc0\x1f\xf8l[w\x10]\x0f-\xa0\xef\x05`\xf1\x00w\xd3\xbe\x874\r\xcb\x87^\xcaZ\xfb\xecu\x90\xe9\x9eN?\x8c\x0e\xe9\x8e\xd3\x0f\xe3\xd6\xfa\xf1\xc0\xee\xfe\x8b\xa7\xd3O\xa6\xe3\xc5\t\xdf\x93\xb9\x14\xe0\xd3\xb6AKf\xd1Og\xe1%s}O\x93\x14\xe0\xb3Xr\xf9D\xfa\xf9D\xbc\xbc\xcb\xf7|\n\x05\xf8\xc2?a%\xa2_"\xbc\x12\xfb^\xfa(\xc0\xafPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x05\x0f\xea\x86\xee\x00\x00\x00\x1e\x01\x00\x00+\x00\x00\x00system_low/__pycache__/lock.cpython-311.pycMN\xbbJ\xc4P\x10\x9d\xbb\x01\t\xc6\xfd\x05q\x11\x84mvd\x05m\xc4\xca\xce\x07B\xb0\x96\x98\x8c\xee\xd5\xfb\x08\xf7\xe6\xb2\xa6\xd2\xd2?\xf0\x0f\x14\xf1g\x14\xb6\x90\xb4\x82\xb5\xb0\xddVN\xc4\xc0\x0es\xcea\xe6\xcc\x0c\xf3\xd2\xef\xaf\x02\xc7\xf7\xe4\xbe\xd8d\xfd\x82\xa5\x88\xfeu\xbe\xc5\xf4\x04=  q\xd3\xeb\xecg\x01\xf0&\xbaJ@\x01)\x0c\xc5\xe90j\x12e\xaf\xa5IsGd\x9a$\x0f\xce\x91\xa9\xce=\xb9&\x0e\xcc&\xd3\xf4\n\xf3vk\x91\xa1\x0b\x065\x152\xc3\xa94W\x99\xd9\xd9\xdd\x1bcz\x82\xc7\xf2\xd2eN\x92\xc7C\x9b\x07\xcd\x17<\x9e\xd5\xd5\xc4\x1a,k%M\xb8\xc3\xf1h\xbb\x05s\xc9\xc6_\xcb\xd7\xbe"}\xa1\xec\x14\x95\xcdoGe\xbd\x88\xf7\xb5-\x82\xa2\x03\x17\xb7\x7f2\xfc:\xd3O$\x84\xf8\x84\xe4!y<\x9a\xadm|\xc0`\x06\x83\xf7.\xdd\n\x8f\xfc\x02PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV-D\xc1\xe4\xec\x03\x00\x00\xfb\x06\x00\x00*\x00\x00\x00system_low/__pycache__/man.cpython-311.pyc\xa5T\xd9k\x13A\x18\x9f\xd9\x9dM6&\xb1i\xad\x17\x1e\x8d\x17\x1a(\xddZ\xad\x82\xa8\x0f\xdax\x80\x16\xa1\x8a\x07V];\x93\xba\x9a\xee\x86\xd9\xedI\nQ\xfb\xb0\x96\x80Q*\x8d"\x18|\xf0\xfc+\xf4/\xc8B\x90\xb0P\x10\xc4\xf7\x88>H\x9f\x9c\xd9\x1a\x93h<\xc0\xd9\x99\xdf\xec|\xdfo\xe6\xbbf\xf7y8\xbc\x0c\xb0\xf6\xaa4\x8b_\t\x00|\x00u\xcd\xf7}\xfeL!\x00\xf3\x00\x83\x19p\x01\x108\x0cn\x08\\L\x97\x0b\x80\x08D\xc4\xf0\x19[\xbffc\xa9A\x80\xfd\x03\x8c\x87\x85a\xf8\x9d\xb9\x891\xd13\xf6\xf6\x1a\xd4XL\x06\xb0\xf8\x0c2)\xacIk\xcc\x86\xf3\xb8\\\xc2\x08K\x05\x1f\xf8\xb51k\x8d\xe7L\xb1\xd1(\xe9\x05\x17\xfc\xc4_\x90\x9b\xedn\xb4w!@\x02\x85e\xcdx\xd8\xc7\xbc\x086\xb2\x97b\xaf\xede\x8c\x10\tTm\xd7"\xe0O\xb3<m\x01;\x81\x89\xc6\x85\t\xf1<\x18\x87\x10\x9cg\xf2%ML\x1e\x82u\xc6\xb9\xe7"\xaf\xc6S\xaf\x1aV\x9d\xea\xfa\x0f^Ah\xe6w\xfa\xa7\\\x98\xad\x96\xbf.*\xf8\x8b\xb7`\xa0\xe1\xfc\x02\xfa\x97S\xfb\xc0\xe0\xed\x8b\xcc\xc3i8-L\x8bi\x91\xad\xe3\xd3(\r\xd3\xd5\xfb\x12\xa9\xb7\x9aF?[\xcd\xae\xa9\xd3\xff.>\xa9\x99\'\xcc\x06j\xcc\xed/g\x1fI\x0b\xcc\x9f\x9ei\xe9?lH\x8d6\xb00\xd5\xcc\xd2\xae\xec\x0c\xcf_L\xec\x9f\xdaz\\\x1fS\x93\x1a\x8e\xa6T\xebZ\xd4\xa0K36\x88\x19\xd5\r+J&4\xd3\xeaZ\x84J\xcc\xe7\n\x86\xe9"\xaev%\xcd\xc4\x1au\xa5\x14\xd5t\xcbE\xe3j\xf2\x86\x8b\xae\x1b\x9a\x1e\xf3Q\xee\x99\x8b\xa8a0\x05#\x99\xae\x94\xd0\x92\x84\xed\xe4\x93+r\x11\xff<\xa2^[\xbc\xa2\xd0Q]\x19!XS\x95qMO\xa8\xfa\xae={{\x94\x81\x93\xca\t\xed*U\xa9FL\xa5\xcf\x18\x1a\x1d!\xbae*\xa7&\xadk\x86\xae\xa4&\x93\x9a>:\xa1\xf4tu\xf3\xc10\xc5\x14\x9e\xc8\x9c4-2r9i\x8c+#\xaa\xde\x95\x9at\xfd\xcc\xe2iJ\x08\x8d\xf0\xd8\xf9\xcdz\xc7 \x03\x16\x82\xe1\xec\xde\xbb\x07f\x0f\xe4\xdb\x9d\xe0\xc6Rpc\x05\x08R\xcb\x82\x1c..\xdf\xed\xc8\xbd%\xb9\xb7(\xf7\x96\xe5\xe5\xb6\xef\xe3\x86\x8e\'g\x1f\x9d-\x9c~8\xf8x\xb0\x02di\xa7\x07\x8e\xbc\xd6F6\xce\xc5\xcb\xedk+\x00\x05\xba=\xb0\xfb\xca-+r\xd6l\xdaN/DV\xe6\xf0\xbd\xe0\\0\xc7\x9e\x8f\x91\x95\x0f\xae\xce\r\xcf\'\xef\'\x0b\xbb_\xb4;\xab\xbaJ\xab\xba\x9c\x88R\x8a(E\xaf\xbf_\xb1\xba\x02``\xa7\x07\xf6\xe1\x85P\xeb\x83\xcds\xdb\xe7;\xefw\xe6\xad\xc2\x80\xd3\x16+\xb5\xc5^\x1cv\xda\x14\'\xd4]\nu\x17\xbd^\x11\xf9\x8e\x96\xaaK\x9f\xbd\xff\x8a\x9fE\x1ee\x83\x8a\xbc\x14"{\x9bB\x0c\x94E\x18\x9d\x92\xb06\xb6#\xd6\x1f\x0b\xd3\x88W\'\x95\x0e\x9b.\xd3j\xba\x1b\x1c\x1a\xa5\x94\xa5\xf9\x8cI(\xaf\xd3\x98\x8b\x8c\x14\xd1i\x80\x13a\x82\xd5\x94\xa8\xd8\x85\x13\xae\x9f\x92TR\x1d"\xbc\xbec=\x94_\xd6\x97\x80\xb6\xf2\xcf\xa7\x85\xc1\xa2\xbc\x7f\xc4\xc0\xa3Ir\x90vTS\xbe\x9e!\xf3\x15\xc2\x8a\x10\x86\xcc\xd7\x1f\xb0\x1e \xd9\xee\xb9\xb5/\xb3\xaf\x8c\xe4L\x9f\xbd.w\xdeA\x1d%\xd4Q\xac\xf6\xb2\x14\xb0\x87\xec3\xb7\x063\x83e\xe4\xcf\x1c\xbe\x19\x9f\x89g\xe2e\x14\xcc\x1c\xb5\xe37\xfbg\xfa3\xfd5\xb9\xf7\xbc\x0f\x84\xedv;\x91\x1b\x98?w\xff\\\x1e\xdf\xbb4w\xc9Y\xbe\xc5\tl-\x05\xb6V\x80(\xb5\xbe\x80\xe5P\xf8\xee\x91\xd9#w\x8ee\x8f\xd9\xde\xe2\xf8\xec\xf1\xdcp\x1e\xe7\xf1\xc3\xc4\xe3\x84\x13\xdaV\nmc\n9lK\xb6zG\xce\xca\xb6\\\xf1\xb3\x9dl\xfbw\xf8\xc4\xe1\x8b\xb7\xfc;|\xfd\xfa\xf5\xcf\x04\xb3\x8de\xe9\xcd\xa6\x83\x87:\xc5\xb7\x9d\xe8P\xb7\xff\xed.\xc8\xf0\x1bPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xbe\xf0b\xaa\x81\x03\x00\x00\xd0\x06\x00\x00+\x00\x00\x00system_low/__pycache__/peer.cpython-311.pyc\x95T\xcb\x8b\xd3@\x18\x9fI&\x9av\xb3\xee\xaeZ\xdf\xec\xd6\x07H/\xcd\xa2\xa0 \xb2\'\xc1\x07*\xe2\xeb\xb0\x97\x10\x9bQS\xda$N&\xb6[\xea\xe3 \xd2\x95\x88\n\x8a^\x04O\x8a\xf8\xcfT\x11,\x81\x9e\xc4\x83\xe0\xa1\xb2z\xd9\x93\xdf\xa4m\xda\xeeV\xd0I\xf2\xcd\xcc\xf7\xfe\xbe\xf9e\xdeMN\xa6\x11\x8cm\x0fo[\x0b\x12B_\xd1\xd0\x90z\xf3\xcaV /\x91\x85,\\B\x8b\xc8\x92\x1e\xa0El\xe1K(\'\x7f\x17\xf2\xf3\x85a+\x02\x9f,\xac~`\xb0\x02\'\'\xc1\xee\x01X\xbd\x05\x7f\x1f\xe0\xeb\x8e;\x88\x0f\x19\xb1\x97\x96\xfc\x06\xf4\xd7\x8d\x11\xad\xb7\xa0\xf1!\xd12\x11\'\x03YQN<c\t\xd5\xd1[X}\xe8\xb3F4\r9\xe1\xa6\x86\xe2\xa4\xc7\xc7\\\x93\xb5T\x97\xd8\x14\x9f\x1c\xc8\xeb\xd2hV\xf8oY\xc9u<>\x0b\x8b\x8c\xaf\xbc.\x177\x8e\xaf\xfc\x12\xe23\x89Z\xaf\xd2A\xfc\xe1\xec,eMv\xffn\xb9\xe1\x7f,-\x02h\xd88\n\x84\xbe\xe9\xca\xae\x18>T\x80\x06-J\x02\x0c\x8br\x0c"b\xc9`FV3\xb4J\x0b\x01\xa7\xf9\xe3%\xb7`\x96\xfc\x85\xfcE\xea\xb1\x02^\x83\xc5-\x03,\xde\x80\x136\x06\xb9BG\xde\xe3\xf39\x1c\x11\xcb\xe4\xa6\x98}Z\xba\xee\x0b\x07\xd9USg\x81\xa3\x97\xa9e\x9bz\xc5v\xae\x9b\xce\xe1#G\x0f\xe9\x97\xce\xe9g\xedk\xccd6\xf5\xf5\x13n!(S\x87\xfb\xfa\x85%~\xd3uto\xa9d;AU?\x94\x9f\x17\x1fP\x0f\x041\xcb_\xf29-\x1b%\xb7\xa2{\x94\xb2\xbc\xb7\x14\xa9\x86a;67\x8c\xda\xec\xd8R\xf2}\xb9\x02\x19\xf9\xa2\xcb\xf7Qk\xc7\xae\xc6\x89\xf0t\x03\x9e\x15QDA\x1a*W\xee\x97{L\x94\x0b\xc5\x16\x13\xd1_\xc0\x82\xd7\x1cW\xdc\x14&\x00\x94\x93\x98\nS\xb4\xc1\xf4<\xeaX\xb0M\x89-\xe1\xb4\xca}\x114\x9bei\xc1Q*\xcc\xe6\xb4\xb6{|\t\xb1P\xf8\xf3g\xbb\xf9k\xd3\xe1\xe9/\xda\x9eO\xda\x9eW\x97?j\xfb>k\xfb\x9a\xfd\x97i\xe2Z\xc8)\xa21\x8eY\xa6\x86\x11\xa5\r\xa3\xecZAI\xac5\xc3\xb8\x15\x98\xa5\xae\x84M\x88\xff\x7f\x1a\xc8{\x14\xdbu\x93!"(Sz\x17\x8a\x7fH\xc4L\x9e\x8e\x84S\xbb;(!\x04\xa7\xf6\xc3j\x1d\xe9\xfa\xcb\x00Y\xc5\xd9\x08\xd56\x89\x03\xcb\x1e/\xb8\xe5\xb2\xe9X\x0b\xb5\xb9\x8b\x94\x07\xcc\xf1\xb3\xfc&\xcd\xba\x01\xf7\x02\x9eu\xaf\x0f\x14r\xa9\x88\x98\xec\x86\x1f\x91\xa2k;\x91\x0cG\x1fm\xf0\xb9\x05\xaa\x11)\x9b\xc0\x9a(\x04\x8c\x01p\xae\xf8\x94E\x8a\xc7l\x87w\xbb-[\xf6\xed\x1c\x81\xd8b\r&\x11\xaeE\xb8\xea\x93\xb8\xdf\xfd\x8eo\xec\xb5\x9a\xed\xefA\xdc\xff\x12\xd7\xd9!D\x81\n\xd6\x93\x9f\x82\xfcJ\xb6\xbf\xd3H\xd5:hZ\xd9\xdc\x9a\xda\xfc\xa4\xfa\xa8\xfa\x9a,\xdf\r\xef6H{\xd3LXl\xc8\xad\xcc\xce\xa7\x97\x9f]}~\xf5\xb1\x1c\xa6\xdb\xda\xf4\x8b\xdd\xaf{G\xd5\xc0\xad\tM\xf4(\xd3\xd6f\x9e\xee]>\x15\x9ej\x9cjkS\xe1\x19\x90dv\x08\xfd\xd6\xd4\xcc\x93\xca\xa3\xca\xd3[\xcfo/\xdf\x0b\xef5\xd5\xd9o\xea\xc4\xb2\x12*\r\xa5\xadN67\xcd~T\xe7>\xabsMu\xae=\xc2\xd7?\xaa\xf3\x9f\xd5\xf9\xa6:\x9f\xf0\xc1U\x831\xad\x0bFq\x1d\xc4\x053\xf1/\x0f\x8e|U=\xdeE\xc8\x02;\xd0\xbb>\xfc\x83@:2\xc6\xb8\x85\xd2\xf7\xe3\xa7#m\xc7\x9b;h=\x89\x1d\xfd\x01PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfVzm\x9c\xe3`\x05\x00\x00\x9c\n\x00\x00-\x00\x00\x00system_low/__pycache__/pylink.cpython-311.pyc\x8dT[h\xd3P\x18>\'=m\xd3\xb4\x9dX\x9d\x97\x89.\xf3\xc2V\xe9Z/xAgAWex\xbf\x8bE\xd1\xac\x89[\xb4Mb\x92\xd9\xadT\xa82\xf0\xc2\xc0)\x82{\x1c>xAE\x1f}\xd6\x17\x1f\x13\tX\x02\x82 >\xf8VQA\xf6\xe49\xe9em\xe7\xa4\xc9\xc9\x9f\x9c\xff\xff\xfe\xef\xfc\xff\x7f\xfe\x9c\xa7\xc1 \x03\xf0u\xfc`\x96?\xed\x06\xe0+\xa8\xbb\xdc\x95\xf7\xcf\x10\x05\xc0#\xc0\x03\x1e\xa6A\xb2\xfc\x86I\xe8\xbc\xa9$\xc5S\xe3 \xe9\xe2]\x02\xba\x06\xd4-\x02\x9a\xc6~s.\xec\xf5\x04\x02\xf0\x02V\xe7\x10P@p\xf1h\xda\xf3/\xb4\x80\x1a\xd0\xcd\xbex\xe5\x13\xc4\xdf\xfb\x04\xcf^\x80\x06N\x9aw7\xa1\xe7GzZFz[F\xd2-#}\xad \x87\x00\xcf<\x86I\xdf\xbc,\xfeVX\x1cd`\x9eZ7\xc5\xd1\n\x1f\xa9\x7f8\xf8\x9dL\x0e\xa7`\x1d\x19\x8d\x1f\x17\xe9\x99\x8f\x90\xf4\x8c^g\xba\\\xc3MS\xff\xec\x10\xd8\xb8\xb2\xb6X\x87u\xde\xaeY\\s\x84\xba\xaf\x0e\xe7\xae\xe1(\x1e\xf7\x17\xef\xe6a\x1e\x0c\xcd\xd9i\xde3\x0e\x1a\xf8=\xf3\xf1\'@c\xf6\xd7a\x1e&\xc0\xf9\xd1\xeb\xd4<\xd9y\xff\x9d]\x9ezBa\x1e\xaa\xc6\xe3\xd2\x17\xd6\xf9\xd7r\xc8\xbbxo#r\x0b\xb8\x8e\xf2h\x9ai\xa5j83\xe7.3\xccj%\xff\x1a\xb0\x11h(K\x8d\xba\xce\x82,\x84\xe0,\xd6\xc2\xc6\x1a\xf8gchf\x9d\x18\xe3\x01\xdes\xfap\x8eQ\xc6\xd2\xa2t%\xc6)\x8a\xedRD\xc5\xa6y9+\xa5e\x8e\xcf\xf9z{%\xb9\x97\x17\x14-G\xf5\xf2)\xd8t\x98,"\x8d\xd1\x87\xc5#\xdc\xd6yp~9)\xe54h\xe5\xb8x\xbd4\x0f\xefS\x13\x1d8\x04\x98C\xd1\xecp:\x0cmZ\x90x-+\xea\xc3a\xca\xa6\xa2\x1bl\xfa\x92\x98\x16$.#h$q\x96\x9dI\xc5\xd4\x11)\x96\x11x\x91\x8beE\xe9\x12\'m\xde\xbamS\xec\xc4\xa1\xd8AqP\xe5TQ\xd0b\t95\x92\x11$]\x8b\x1d\x1d\xd3\x87e)\xe6\xa472\x1a\xdb\x14\xdd@\x1e,\x15lpT\xda\x98\xa6\x0b\x99\x0bi9[F]\x89*c3L_Z\xd4\xf4\x94\x9cQ\xe2\xb9\xd5\xd5R\x1c\x92\xf9\x91\xb4\x10\xedK\xcb).\xad\xc5\xa3\xb3\x986\xd2\xda\x11,\n\xc0\x08\r\x96\xc74\xfd\x81\xfe4p\xf6\xe3\xc0Y#y\xd1\x1c\xe0\xac\x01\x0ek\'\xb7\xd7\x00?I\rl\xa8\x86\x036%k6R8}\xd8\xf6\x08\xa3\x98T\xb3\xe9\x0cw\x05\xa7\xa8j6\xa3\x8d\x0c*\xaa\x9c\x124\x8c\xc1\x0b\xa7m/Y\x17\xdbltY\x16%\xdb\x9b\x13\x15R$\xdb\x9b\x14\x95}\xe4\x83\x11Fu\x95K\xe9\x04\xecQ\x85\x8c|M\x08\xbbm&\xe3\xc4\x7f\x18\xd7\xd2\xf6g\x87\x05!}\x81\xb8\xe1\x15f\'\xd5o\x12\x8bC|A\x15.inRyr\xa9\x0c\t\xb9\xad\xb1 jg\xa5\x154\x16\x92\n|\xf3\x07\'\xb6\xdd\x8b\xdf\x8dOEL\x7f\xb7\xe5\xef.\x01\xe8^\xfd\x99f&\xfc\x93\x07M\xba\xcb\xa2\xbb\x0c\xba\xeb\xb7\x07\xb8\x17\x8c\x1f\x99<5\xb5\xff\x99\xff\xcd\xc9\xb7}\x1f:\x8c\xc5\'Mt\xcaB\xa7\x0ct\xaa\xe4\x01\x8bR\x10W\xe9\xd5\x9e\x97\xfb\xdf\xe4\xcdH\xc2\x8a$\xf0\xd4\x0c\rZ\xa1\xc1\xc2\x81\xe2\x92\xae\x12@\xeeU\x8e\xb8\xcd|n_\xfa\xf0\xcc\xa3s\x0f\xceMG\xde0f\xfbN\xab}\'V\x06\x17O\\\x98J>[d\x06{\xad`/\x0e\xc3\xd7\xfbfi1\xb0\xe8S`\xd5\xc7\xc0\xaa\xa9\xbc\x19\x88X\x81\x88\x11\x88\x94\\\xd8\x84\xed\x15\xf1\x83\x88_\xce\xf4\xbf\xe2\xcf\x9f?\xffR\x7f\xc3\xa9\xfa&\xd7\x9b\xf4J\x8b^i8\xa3\xe4\xab\xc6\xaa\x85p\xa5\xde\xad[\xd2\xefu\xbf\xf7\xa2~\xbf\xef}\x1b\xc4\xd2\xf6\x8a\x92F6l\x06\xb2\xb6\xa7\xdc\x88\xb9\xadG\x9d7\x8b\xd5rVc\xc7\xe4\x11V\x97\xd9\n\x90\xe5$\x9e\x153\x8a\xac\xea\xac2\xa6\x88\xac\xc2\xa5\xaepC\x82\x16\xcd\xb5\x9f\xacCU\xf5;r\xcb\xca\xb45S_\xc5\x12\xcf\x85\xb0\x03\xd9\xd0:t\x18\xe5\x98\n;\xfeCr\xcb\xb1\x88\x92\xae\x88\xe2#\x02\xff\xa2=\xdde\xb2\xeep.X\x81U\x82\xde\xa6\nWG\x04\xdc\xc3,\xbb\xab\xa2\x8b\x96\x11=\xddUSw\x98]\xb3\x86\x15F\xb9\x8c\x92\x16\xd8r_\xe6V\xec\xd6Y}X\xc0)*\xac|\x89d\xab\xb2\xb8\xf1\x87T.\xb3c\x062aF%\xbf\x99\x1a"b\t\x11\x9d\xa4\x19\x11\xa7\x0ei\xf8\xcc\x92\x15\xb5\x9d\xcc]\xbcx\xcdv+\xaa(\xe96\xd2\xf1\x8f\xf0\x1c\xa8\x01lpZw\x86\xee+/\x16W\xd7\x93\x13\x904-\x8f%\xde\x7f\x08\x8b\xc0Wp\xee"XhTG\x11\xb4\x15\x9c\xbb\x84\xda \xde\xc1\x9a`\x01\nN"\xc3\xb5\x18\x8f"\xa2o\r\xdc\x1c\xb8}\xec\xc6\x81\xf1\x03\xb87Q\xa8pxr\xf3\xa3\xed\x0f\xb6O%\xee\xc7\x1f\xc6M\xb4\xdaB\xab\x8d\xea\xf8\x82\xbc\x85\xfe\x1b{\xc7\xf7\x16\xf6\x16\x91\xaf\xb0\xf7v\xcf\x8d#\xe3G\nG\x8aMz\x83\xd9c\xa2~\x0b\xf5\x1b\xa8\x7f\xae\xad\xab\xc6:\xd7\xb6\xd6D\xeb,\xb4\xce@\xeb\xe6\xdaV\x99\xa8\xd3B\x9d\x06\xea\xac\xb3\x95(w\x80)\x81\xaa($J\x01\xe0\xa6\x9b<\xbbM\xd4c\xa1\x1e\x03\xf54\xb3\xde^{/|7<\x99\xb8\x13\x9b\x88\x99\xa8\xc3B\x1d\x06\xea\x98\x059\xb7\xb3\x0b\x7f\x01PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xbfE/\xec\xc5\x00\x00\x00\xea\x00\x00\x00+\x00\x00\x00system_low/__pycache__/quit.cpython-311.pycMN1\n\xc2@\x10\xbc\xd3\x10E\xb0\xb3\xf2\x076\xae(h#V\x96*\x82\x0f\x90hN<H.\xf1.G\x92.\x82\x7f\xf0\x07\x8a\xf8!\x11\xac\xfc\x80\x90.\x8dn\x82\x88\xbb\xec\xcc\xee\xcc\xc2\xee\xb9^\xaf\x11\x8c\xc7;\xb2+\xc8O\xf2\x17\xa5/\xa7M\x84#\x8e\x8c\x9c\xb0\xbb\xfe\x16(\xb1\xc9\x82\xb4\xe8\xacE\xef\xc6N\xf3\xe0B\xd2\\\xcf,\x90Z\x80\xcblnA\xc8\xc5\xc6\x12\xbd\xfe\xa0\x0b\x8b)L\xf8JZ\x923\x05co\xad]&\x02\x05\xf38\xd8z\x02\xfc\xd8\xe1BG\xd0mw\xf2B\xf4\xd1($\x15\xab\x80\xb9K\xc7\x0b!?\xd3\xf6\xe3\xac:t=[;l$\xcd\xfc\x13,\xd5@x\x95)\xa57b$\xc6\xde<\x98I\x91\xd2@\xe3\x03PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x19\xb3\x85`\xe2\x00\x00\x00\x0c\x01\x00\x00,\x00\x00\x00system_low/__pycache__/recur.cpython-311.pycMN\xbdJ\x03A\x10\x9e=O\tJj\t\xa2\xbdMF"h#V\x16\x16*B\xb0\xb2\x90Kv\xc4\x85\xdb\xbdc\xf6\x96\xe4\xba<\x82\x9do\xa0\x88/\xa3`\x11\xd2\xa6J\x17H\x97*s\xf9\x81|\xcc\xf7\xcd?3_\xf5\xfa>\x08n\'}}$~\x0c[\x88\xd7~v"\xf2\x01\x11\x10\x90\xd2\xf0\x19\x01\xfc\x08WP\xa0U\x1bN\xa3\xd1.S7\xf0\x83D\xb1M\x8c\x1b\x1dH\xc6\xe4\x8a\'O\xfc\r\xb3jv\xdeA\x0e\x0e-i\x93`\xcf\xb8\xd7\xc4\x9d_\\\xb6\xb0}\x8fw\xa6\xc3\t\x1b\xf2x\x93u\x83\x95=\x8f\x8fe\xf1\x969\xcc\xcb\xd4\xb8\xd0\xc7V\xf3\xac\xa2h.\x8de\xc9\x97\xbe \xfb\x92f=\\^o\xe6\xe5\xbcve3\x1dR\xba\xe6Z\xf5\x9e\xd0\x1f\x8bLw\x94RC\x88\x07\xf1\xe0\xf9\xfd\xf0\x0f\x1a\xff\xd0\xf8\xdd\x18\xef\xc9\xc4\x02PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xad\xac\xfb\x1e\xfb\x01\x00\x002\x03\x00\x00-\x00\x00\x00system_low/__pycache__/script.cpython-311.pyc\x8d\x921o\xd3@\x14\xc7\xdf\xd9\x97\xc4\t\n\x12\x08\xb1U\xba4S\x97\x1e-\x82\x0eDth\xb2\x01BT\x0c\x85\xa12\xf6\x05\xbb\x8a\xcf\xd6\x9dM\x9a.\x04\x89! $\xb2\xb1\x96%\x08!\xf1\x05\x98\xf8\x06\x89\x94\xc1\xb2\xd8\xf8\x02Ae\x88"\x06\xceNT\xa0\x15j\xdf\xe9\xde\xe9\xbd\xdf\xff\xbd{g\xf9C\xb9\\\x02e\x9f\xf7\x9e\xdb\xdf\xd4\xf9\x1d\xfe\xb2\xfc\xe2<\xfa\xa5\xdc;` \x1a\x1a0d\xc3\xa1\x06\xa7M\xf1\x01\x02\xf8\x84\x16\xe1\x89\xe8\x06<\xd2U5f:\xcb\r4E\x8e{ \xb0Q\xbaNg\xb7\xa1\nk q[\xdb\xd7w\xa0\x8d\x10\xec\xa8\xfc\x9c\xa8^\xf9\x01\xa8\n8\xaeHs\x05[\xfb\xf7^\xf4\x7f\xa5~\x1eez\xd7\n\x9e!r\xef\xe0\xaa\xb4\x84\x1b\x84\xa4F\x033th\xe8\xd3\xa6\xdbb\xb7\x0f6\x1e0\xd3\x96$t\x18\xb1|\x1e2\x1eJ\xe27I-\xa3\xc4\xe46\x11\x11\xcf\xb8GLIL2\xef\xb3\xbab$\xd8\x14Oe\x82\xfd\x80\xf1\x04\xef\xf9.OP3))\xf9\xee\\\x93\\\xb0"!T\xc7\x87\x92\x89D\xb7\xddgI.\x10.\x0f?\xc2Q:\xdf\xcc\xa2JL=f\xbb&m\xbb\xbci\xf2\xeb77\xd6\xe9\xf6]z\xc7}"L\xe12I\xeb\xbe\x15y\xe9T\xf4~\'t|N\x83N\xcb\xe5\xd1>]_\xbd\x96n\xe5\x03\x05\xb2\x94\xec\xc8\x90y\xbb-\xbfM\x17S\x06\x9d\x99Q\xf3|;R\x8f\x11\x17\xd3o\xa2\xb6L\x7f\x94\x89\x8e\x10\x8a\xf5\xc2\x04\x0cT\x8a\x8b\xe5\xde\x95\x9e\xf5\xd6y\xed\xf4\xc3W\xfc\r\x1f\x15\x97\xc6\xc5\xa5\t\xa0\xdc\xf2\xe1\xa5\xd8\xb8\xdc+\xf5\xd7\xfa\x8fGFelT\x86Fe\xa2+\xa0\xe8\xc2\xfdH\xdd\xcf,<\xdbM\xa7\xd33Ty\xc8\x19\xdd\xad\x17\x8d\x97\x8dn#\xc6\xc5ncXZ\x1e\xe1\xea\x18W\x87\xb8\x1a\xe3\xc2\t\xb65\xc2\xf51\xae\x0fq\xfd\x0f\xcb\x96,\xabw\xbe/\xdf\xd2\xbf\xe0\xcd\xc2W\rm\x16~\x03PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xdf\xed?\xd9\x13\x05\x00\x00\x97\n\x00\x00.\x00\x00\x00system_low/__pycache__/service.cpython-311.pyc\x95TIo\xd3@\x14\xb6\xe3\xb1\xe3\xac\x10\xf6B\x13\x8c\x08\reiX$\x10\x15BbiK\x05THa-\x9b\xdc\xd8\x14\x83\xe3\x94\xb1\x03\xd4\x17\x02*`\xa4\x1ez\xa3\x12 \x19\xc4*8p\x80#\xff\xc1\xae,a\xf9\x84\xc4\x01qC\xe2\xc6\x89\x19\xc7I\xda\xa6\xa0\xe0e<\xf3}\xdf\x9b\xf7\xde\xcc\x1b\xbfN$\xa2\x04\xba\xee\x97n\x0b\xf7\x01A|#f]\xe1\xe0\xfb\xeb2b\x1e\x11\x02!\x9021L\x88\xa4\x10\x1a%\xaf\x850\x05w\x85\x081\xf4\n\xf5\xde5\xccH\x02a\x94@\xbd"\x11J6\xd1\xbf*A;J\x81, \xcf\xf0\x1a\xf2Nt4p\x81\x0e\xe2\xb8\x84l\x80H\xce\x9dI`\x02\xf68b\x89\xabt\x1d\xaf\xcd\xddT\t\xe4\xbdPs\xceaFd\x90>\x8c<\x85\x9b\xe8\xbc\x99\xc3:Z\xb7&k\xb2\xc4\x02\xd7\x82\xd9\xb2\xb5\x99Z2;=/\xb3P\x10\xfb\x91\x7ff\xb6\xd7\xcf,\xd2\xc0#\x13\xc4\xfb\xe8\\\xedptn&b\xf4R\xac\xa1\x8f\xa1Q\xbc\xc9\x98\x89v\xf2\xa8E,\xc4\x1bUp\xef\x7f\xd6W]\xf7\xd7JH\xb4[\tBx\x98Y\x88\xfb\x9f8\x0e\x11\x17\xd2\xc3I\xdfoRd\x1e\x13\xc2"1y\xb5\xb12\x8f\x89\xa7-u)2h\xdf\x13\xb8B&3\x7f\xafQ\x81n\xe3t,n\'S_\x99jG\x89<\xff}\x86%\xb5\x19\xe6\xa1K\xdb\x99\xd7W.[\xd0~\xf9\x82\xe8\x8a\x05\xd1\x95\xed\xf8\xc29t\xaf\xfa\x81\x07C\x1e\xadj<\xd4\xf4\x0eU\x847\xa4\xa2\xc8\xf9C.wn\x0c\x96G!_\xba\x90\xd33\x05\x0c\xa9\x1c\xcf\x05\x18\xc7\xe3A`\xd0\xe3\x81k\x92,\xff\xc0\xfb\xf0\x03;\xd6;\x0b\x95bQT\xd5\xcb\x15Y\x1e\xe70)\n\xd8\x14c=\xc5\xd9\xe5\x0e\xd0K\xa1\xf7\xd7\x01\x02\xff\xf74\xb2Ii\xa1F\x17\xc5\xdb\xd1\xc4\xc1\xac\xd3\x824\xef\x1a:\x94Sh\x082\xa8\xd7Myq\xb9\xcc\x0b\x97\x82x=\xc0\xc3Q\xd5\x8b\x15+\x10\x8a\x8av\x12E\xfe\x96\xf8\x85m~\x0byXQ\xf2%Q\x90\xf8\xfcMI\xb9\xcc+;w\xed\xde\x91/\x1c\xcb\x1f\x95F \x0f%Q\xcd\x1f*\x17+%d\xa7\xe6\x8f\x8fkW\xcaJ~l\\\x96\x94\xca\xad\xfc\x8e\x9em\xf8E\xed\x18"|H\x1dW5\xb1tI.\xdf\xcc\xd7\xd7gl\xfc7\xbbW\xe6K#\x02\xbf\x0f&\x91\xd3\x04>\x9a\xcbPS%^\x9e\xff\x94\xfdp\xfdc\xee\xf3f{C\xbf\xb3\xa1\xbfJ\xc08N\x80\xf4\x18\r\xc5,j\'< K\xaa\xa6w\xf6AX\x86\xbd\xdcP\x99C\x01+\x922Z_QQ\xed\xf9M\x9e\xd3C\x178=\x15\xb8\xf4\xd7\x9c\xdb+\t\xfb\xf45Gp\x97\xaf\x8b\xb9\x11^E\x9bQV\xb8\xc1C=\xfa\xd2\xba\xfe\x1c\xf2UK\xf1\x82\xbe\xb8\x10\x80WxE\x90E\xd8\xa3/>\xc5\xcb\x92\xc054\xbd\xfaj\x0e]~\xa1\xf4\xd6>M\x0f\xfaz\xcc\xe1\x98{q\x8b\xcbF\x96\xe7\xc7\xacw \x8d\x1fe\xaf\xdf\xaaM\xfb\xeeE^D\xbb\x02E^@z\x88\x7f\xb7\x1e%H7<z\x0cJ\x8a\xe6Q\xb2\xa8x\x11QA\x91@^\x13=\xf2\x96G!\x1c\x02,dN\xf8\x86\x1e9\xe6\x01\x85/\x89\x1e#\xf0b\xa9\xac@\n\xb3\xa4\x04\xd1?\xa7\xb6\xc0\x10\xef\x01\xda\x96RY\xa8\xc8\xe2>\x98\xc1\xe7\x02o\xcbwTN?)\x92$]b\xb1U\x7f\\*l\x0c\x18{f\xa8e\x16\xb5\xcc\x05\xe1\xea\xc1;}\x13}\xd5>\x17D\xaa}Vt\x83\r\xba\x1c\xd0e\x81\xaeVn\x93\r6;`\xb3\x05679\xffv\xe9\xc8O"KF\raj\xfb\xe4\xe8\xf4\x8a\x99\xe4Z+\xb9\xd6<h\x1e|\x03\x9e\r\xbe\x18\xfc\x90z>d\x0e\xb9\xec\x1a#\xe2\xb0kl6\xed\xb0\xe9i~zdz\xc4a\xd7U\xf7\xbb\x80\xae\x16\xabE#k\\\x9f\xcc\xdd\x91\'\xe4\xa9\xedw\x14\x07,\xff\x02V\xcf\x80\xd56\xe8t@\xa7\x05:\x83(6\xda\xa0\xdb\x01\xddV\xfd\xf1\x9ds\r\xe7+g\x92\x9c\x95\xe4\xcc\x82Yx\xb3\xec\xd9\xd9\x17g?\xac{~\xd1\xbc\xe82+\xaa\x92\xc3\xac\xb02\xfd\xf8a\x06lf\xc0a\x06\x90\xf3\xd8\xa2)rrwu\xffD\xbf\x9bH\xa1\xcfa\x14\xce\x83\x81\xbb\x03w\x06\'\x06\xab\xfe\x8d<\x18\x97\x8d33\xf4r\x8b^\xee\xc62\xc6\x1e\'\x96\xb1c\x9c\x13\xe3\xcc\x94\xb9\xc4\\\xe2\xc4\xb2?\x89(\x9dt\xd9\x98A=\xa4\'i\x83v\xd9\x84A[\xc9-6\xbb\xd5a\xb7Z\xec\xd6&\xe7\xdf_\xe3\t\x83\x9c\xadOe\xa7:\x9cT\xd6Nu9\xa9.\xf3\xba\tM\xe8\xa46\xfd$B\x91\xa5~c\xecw\xe3)\xa3\xcfZ\xb2~\x8aG\rz\xa6\xb7?\xd9U\xeb\xd9\xf1\xac\x13\xcfZ\xf1\xac\x1bOL\xa5\x1e\xf6\x1b\xfb\x91z\xae\xbf99\xb4nm\xda\x06\x19\x07d,\x90i\xe5r6\xd8\xe8\x80\x8d\x16\xd88o\xdb\xbf\xb6H\xd7\xda\x80s\x00g\x01.\x00:m\x90v@\xda\x02\xe9Y\xb6-\\\x00t\xd9 \xe7\x80\x9c\x05r\x01\x90\xb7\xc16\x07l\xb3\xc0\xb6\x7fT\xa7\x7f\xfb\x07\xe1\x0fPK\x03\x04\x14\x03\x00\x00\x08\x00\xe6]\xcfV\x9btm\x91\xdd\x03\x00\x00|\x06\x00\x00/\x00\x00\x00system_low/__pycache__/terminal.cpython-311.pyc\x8dTMh\x13A\x14\x9e\xd9\xdd\xa6\x9b&\x9bm\xd4V\xd4\xaa1\xd6hD\xb3\xfe\xa1\xa0\xa2\x82\x89^l\xd4\xa4\n\n"1\xbb\xeaj2\x89\xb3\x93j5B\x04\xc5Dr\x88\x82\xd4_\x8cRj\xc5\x8b\x07\xaf\x82\x82\x82\xc7Dr\x08\x0b9\x89\x07\xc1C\xa0\x08\x92\x93\xb3[\xf3\xd3V\x8b3o\xded\xe6\xcd\xfb\xde{\xdfL\xf6\xa5 \xf4\x00\xda\xdc?\xee\xc8I\x06\x80\xaf\xa0\xa3\xb1\x7f\xe6)7Uc@\x067\xc1I\xc0\x00\x05(p\x02\x02\xf0\x9a\x8e\xe9\x06\x81\x0c\xc3\xc0\xcbDa\x87\xb7\xf5\x0f\xc2\x14\xa2\xb8\xb7\xd91@:\xaci@\xd8\xceU\x91\x9e\x99\xdb&\xe8x\xddZ=\xa6Q\xd2\xe0\x02\xdb\xb1f\x9er33\x99`\xe8\xaa\x85u\x87\xcd\xb1\x84o\xe3]4-X$\xb6\xd91\xda\x95\xa0R\x8e\x95\xd9\x11\x80\x19\x19\x84A\x8e\xc5\x9f\x89\xd0>M\xf1\x1ct\xfak4<N\x9c\xff\xc6%\x0b;Qff-s\x179\x13!\x94e\xcfB\xb9\xeb&O\xfa\xda\xa7e\xcb\xfc\xbe\x13,]\xb7X\xf1\xcf\x8a|\x1d\xa6\xa1\x1f\x9c\x1a\xbc\xce\x90\xc5\x1d\x98\xddE\xfb\xdf\x18O33\xd1g\xdfs~\rr\xff\x0fN\x8e\x9d\x1fg>\xa6\x90hDh#\xcd\xf1]\xd6\x91\xef\x1cd\xe3\xd6\xbc|\xb0\x01\xf7]e\\\x83^F\xe7\x94+*\xd1\xb9K)\x95|7\xde\xfa\x8cGj\xa1\xc3 wj=U\xf7\xe1\x188G!O\x89\xd7a\x8eIS\xe2dp\x95\xee\xdfb\x96\xb4\x1c\xee2\xf9^\x1a\x00b\xc3\xf3\x15\xf0\xb2:\xe3\xdb\xa4\xc3+\xba%\x89\x13\xf1$\xd1\x8c\x8bp\xb92\rE\xc2)$\xc5\x15Y\x8dH\x97Ut6\x82\xb6n\xdf\xb1E\n\x0fI\x87\xd438\x82UE\x93\xfc\x89h*\xae \xa2IGF\xc9\xf9\x04\x92\x92\xa31\x15\xa5\xaeH[|\x9b\x8cAu\x92\x1a\xcc-mT#J\xfct,qY"\n\x8e\xab(\x12\xf3%G\x1b=\xbbc\xaaF\xa24\xf4\x9e\xab\x03-\xc3\xeeX"\x1a\x89i{|m\xab\xf1\xe4\xb55T\xfd\xca\x80\xd2\xaa\xf0\xb4\xbc9Z\xf4L:\'7O\x86^m\x9b\xec\x1f\xf7\xb5\x0cSF\xad\xdf\r\xd5\x80.\xafC\xe7\xe2\x11\x15\xe9]*J\xa6\x88\xce\x1f\x0b\x07B\xc3\'\x8e\x04t>\xa5)\x18E\xe2\x8an;t\xf8\xe0\xe1\x03\x07\x02\xc7\x03\xc1a\xdd\x16K\x9cSQ8\x8a\x15\x05\xe9=\xaa\xa6"\x8dDPT\xd19#\x1d\x9d\x95\xd5\x11\x9d\x8dQ[\x17\x8e\xa0s\x8a\xde\x95\xc4*\xa2wt!A\x83\xf0\xcd*\xbc\x9c\xce\x19\xf8\xba\xc3( \xa1\xa9D9m\xfas\xf4W\x1c\x9b\x05q&\xdb\xae}\xd8n\xfc}V4\x154l\xeb\xa1YlMp\x16\x06\xef\xa7\x8a\xdcK\xe1\x85\xf0\\\x1c\x17K\xcb\xf7Sy3\xf8v#\x9d\xa6\xa5\xbc\xd8_Y\xec/\x0b\x81\x8a\x10\xc8\x1c\xa8v\x0b\xf7\x97}\xe9\x1e(u\x0f\xd4\xf8\x859!/di\xafZ\xc5\xc2\xde\x92\xd5M\xa5\xca;\xb2\x16\xba\xae\x03[\xd7\xd2\x9a\xad\xafp\xf6\xe9p\xd9\xe6\xae\xd8\xdcu\xd0c]Z\xb3\x8b\xb9@>\x90\r\xd4\xc4\x05\x85\xed\xb9k\xf9k\x0fB_\xc4\x95%qe\x95\x92\xdb\x94wk\xde\xc3O[\xdf\x8f|\xd8\xf5q\xd7g\\\xde\x19\xaa\xec\x0c\xd1\xed\xf2\xaapeU\xb8\xe0\xa8\x0e\xac\xaf\x03\xe8\x9cV\x05\x7fm\xd1\x92\x07\xab\x9f\xad{\xb4\xae\xb8\xed\xa1\xef\x89\xaf\xbc\xc8[Y\xe4-\x99Rg\xe9\x89\x9f\x16\xe0\xec/D\xc7\xce\xdf;\xff`\xa4\xdc\xef\xa9\xf4{\xca\xbdk+\xbdkK\xbdk\x9b\xf9\xd0\xfe\xcd\xee,xrC\xf9\xa1\xecP\x8d\xb3g\x87o\x04o\x063f\xc7\xc6w-\xe8eL\xfet[4\x851}\x99\xc7(\xff\xd8\xf8\x82\x9af\x93\xe5\x06\xbf;\x9e\x90S1e\x0f^\xdd\xa4z\x03U4\r\x08\xeb\xcc\x02\xb8\xb0\x0eZ\xca\x03\xa05\xc3g\x97\x95A_\x05\xf4\x95\x9ab\xa2\xfd\x06PK\x03\x04\x14\x03\x00\x00\x08\x00\xfd\xb5\xd0V\xc2\x99\x96\xf5\xe4\x00\x00\x00\x12\x01\x00\x00*\x00\x00\x00system_low/__pycache__/tty.cpython-311.pycMN\xb1j\x02A\x10\x9d59\x0c\x01\xc1|B\xd2\t\xc1\t\x06\x92&\xa4J\x99\x84\x80\xe9\x93Kn=\x17n\xf7\x8e\xdd=t\xbb\x13\xac\xfc\x01\xff@\x11\x7fF\xc1Blm-\x04;+\xe7D\xc5\xc7\xbc\xf7x3\xaf\x98a\xa9t\r\x84\xbbU/\xb8!_\xc2\x19.\x0f\xbe\xb9\'\xe9C\x01xN6\xa04>\x95\x06\x8c\x12;&\x06\x01\xd4\xa1\xc2>+\x85\x85\x97h\xa1\xec\xa2\x18r\xfb\xcd\xb5\x1c\xc1&ol\x7fQ\xa7\n%\x0f\x84\x8f-\xa1\x1a\xbez|z\xaea\xfd\x03\xdf\xc5\x9f\xf6\xb5\xe0\x06\xdf\xe2\xffTre\r~9\xdb\x8c\x15&.\x12*mc\xad\xfa\x90\x934\xa1\xc3~e\x9c\xb1\\\xfeDq\x0b\xadu\xd5\xc4m\xaf^d\x1c\xa4\x11\x7f\xd5\xc5\xfc%\xa2\xb9%Y_0\xc6\xe6\xe0e^\x16faGt\xc5\x14\xca3(O\x8e\xa3=j\xed\x00PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\n\x9f(\xb1!\x01\x00\x00{\x01\x00\x00/\x00\x00\x00system_low/__pycache__/userlist.cpython-311.pycmP1K\xc3@\x14~\x97\\ \x8a]\xd4\xa1\xee.\x1d\xecI\x05\x1d\x14\x17\xe3VE\xe8"\x82H4\'\x9e$\x97p\x97\xd8f\x8b\xe0\xe0\xd0\xdd\x7fP\x11\xff\x8c\x82C\x088\xf9\x07\n\xdd\xba\xe8K\xd4\xb6C\xdf\xdd}\xefx\xdf\xf7\xee\xdd{\xcf\xb5\xda"\xa0}~\xf7\xbc]\xf4_0c\xf4\xcf\x8fN\x11\x9e\xc0\x00\x0e\x03\xbc\xbdN\x04\x048q\xe0|\xf9\xcc@\xce\xe4\xc6-\xfdg\x06\x04ud\xaa\xeb\xaf\xcc\xcb\xf6\xa0\x03\rr\xdc\xb0\n\xd3\x13w\x85\x9dh\xae\xdaB\xc7\x05\x151\x0f\n+RB\xc6\xbfa\xe9\x06\xfc\x05Fe\xde\x983\x95H\x16pO\xb8\xac+\xe4\xb5+\xb7\xb6wZ\xacs\xc4\xda\xe2R\xb9Jp\xcd\x9c\xf0*\t\xb8\x8c5;I\xe3\x9bP\xb2(\xf5\x85Lz\xac\xd5\xdc,\x0fb\x84D\x15\xd2\xa9\xc6r\x17~\xd8ee)\x1f\x7f\xd0\x8c\xd2\xb1\xbd\x17\x84^\xe2\xf3}U\x8e\xa8lF\x1f \x0cMBH\x0eff\xde[\x0fVf\xe5K\xabC d\xad\x82\xcc\xc9\xe9Bv\xf8\xb8\xde\xdfx\xa7\xf5\x0fZ\x7f\xab\xf6T^-e\xe3;?PK\x03\x04\x14\x03\x00\x00\x08\x00\xfc\xb5\xd0V\x19\x10m\xf8e\x01\x00\x00\xed\x01\x00\x00.\x00\x00\x00system_low/__pycache__/version.cpython-311.pycmOMKBA\x14\xbd\xf3\xbeR\xcb \xb0uV\x1bEp\xca\xa06\x11\x04.\\T\x04\x92\x0b!\xc2\x9a\xa9&t\xde\xe3\xbdg~\xac\xa4M\x16.,"\x83\x08\\\x15\xd1\x9fQp!o\xdb\xb6\x85\xe0\xceU\xf3\xcc \xc3\xc3=\xe7ra\xe6\x9c{\xdf\xfc~\x1f\x08,}\xdd\x92\x03\xd1?\xe1\x0f\xb4Q\xef?\ni\x00\x854:\x83\xb4DQ\x1c\x0e\x83i\x99JM\x05&@\x02\xaaR\xf9\x15\x01|\x08\xfe`|BP[\x14\xaf4\x02\x045\xa7&yPi\xfc\xc73\xbcH\xff=\x88\x94\x84\xb0\\\xf6\xee\x97\xecs\xc6\xf3\xc5\xe0\x00E\xf7\xc2\x1eg\xea\x92\x9a\x16\xd3\xb9\x83\x8a\x0e*;\x889Z\xc60(\'\x8el\xd9\xa6\xa3\x1a&\xe3\xb6\xa3\\\xe8\x8c\xbfC\xdf\xf5\x1a\x10l\xe69\xceQ\xc22\xb8\xc0\xf8i\x86\xaf\xado\xc4pr\x17\xef\xb0c3c2j\xe1\xb8~\x92\xcfQn[\xd8\r\xd496JY7\x16\xc7\xa2+.\x85\x1a\xa3M\xb0U\xb2l\x9a;\xca\xea\x05<Z&j\x94\x06\x9e\xcd\x9cN\xf2Y\xbae\xce\xba\x07\x08ZDHOF\x08u\x95\xe9\x8a\x10M\x88\xd7\xd7\x03\x84\xe6\x87R\xd9\xee*\xeau\xe2*QMV\x93\xf5\xb9\x9bT-\xd5V\x02\x1d%\xd0\x1aV\x17\xd4\x8a\xda\xd2\x16\xea\xcb\x8d\xd0}\xe8i\xf5.\xf2\x10\x11\xa3\xa86\x04;\x10l\xfd\x969#\x82\xbe\x01PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x11Y[\xd5\xe5\x04\x00\x00I\x08\x00\x00+\x00\x00\x00system_low/__pycache__/wget.cpython-311.pyc\x8dUI\xa8\xd3@\x18\x9e$\x93\xae\xe9\xab\xb5\xf6U\xad>\xeb\x06\xb6.u\x17\xc5]\xdfS\xdcq_\x10\xc9{3\xb6\xd16\xa9Ij}\xa5\x95*\x1e\x8a\x08.\x08\xeeP/\x8a\xcb\xc1\xa37\x15<xL$`\t\x08\x82x\xf0VQA\xde\xc9\x99\xd6\xbe\xd6\xaa\xe0\xcc\xe4\xcf\xcc\xbf|\xf3\xff3\xff\x9f<\xf4\xf9<\x80\xb4{\x1f/\xa2\x17\x10\x80\x8f\xa0\xa3\xf1\xbf\xde_\rBn\x00\x04\x10\x93\x06\x87\x99\xc6\x9b=\xcc"\xf6\x028\xcca\x98\x04\'Y\xaa\xa6.e\x01\xe6\x1f\x90\xd9\x93Q\x08\x06\x10\x9e\x03q\x0f\x18\xc2e\xda\xdc\x7fj\xc2\xff\xd1D\xcc\x1e\xca\xe7\x10_u\x82\xbf4\xdc\x85\xd2^\xb5\xedc\x8e\xcft\xb1c\x88\xed0t\x91\x87\xa3\x11\x1fgi\xc4z\x87\xe8\xc4\xa8}\x95\xc8\xfel\xc5\xae]J\xac\xee\xec\x90\xb2\'\xe0\xa8=\xff\x17s\xe2\x13b\x1f\xb0\x04\xa1\x85\xde\x8d\xc7!\xae\x04\x11,\xf1\xba\xaf\x03\x97A\xfc\xefVK@\xc9\x81\xd8\x92\xd3M\xf6\xfc\xfb\xe9\x14a\x17\xb2\xab\xe8\xd2\x18\xf9Z\xd1Qu\xfdU\xdf\xd5}~E\xa7\x1e\xfc\xb7\xbc\xe0#\x98N=\xd4\xd6\xf8\xed$\x9cE\xae\xe0%o\xbe\xc0w\xc7X\xec\x8a\xa5\xe4\xd6\xc3\x1d7 tc \xe7\x9f\x18%\x0fr!w\xd1M%\x05z\xae\x9e"OV$\xcbG9^JK^=\xd2q\xfaB\xd1{\x87\xeaz\x08\xf5\xdd\xe3Q\x0fr<\xf5?\xe0\x082\xd7\x8e\xfb\xd2c7@\x8d\xde\xf4\xb3-\x91\xbd\xd3\xc1\x02\xa0\xc1<{\x86;\x04\xf2\x0c\x03\x0e\x01\x86\xf4\xdf\xf6\x18\xf3G\x1e\x02\x92\x87\x81\x1d\x85\x9e\r\x8a\xaccY\x9f\xbb\r\xcbI=\xa5R`\t\x90\x84\xf9<\x8b\xccl6?\xb8\xf73"\xb3\x11\xe6\xc8\x08\xb3j\x84\x89\x8e0GG\x18_\x81\x9d\x19\xb5A\x8c\xb59,#\x9b?\x9e\xcei\xa9B\xd0\xb3Q\xc9\xcbiED\xd1!%\x93Mc\x1dO\x8d\xf5\xd8\x8e\x9c\x9aNK\x83\xb6S\xc5\xa7rX\xd3m\'a(Y,\xdb\x9c$\x93U\n\x8b\x08\xab\x9a\xcd%\xb1n\xc3\x86\x00\xaa\x84g\xf3yU\xd2\xb1\xcd\xa5\xa9jF"\xec\x8c\xa8\xa7\xe8n\x8a\xa2\xda|V%\xe61\xc1\xe6\x08\x9c\xed:.\x1151\x83m\x97\x8a\xb5\xac"k\xd8\xf6\xe8\x8a.\xa6\x8fiR\x81\xcc\x07\xd3\xca\xd0\xc9\xe6|lVU\x92DK;6(\xaa\xc7\xf2\x12"\xa0\x90\xda\xdb~\xf4+\x00\x8c\x9a\xaa\x10\x89\xbah\xbbZ\x06\xb63\x8b\xd5!L\xbc\x16:14\x9a\x1e\xd1\x8e6"&\xd4\x9c\x9c\xc8`$\x89\x89\xbc$\x1f\x17\xe5EK\x97-L\xec\xd9\x9e\xd8&\r\xaa\xa2*a-\xb1Q\x19\xcae\x08\x96\x96\xd85\xac\xa7\x149\x91\x1dNKr\xeeLb\xe1\xbc\xf9\xf4!4K\x04\r\x966\xac\xe98s,\xad\xe4\x13yrL\xf3\xb2\xc3\xb6\xd0\xf2u\x80x\xae\xc6\x89\x07\xb4\xcc5z\xc9e\xf0\xc9\x1f\xbat\xf6\x9d\x7f\xe6[\xff\xcc\xea\x90\xe9\x8f[\xfexy\xf3\xfb\xc0\xb8+\x07\xad\xd0\xccw\xa1\xd8\xdbP\xcc\x88\xafx\xbe\xce\x0c\xad\xb6B\xab\xcd\xc0\x1a+\xb0\xa6\xbc\xa5\x16\x08\x112!b\xc0\xde\xef\x0e\xe0\xe9\xa9\xa4nB\xd3=\xd9rO\xae\x83\x1e~\x13S\x1dW\x9b\x18\xa9\xf8\xeb\xd0\xeb\xde\xc4\xd4\x82\x91\x1b\xab\xae\xad\xaaN4\x83s\xac\xe0\x9c\xca\xc6Z0\\\x07\x8c\xaf\xb76&T\x13\xc6\\\xderq\xcb\x15\xdd\x14&Y\xc2$C\x98\xf4A\x88\xdc\xd3\xaa\x8bo\r\xdf\x1d6\x85Y\x95\x9d\xef\xc3\x13\xef-\xaa\xfa\x9f\xc5\xcd\xe8Jc\xedns\xcan3\xb2\xc7\x8a\xec1\xf6%\xcdp\xca\n\xa7*\x9b\xdf\xf7N\xbc~\xa2\x9ax\xb6\xc5\x9c\xb6\xfa\xe5tsj\xbf\xd9;`\xf5\x0eT6}\x88\xf4U\x83\xd53\xf7\xfb\xccH\xe2\xd9tc\xf9\xd67)s\xf9~s\xe1\x013r\xc08|\xd4\x8c\x1c\xadl{/\x04\x8c\xb1\x0b\xae\x14\t!\xa3\x9a$\xa49\x9e\xa9/\xc7\x19\xc2\x80)\x0cX\xc2\x00\x99\xd4\xc34\x98\xba\x03\x04z\xeb>\x1ad\x1d\xb4\xe9\x97\x06\xfd\xd6\xe4\xfc\x07\xfd\xf1\xe3\xc7\xbfD\xdf\xa3\x80\xf7\x18\x9e\xa8\t\xa7Zp\xaa\xd1\x1a\x1a\xfd\x9a\xbd\x9a\xb4~\xde\xc60\xf7:\x0c7F\x9c\xaf\xfb\x18B\x0b\x1ez\xcf\xd1\x95$\xb7W\x17\xfaZu\xa55\x19Q]\x89\xa6\x94\x0cN4V\xf3T7\xc1\x88\xb9\xec\x9ef\xa1\xcd\xfbUg\xaa\x9f\xfe\x19\'R\x12\xa7\xb5\x0cE5I\xaa\x0cI\xa7\xd5I\x8d\xf5\tE\x92\x1f\x81\xaf\x8d\x1fh\x8c\xd6\xb8keFA\xb94^\xad.\xa0\x1f\t\x9aN\xb7\t\xa9s\x0c\xc3\xd4@\xc8h\x8d\x1a\xf0\x96\x1b\xbd\x0e\xc73\xd3\xea`\x94,\x04\xd0UYx~EyE\r:\xcb\x1b\xce\xf5_\xe8/\xf7\xd7\xa0\xbb\xdc_\x99c\xc2\xb0\x05\xc3\x06\x0cw\x8b\x0cO\xdc\x84\xb3-8\xdb\x80\xb3\xdb\xb2F\xff\x00\xc7\x94\xb7]\t\xde\x18\x7fm\xfc\xcd\x19W\xfb\xae\xf7\x990j\xc1\xa8\xd1\x1a\xea|\xe2\xdeOPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x03b\xc6dg\x00\x00\x00z\x00\x00\x00\x13\x00\x00\x00system_low/about.pyM\xcd1\n\x840\x10@\xd1~O1\xa4\x8a\xb0\x88\x1ba\xbd\x81\xb5\x9d\x85X\x88\x8e:\x85\xa3LbP\xc4\xbb+\x88b\xf9\x8b\xc7o\xc8\xeb\xe03\t\xb1\xd3\xad\xcaV\xd7\x13\xcf\x0bl\x1e\xc5\xd2\xc8ET\xee\xe1\x13\xbfw\x98rW\xb7T\xba\x0e\xc0D&\x86\x9c8\xad8\xfe\'\xe6\x0bv\x1c\x10\x84\xba\xdeY\x10\xb4(\x1e\x9b\xf04\xd7\xf3\x00PK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xdft\x88\xb5?\x01\x00\x00\x9d\x04\x00\x00\x12\x00\x00\x00system_low/area.py\xc5\x93An\x830\x10E\xf79\xc5\xc8+@J\xaa\xd0\x9d\x95d\xd7\x0bt\x8b"\xe4\x9a\tX\x02\x83\xecI\xd5(\xca\xddk\x03i\x05%\xa1\x95Z\xd5\x1b\xc6\xcc\x1f\xfe\xf7\x13VUS\x1b\x82JP\xb1P\x07\x10&\xb7\xb0\xddB\xc2\x96\x86\xed\xf9\x02\xdc\xca\xd4k\x10\xb6Uc\x94\xa6\x80\t\x83\x02\x96\x066/\xc2\xe2\x0e6\x05\xaa\xbc\xa0\x1d\x0b\xa7\xe5\xcfHG\xa3\xedU\x1eM\x0f`\xe9\xec\xbd+(\xdd\xc5\x10:\x83\x12u\xe07\xa1\x0f\xf5\xd8\xe5!srE\xbf|3Y\xefa\x0b\x87\xb2\x16\x14\xf4\xfbp \x80$\x1e)\xe2^q\x8d\xf91\x18\r\xda\xf8&\xb1!xj\x1f\xaav\xc1, \x1fM\x1e\xd8\x99N\r\x06\x18\xae\xd2T\x8b\n\xd3\xf4\xc2\xe1\x8c\x17\xe6O5\x84J3P\xe9\xa7P\xd7\x0f1D\xdfCK\xff\x85\xb6\xcb\xf8\'\x80\xbd\xe8\x0bd9\xff\xe7\x1a\x91\xa9\xa3\x9d\xa5K\x05B;S;\x03\x90\xca\xc8\x12\xc1\xb3\xce\xc0eUd\xa1\xfb\xd0\x14ny\x07w<\xc2\xfdi\xed/\xe2\xaaQ\x8eW0\xa4\x1eEq\xf8;\xcc\\@\x8b\xf7\x00%\xdes\x7f\x8b\x8dor6x\xe5\xcb\xa5\xe1`P\x92\xd0y\x89\x13m\xe2\xee\xb8\xeaVW\xf2\x9e\xee\xc0\xf5\x1dPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV:\xb8\x11Bt\x00\x00\x00\xbd\x00\x00\x00\x11\x00\x00\x00system_low/cat.pym\x8cA\x0e\xc3 \x0c\x04\xefy\xc5\x8a\x13\\x@\xd5\xf6\r\xfd\x02J\xec\xc6U\x04\x11X\xed\xf7\x0b\t\x8a\x14){\xb1\xd7\xbbca\x84\xfc.\xb7\x01Um\xc3\x03\x06\xc6\x7f\x92D\xdb\xbc\xdb\x92\x9f\xe8\x8c\xb4R\xbf!\x14pe\xba\xd6,Q-\xfbLa\xb2\xce\r\xb4\x14\xda\xd3I\xbe\xb6~8:f\x0c\x8a;\xcbBO\xe3\xae\x1b\xaf6\nt&\x8c)*5\x93\xb8C\xfeD\xfd\x01PK\x03\x04\n\x03\x00\x00\x00\x00\xdd]\xcfV:\xeb=\xc1\x07\x00\x00\x00\x07\x00\x00\x00\x11\x00\x00\x00system_low/cls.pycls() \nPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x8c\xb6z\xa0[\x00\x00\x00~\x00\x00\x00\x12\x00\x00\x00system_low/echo.py]\x8d;\n\x800\x14\x04{O\xb1\xa42M\x0e \xc6\xceS\x88E\x90\xa7\x89\xe4#\xc9\x13<\xbe)D\xd0mg\x99q+L\xde\xce@\x91\x0b\xb4\xc64w\r\xea\x8e\xec"\xb7b\\lB\xcft\xf1 \xe4\x1fPy\x108\x81-\x81)\x07\x17\x8dW\xf5K\xbe\xd0G\x05\xa1\xf6\xe4b\xfb\xe6\xa4lnPK\x03\x04\n\x03\x00\x00\x00\x00\xdd]\xcfV\xc9\xdb.n\x07\x00\x00\x00\x07\x00\x00\x00\x12\x00\x00\x00system_low/exit.pyquit()\nPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x89\xfa\x82\xd9\xaa\x00\x00\x00\x07\x01\x00\x00\x12\x00\x00\x00system_low/help.py]\x8e\xc1\x0e\x820\x10D\xef\xfd\x8a\r\x17\xdb@\x0c\\I\xf0\x0b<x\xf1D\x08\xa9\xb2%kJK\xb6\xd5\xef\xb7X\xf1\xe0^\xf60\xf3f\xc6\x86\x08\x1d\x04\xcf\x11\'i)\xc4\xd1z=\xe9\x9b\xc5qe?\xb3^\x82\xbc?\x99\xd1\xc5k@VPB\x7f\xb0~\xf6\xc6\x1c\x06%&zI%V&\x17eq\xc9\x00\x9cSL\xb1kd\xc0\xa2\x93\xa9G\xc1\xa9\x83\xa6n\x05l\x97\x8b\xfb\xf4zj\xa9l\xea\x01\x8cg  \x07\xac\xdd\x8c\xb2\xae~d\x9585|\xc0\xec\x8a\xb8l\xc6\xa4\xa5\xb8\xfd\xbe3\xa08><9\xb9\x99\x94\x12h\x03&\xd3\xbf\x9e\x83\xf7\x95oPK\x03\x04\n\x03\x00\x00\x00\x00\xdd]\xcfV\xc7m\x89\x84\x15\x00\x00\x00\x15\x00\x00\x00\x12\x00\x00\x00system_low/idle.pyimport idlelib.idle \nPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfVsH\xc7q\xf7\x01\x00\x00R\x06\x00\x00\x13\x00\x00\x00system_low/initd.py\xadT\xcdn\xdb0\x0c\xbe\xe7)\x08_*\x03\xa9\x9a]\r\xe4\xb0\xc3^`\xc0N\x9eQh\x16\xb5p\x8b%CR\xe2\x04E\xdf}\x92\xec\xd8iRg]0\x1dl\xfd|\xfc\xf4\x91"IMk\xac\x07wt\x8ba\xea\xad\xa8\xf1\x87\xa8\x7f/H\x81\xb0?\x1d\xac\xd7Pf\x8f\x8f\xa4\xc9gU\xb1\x800\xbc=\x86\xc90:\xf2\x1b0-j\xa6\xb2\x8di\xf0\xe9\xa5\xdeY\x8b\xda\x7fsh\xf9.|\xb4h\xf0\xf5)\x12p\x99\xe5 \x1c\xa8h>\r\xbb\xd3\xcf\xae\xb6\xd4z\xa6\x96g\xd6yB\xe1\xa1\xc6\xd6\xc3\x97\xf4#\xa3#\x01N\x04\xad%\xed\xd9\xa8\x9b+c\x1b\xe1\x9f\x83\x15\xcb\xf3\x05n/\xfc\x10R\x9e\xdc\x90\xb4g\xe1\x8a\x91#k\x04iH\x10(k\xd34B\xcb*\xcb\xdf\xc7~\x96\xd2\x81\xdf \x0c@\xf0&-\x9d\x17!\x8cF\xa5E\xef3(\xda"?\'\xba\x96e\xb11{\x9cU\x16\x89$\x9c`\x7fW\xf75\xe1\x1c\x88Q\x9e\xb2\xa6\x195A\x1f\xedkI\x93\x92\x80\xeb\x05\x06\xe34)WU\x14;!\x8a\xc5\x7fx~\xb9V\xdc\xa2\x90[\xd2\xe8\xa2\x0f\xc38\xac\xcb\xea\xb4\xe8u\x84\xab!\xe3\xbf\x0ci\x96\xe4|*\xaa\t\x1e\x1e\x1d(J\x96o3+\xb8\xa4\x8dO\x04\xf1\x94\xa6\xd3\xf1".\xda\xa0^2\xca\xef\xf1g\x99uW>)\xdeY\xf2\xd8\xbbt\x18"\xdb\xa7\xde\\XO\xc7\x89$\xed\xf3\xd6\xb4l\xd5k\x8ay\xc9\xced,\xd5eB\xbc<\xc0\xc3\x14\x9b\xfc5\xbb\xcb\x99\x8f>\x8e\xe4\xa4\x83\xadg\xab\xe5\x9b7\xc9\xef\xba\xf5F\x08Y\xf6]\x0f\xfc\xf2\xbdb\xde\x13v\xa1f\xe6\x82T\x0b\x0f\x1f\x10\x10\x89\x1d\xde\xac\xbc2\xde\x1a\xaa\xed\x16\x86\xe2\xa3\x0e\xe5ut\x1ec\xb9\t\x1f\xb6c\x7f\x03\xa3\xfb\xd6\xb0k\xf9\x0c\xcd\xd0d\x8b\x08w\x17e:\xa1\x06\xaf\x0bp\x1b\xd3\xa5\x0e4\x0b\xeds\xaa\x80\xf0\t\xd2\xce\x1a\xd5M\xab\xb1\xc0\x83\x90\x7f\xef"\x7f\x00PK\x03\x04\n\x03\x00\x00\x00\x00\xdd]\xcfVX\xa0\xda2#\x00\x00\x00#\x00\x00\x00\x12\x00\x00\x00system_low/lock.pyloginScreen(currentUser.username) \nPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV5\xe1C\xf80\x01\x00\x00\xaa\x02\x00\x00\x11\x00\x00\x00system_low/man.py\x8dRAn\xc3 \x10\xbc\xfb\x15+z1\x8a\xe5H=V\xca\x03z\xeb\xa1=U=P{\xdd\xd0\x12\xb0\x16\x9c\xf8\xf9]\xc05q\xa4JA\xb2\x90\x99\xd9\x99\xd9\x85\x1e\x07\xe85\xbd\x12b=\xaap\x94O\x15\xf0\xd2\x03X\x17\xc0\xf96\x1e\xb6\xda3g\xc5\x975\x92\xb6\xa1\x16\xcf\xf6\xac\x8c\xee!\xa2\xe0(\xef\xbdC\x9f\x14p\xd6>\xb4B\xaeU\x84a"[\xa5\xff\x81\xe9\xe4\\hb\x04\xdf\xc0\xa0\r\x97i\x1b}/\xca\xfc\\;.\xfc\xc4aJ\xe6\x16(\x87Njp8\xa4\x10\x05\xdc&\x8e\x95r\x83\xa1\xf1\xf8\x1f\xfbo\x04\xdfN\xdb:\x87M\x02\x12\xe0\x01^"e\x89}\xd1\xe1\xc8\xb9\xfc\xf4\xc9\xcd`\x17\x1ci\xf4\xd5&;\x03\x1c=n\x9c\xfc.+\xa6J\xd8\x81\xd8\x8b\xe2wk\xc1m+\xfa\xf2\xb1\xed\xf7\x8f\xac{R\xac\xd0MDh\xc3\x9bGj\xc4IY\xe0\x8f/\x02\xcdu\x01+\xe7\x1a\xb6:\xd7i,\xeb{\x10\xb9\xa0\x80\xeb\x9cR\xb3\xe0F\xb4\x89\xb4\x17;\x01"\xe7\x8e\xca<\x1c\xe5a(=\xcep\x80\xa1%T}\xb2(\x873\x1f\x8eFul\x96,D\xc3\xdbc-\xe5\xcd+\x9be\xf5\x0bPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xab\x008Z\x8d\x00\x00\x00\xdc\x00\x00\x00\x14\x00\x00\x00system_low/script.pym\x8e\xc1\n\xc20\x10D\xef\xfd\x8a%\xa7\x04\xa4\xbdK\xf1#\x04\xcf\x12\xda\x8d]\xa9\x9b\xb0\xbb\xd5\xdf\xb7m\xbc\x08\x9d\xd3\xc0\xcc<\x86\x12Dy\xe8\xb9\x81U\x1f\xb2\trA\xf6\x0e\\\xfb\xcc\xc4~\x0bC\x80\xa8\x90\xd6\xceO\xb2\xf0]\x07\xa1b>\x9d\x86E\x04\xd9n\x8a\x12\x1a\x9c\x15ko\xa4\xb7\x0f\xbb+Bl\xde\xd5\x01\xf4]\x896u\x96\xbbD3^\\8n_1\x8e\n6!\x0c\x99m\xe5+\xe4\x04\xfd\xbe\x81\xc8\xe3\xf6a\xcf_\xdb\xb7\x08\x95\xde\xfe\xe1\xbePK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV@\xb7\xff\xb8\xa8\x01\x00\x00\x86\x04\x00\x00\x15\x00\x00\x00system_low/service.py\x8d\x93MO\xad0\x10\x86\xf7\xfe\x8a\t\x1b!\xf7^r\x8fK"\xaetaL\xdc\xf8\xb1!\xc4\xd4\xd39\xc7\xc6\xd2\x9eL\x8b\xd1\x18\xff\xbb\x9dRD\x8e\x12e\x01e\xfa\xce\xf4\xe1\x9dAu;K\x1e\xfc\x03\xa1\x90\xcal\x0f\xd4\x06\x04m\x1d\xd454\x99\xf3\x82|\xd6V\x07\x10.\xa9\x9e\xf2"\xaev\xa4\x8c\xcf3\x87\xf4\xa4\xd6\x08Q\x05\x87\xcd\x8e\xec\x96D\xd7\x1ef\xc5\xf7\tW,t  )A\xf0K*S\xce\xb2P\x8f \xc2\xc8\xb8h\xfe\xb7\x0c\x95=*\xad\xb3\x18\xd5hr\xde)8~4@>C=}L\x89\xa6\xef\x90\x84\xc7\xbch\x8e\xaavP4\xcc\x12+\xae\xda\xe2\xdf\xaa-\xb9\xe2\x1eh\xbf^\xa3s\x9b^\xeb\x17\xe0m\x94\xcc\xcc\xb1\x80\xc9\xc2e\xc0\xc1\xb4e\xc2]=\xf1]\xc7U\xee\x83\x06}\xadEw/E\xa5\xad\x90w\xc9\xa1\x91\xf3\xef\xba\'B\xe3o\x82YEB-\x8d\xe8\xb0N\x82\x14\x92\x02;k\xeak\xea1E"\xcdh\xe8\xd4Y\xad\xdcGc\xc3\x86\xb1~\xd1\xb6\xa4\x9aw\xf4\x93YgD\x96*\xb8\xb4@\xbd1!\x7f\xb4\n\xd9\xacorQ;\x1cj\x8e\x1d[-\x9c\xb0\xb1\x04\n\x94\xf9\r\xdbD\xb4\xc9\x9a\xd7\xe7\xb7\x16^U\xb4\xe8-AL\x07\xfe\xd9;\xf1\xab=\xdc\xf3\x1f\xe7\x9eEp\xac\xe4\xc9\xd2\xbc_\xb0@\x8cv\xc0\xbdpa\x8e\xac\x81\xf3\xd3\xfdaw\xf8\xc3YM`\x0b\x1fn\xbck\xb3\xf9\xa8&\xc1C\x987\x8dT.\xb1\xdc\n\xad$|T\xa9\xe6U\xc2j\xf8\x8d\xab\xe11Q\x7f\xd5\xf1\xe8T|\xe7_Y\xeb\xb1\xeb\x8b\t\xd1\xa7*\xde\xddTw\xc6\xf9\x0ePK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x18\xa9\xdf\xa8\x1e\x01\x00\x00p\x02\x00\x00\x16\x00\x00\x00system_low/terminal.py}\x92Qk\x830\x10\xc7\xdf\xfb)B\xd8C\xc2\xa4\xd8\xd7B\xc7^\xec^\xc6:\xd6v0D\x86\xd8\xb3\xdc\xd0\xd3\xc58\x84\xd1\xef\xbe\xc4XS,\xeb=(\xb9\x7f~\xff\xcb]r\x80\x9ciP%RZ\x88\xb6\x01%\x973f\xa2VUYk\xb6be\x8a\xd4\x0b\x01R\xddj\x91\xf3_\xbb\x9a\xef\xb7\xd1\xdb\xee\xe35\x12\xf2\xf4\xe82\xf6Ci\t\'v\xc7\xa5\xec]0\x1f\x8dV\xecy\xf3\xb4Y\xaf\xa3\xf7\xe8egj\x0cQTG\xa4m\xa6\x00H8\x06\nO!\xb1\x98C\x87\x9a\x07\xfc\xbb5\xbf\xc4\x93\nt\xabh\x8ax\xdd\xa4\xb0AjtJ\x19\x08\xa7\x06\x056\xba\xef\xd0\xc7\x01\x7f\x86\xca\x17d\x014 \x92=\xb0ExF|dF\xac\x1a\xd4\xf0i<\xed\xa0b\xb7?\xee\x96\xdd\xfd"LX^)\xd6\xd9\x0eTJG\x10api\x1a,B\x99L={\xc48\x96\x86\x9a\xf8_\xd7w\x97\x84\xa4\x05g|\xfeU\x99[\xb2\xa8\xf4\xad\xb8\xc94`\xd8[\xdcx&\xf9\xcfX\xbc\xcf\x95\xc7\x19\xb5\xca\xe4\x19\xcd\xc6e\xd6*\x05\xa4\xf7}\xf6\x0fPK\x03\x04\n\x03\x00\x00\x00\x00\xdd]\xcfV\xd0I\xaa\xd8\x11\x00\x00\x00\x11\x00\x00\x00\x11\x00\x00\x00system_low/tty.pyprint(getTerm())\nPK\x03\x04\x14\x03\x00\x00\x08\x00\xdd]\xcfV/GlmT\x00\x00\x00U\x00\x00\x00\x15\x00\x00\x00system_low/version.py\r\xc61\x0e\x80 \x0c\x00\xc0\xbd\xafh\\\xa0\x0b\x0f0\xf1\x0f\xee\xc6\xc1D\x88u(\xa4\xa0A\x8c\x7f\x97\x9b\xae\xe2\x84\xb7\xd7\xccQ\xa0\xf5/+\x84\xa8\xc8\xc8\x82u\x04\xec\x9a\xdbR\xf2\xb2\xdb\\\xd42\x11$e)6\x0c\xf3S\x0e\x96\xab\xe2k\x9cqgd\xb1\x8d\xbe\x81\xe0\x07PK\x03\x04\x14\x03\x00\x00\x00\x00\x01\xba\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00tmp/PK\x01\x02?\x03\x14\x03\x00\x00\x00\x00\x01\xba\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00$\x00\x00\x00\x00\x00\x00\x00\x10\x80\xffA\x00\x00\x00\x00app/\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80f\x03"\xa0\xa0\xd9\x01\x80f\x03"\xa0\xa0\xd9\x01\x80f\x03"\xa0\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x00\x00\x01\xba\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\t\x00$\x00\x00\x00\x00\x00\x00\x00\x10\x80\xffA"\x00\x00\x00app_high/\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80f\x03"\xa0\xa0\xd9\x01\x80f\x03"\xa0\xa0\xd9\x01\x80f\x03"\xa0\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x00\x00\x01\xba\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\x00$\x00\x00\x00\x00\x00\x00\x00\x10\x80\xffAI\x00\x00\x00config/\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80f\x03"\xa0\xa0\xd9\x01\x80f\x03"\xa0\xa0\xd9\x01\x80f\x03"\xa0\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x00\x00\x01\xba\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x00$\x00\x00\x00\x00\x00\x00\x00\x10\x80\xffAn\x00\x00\x00home/\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80f\x03"\xa0\xa0\xd9\x01\x80f\x03"\xa0\xa0\xd9\x01\x80f\x03"\xa0\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x00\x00\x01\xba\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00$\x00\x00\x00\x00\x00\x00\x00\x10\x80\xffA\x91\x00\x00\x00log/\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80f\x03"\xa0\xa0\xd9\x01\x80f\x03"\xa0\xa0\xd9\x01\x80f\x03"\xa0\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x00\x00\x08T\xcfV\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00$\x00\x00\x00\x00\x00\x00\x00\x10\x80\xffA\xb3\x00\x00\x00man/\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80\xf9,El\x9f\xd9\x01\x80\xf9,El\x9f\xd9\x01\x80\xf9,El\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV8\x03\xf6d\xec\x00\x00\x00\xf2\x01\x00\x00\t\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xd5\x00\x00\x00man/alias\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xca\x87=\xd3H\x01\x00\x00M\x02\x00\x00\t\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xe8\x01\x00\x00man/initd\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfVn\xb0P\x12\xe2\x00\x00\x00\x9d\x01\x00\x00\x0f\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81W\x03\x00\x00man/loginscreen\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xbaB\x88\x97\xc4\x00\x00\x00K\x01\x00\x00\x07\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81f\x04\x00\x00man/man\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xaf\xc7y1\x15\x01\x00\x00\xf8\x01\x00\x00\x0b\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81O\x05\x00\x00man/startup\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x00\x00\xf6\xb5\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\x00$\x00\x00\x00\x00\x00\x00\x00\x10\x80\xffA\x8d\x06\x00\x00system/\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00\xc0\x85.\x9c\xa0\xd9\x01\x00\xc0\x85.\x9c\xa0\xd9\x01\x00\xc0\x85.\x9c\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x00\x00p\xb8\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x13\x00$\x00\x00\x00\x00\x00\x00\x00\x10\x80\xffA\xb2\x06\x00\x00system/__pycache__/\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80{\xfab\x9e\xa0\xd9\x01\x80f\x03"\xa0\xa0\xd9\x01\x80{\xfab\x9e\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x10r\x02\xc5f\x01\x00\x00\x06\x02\x00\x00(\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xe3\x06\x00\x00system/__pycache__/about.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\x01\xb1\xd0V\xc7\xd3\x98\xe2P\x04\x00\x00C\t\x00\x00(\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x8f\x08\x00\x00system/__pycache__/alias.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00e\xbd\xa2\x96\xa0\xd9\x01\x00e\xbd\xa2\x96\xa0\xd9\x01\x00e\xbd\xa2\x96\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xee]\xcfV\x1ex\x16\xa0\xf3\x01\x00\x00q\x03\x00\x00,\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81%\r\x00\x00system/__pycache__/autologin.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80\x89\x89\xc6v\x9f\xd9\x01\x80\x89\x89\xc6v\x9f\xd9\x01\x80\x89\x89\xc6v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00)\xb6\xd0V\xa6\xb8Q\x95\r\x02\x00\x00|\x03\x00\x001\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81b\x0f\x00\x00system/__pycache__/basic-terminal.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80l\xf4e\x9c\xa0\xd9\x01\x80l\xf4e\x9c\xa0\xd9\x01\x80l\xf4e\x9c\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV1\xc5\xc6\xc6~\x01\x00\x00N\x02\x00\x00\'\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xbe\x11\x00\x00system/__pycache__/calc.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x89\xdf\xbe\xb3\xda\x00\x00\x00\x0b\x01\x00\x00,\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x81\x13\x00\x00system/__pycache__/check_sys.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV;(\xec\x02\r\x01\x00\x00\x84\x01\x00\x00)\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xa5\x14\x00\x00system/__pycache__/datest.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\')\x875!\x02\x00\x00\x90\x03\x00\x000\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xf9\x15\x00\x00system/__pycache__/debugterminal.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xe5\x86noI\x01\x00\x00\xcf\x01\x00\x00\'\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81h\x18\x00\x00system/__pycache__/echo.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfVD\x1d,\x0f\xec\x00\x00\x00\x16\x01\x00\x00\'\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xf6\x19\x00\x00system/__pycache__/edit.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xecm\xe5\\t\x01\x00\x00\xee\x01\x00\x00\'\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\'\x1b\x00\x00system/__pycache__/exec.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x06\xd1]<\x8c\x02\x00\x00\x19\x04\x00\x00\'\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xe0\x1c\x00\x00system/__pycache__/help.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xb0\xb1\xd0V\x9f\x19\xbe\'\x01\x0e\x00\x00\xed \x00\x00+\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xb1\x1f\x00\x00system/__pycache__/installd.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80\xcf\xd6f\x97\xa0\xd9\x01\x00\x93\xa0h\x97\xa0\xd9\x01\x80\xcf\xd6f\x97\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xf5\xb0\xd0VLv\x1e\xf3\xd6\x01\x00\x00\xc0\x03\x00\x00%\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xfb-\x00\x00system/__pycache__/ls.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00\xa3\xd1\x96\x96\xa0\xd9\x01\x00\xf8\xf4\x19\x9b\xa0\xd9\x01\x00\xa3\xd1\x96\x96\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xb4\x81\xed~\xd5\x00\x00\x00\x05\x01\x00\x00&\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x140\x00\x00system/__pycache__/lsd.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xe2s\xa2\xad\x8b\x01\x00\x00]\x02\x00\x00%\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81-1\x00\x00system/__pycache__/md.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xfem<\x98\xa5\x04\x00\x00\x12\t\x00\x00\'\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xfb2\x00\x00system/__pycache__/peer.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00k\xb6\xd0V\x99G\r\x9b\n\x01\x00\x00^\x01\x00\x00&\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xe57\x00\x00system/__pycache__/pip.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80R\xdd\xaf\x9c\xa0\xd9\x01\x00C\xd8\xb2\x9c\xa0\xd9\x01\x80R\xdd\xaf\x9c\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00F^\xcfV\xe2/\t\xc7<\x10\x00\x00.\'\x00\x00&\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x8139\x00\x00system/__pycache__/pkm.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00\x8a\xe2(w\x9f\xd9\x01\x80M\xac*w\x9f\xd9\x01\x00\x8a\xe2(w\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV|,\x19\xee \x01\x00\x00}\x01\x00\x00&\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xb3I\x00\x00system/__pycache__/pwd.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x18\xba\\\xe8\xaa\x04\x00\x00S\t\x00\x00)\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x17K\x00\x00system/__pycache__/pylink.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00/\xb6\xd0V\x91\x17X,X\x01\x00\x00\xfa\x01\x00\x00)\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x08P\x00\x00system/__pycache__/python.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00\x11\xb4m\x9c\xa0\xd9\x01\x00\x11\xb4m\x9c\xa0\xd9\x01\x00\x11\xb4m\x9c\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x009y\xdbt\x01\x00\x00/\x02\x00\x00*\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xa7Q\x00\x00system/__pycache__/python2.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00p\xb8\xd0V\xbcTC\xd8e\x02\x00\x00R\x04\x00\x00*\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81cS\x00\x00system/__pycache__/removed.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80{\xfab\x9e\xa0\xd9\x01\x80{\xfab\x9e\xa0\xd9\x01\x80{\xfab\x9e\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x9d\x84\xb2j\x8e\x01\x00\x00H\x02\x00\x00(\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x10V\x00\x00system/__pycache__/shell.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfVk%\xda\xb1\xd5\x00\x00\x00\x05\x01\x00\x00&\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xe4W\x00\x00system/__pycache__/sys.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00$\xb1\xd0V\x9b\xf3A\x0e\xb5\x04\x00\x00\xb4\t\x00\x00\'\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xfdX\x00\x00system/__pycache__/user.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80\x9b{\xc9\x96\xa0\xd9\x01\x80sj=\x98\xa0\xd9\x01\x80\x9b{\xc9\x96\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV54\xd2W\x1d\x01\x00\x00w\x01\x00\x00+\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xf7]\x00\x00system/__pycache__/userlist.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV]\x9e\x92\xe4b\x01\x00\x00\xe9\x01\x00\x00*\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81]_\x00\x00system/__pycache__/version.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\t\xb0\xa7\x8d\xa3\x02\x00\x00"\x04\x00\x00&\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x07a\x00\x00system/__pycache__/xax.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x04\x9ex\xefv\x01\x00\x00{\x04\x00\x00\x0f\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xeec\x00\x00system/alias.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xaa\x0c\xbc\x88\xa3\x00\x00\x00;\x01\x00\x00\x13\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x91e\x00\x00system/autologin.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x89\x89\xc6v\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x95\x1ea\xa4\x9b\x00\x00\x00\xfc\x00\x00\x00\x18\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81ef\x00\x00system/basic-terminal.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xc3\xaf\x88Jl\x00\x00\x00\xa8\x00\x00\x00\x0e\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x816g\x00\x00system/calc.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\n\x03\x00\x00\x00\x00\xdd]\xcfV\xa9[\x03;\r\x00\x00\x00\r\x00\x00\x00\x13\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xceg\x00\x00system/check_sys.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xaf\xb1\xd0V\xbc\x10\n\x9f%\x04\x00\x00\x9d\x0e\x00\x00\x12\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x0ch\x00\x00system/installd.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80\xa2\xa5e\x97\xa0\xd9\x01\x80\xa2\xa5e\x97\xa0\xd9\x01\x80\xa2\xa5e\x97\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x8b_3\x14\x81\x00\x00\x00\x1a\x01\x00\x00\x0c\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81al\x00\x00system/ls.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x9dY\xec\xd7u\x00\x00\x00\xb7\x00\x00\x00\x0c\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x0cm\x00\x00system/md.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV>4J\xc6O\x01\x00\x00\xdd\x02\x00\x00\x0e\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xabm\x00\x00system/peer.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\n\x03\x00\x00\x00\x00i\xb6\xd0V\x99"\x03b$\x00\x00\x00$\x00\x00\x00\r\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81&o\x00\x00system/pip.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80\xf8z\xad\x9c\xa0\xd9\x01\x80\xf8z\xad\x9c\xa0\xd9\x01\x80\xf8z\xad\x9c\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV6\xf9\xa3T=\x05\x00\x00\xbe\x12\x00\x00\r\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81uo\x00\x00system/pkm.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00\x8a\xe2(w\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\n\x03\x00\x00\x00\x00\xdd]\xcfV\xf4}G\xe1/\x00\x00\x00/\x00\x00\x00\r\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xddt\x00\x00system/pwd.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV.\x8al\xc0\x84\x00\x00\x00\xc6\x00\x00\x00\x10\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x817u\x00\x00system/python.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xcc\xf6\xea\xfe\xc1\x00\x00\x00\xa3\x01\x00\x00\x11\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xe9u\x00\x00system/removed.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xa1\r\x9e\xce\x9c\x01\x00\x00\x98\x04\x00\x00\x0e\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xd9v\x00\x00system/user.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x00\x00\xd9P\xcfV\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0c\x00$\x00\x00\x00\x00\x00\x00\x00\x10\x80\xffA\xa1x\x00\x00system_high/\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80\xda\x9b\xb7h\x9f\xd9\x01\x80^s\xcfh\x9f\xd9\x01\x80\xda\x9b\xb7h\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x00\x00dR\xcfV\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x18\x00$\x00\x00\x00\x00\x00\x00\x00\x10\x80\xffA\xcbx\x00\x00system_high/__pycache__/\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80\xb7}oj\x9f\xd9\x01\x00\x89nxj\x9f\xd9\x01\x80\xb7}oj\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfVHo\x8ad\xcb\x00\x00\x00\xf3\x00\x00\x00/\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x01y\x00\x00system_high/__pycache__/compile.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00\xc4\xc6\x80j\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\n\x03\x00\x00\x00\x00\xdd]\xcfV\xed[\xd2y\x0c\x00\x00\x00\x0c\x00\x00\x00\x16\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x19z\x00\x00system_high/compile.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x8b\x83zbN\x00\x00\x00^\x00\x00\x00\x18\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81Yz\x00\x00system_high/reinstall.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x00\x00e\\\xcfV\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0b\x00$\x00\x00\x00\x00\x00\x00\x00\x10\x80\xffA\xddz\x00\x00system_low/\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80\xac\xa7\x0eu\x9f\xd9\x01\x00C@\x0fu\x9f\xd9\x01\x80\xac\xa7\x0eu\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x00\x00\x04\xb6\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17\x00$\x00\x00\x00\x00\x00\x00\x00\x10\x80\xffA\x06{\x00\x00system_low/__pycache__/\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80E;<\x9c\xa0\xd9\x01\x80f\x03"\xa0\xa0\xd9\x01\x80E;<\x9c\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xbf\r\xa7\th\x01\x00\x00\n\x02\x00\x00,\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81;{\x00\x00system_low/__pycache__/about.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfVtKylC\x04\x00\x00D\x0b\x00\x00+\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xed|\x00\x00system_low/__pycache__/area.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xe2O\x82:\x07\x01\x00\x00]\x01\x00\x00-\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81y\x81\x00\x00system_low/__pycache__/author.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xfa\xb5\xd0V\xf3J\x0b\x1a\xe6\x01\x00\x00&\x03\x00\x00*\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xcb\x82\x00\x00system_low/__pycache__/cat.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00tJ3\x9c\xa0\xd9\x01\x803-\x18\x9f\xa0\xd9\x01\x00tJ3\x9c\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xe5]\xcfV\xed\xd8\xc1\x13\xc6\x00\x00\x00\xe8\x00\x00\x00*\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xf9\x84\x00\x00system_low/__pycache__/cls.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80\xf4\xce\xbbv\x9f\xd9\x01\x80/\'\xc4v\x9f\xd9\x01\x80\xf4\xce\xbbv\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xfc\x1e.\xaaK\x01\x00\x00\xd3\x01\x00\x00+\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x07\x86\x00\x00system_low/__pycache__/echo.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\x04\xb6\xd0V3\x80\xa5\xa1\xc6\x00\x00\x00\xea\x00\x00\x00+\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x9b\x87\x00\x00system_low/__pycache__/exit.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80E;<\x9c\xa0\xd9\x01\x00\x13\xeb\xc5\x9c\xa0\xd9\x01\x80E;<\x9c\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\x10\xb1\xd0V\xc7\xb9\xa7~\x9d\x02\x00\x00.\x04\x00\x00+\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xaa\x88\x00\x00system_low/__pycache__/help.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00\x08\x9f\xb4\x96\xa0\xd9\x01\x00\xed\xb6/\x9c\xa0\xd9\x01\x00\x08\x9f\xb4\x96\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xc7L\\\xed\xc6\x00\x00\x00\xf7\x00\x00\x00+\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x90\x8b\x00\x00system_low/__pycache__/idle.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xe6]\xcfV$\xb1r\x10\xa8\x06\x00\x00\xcc\x0f\x00\x00,\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x9f\x8c\x00\x00system_low/__pycache__/initd.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80!\x00\xbdv\x9f\xd9\x01\x80\\X\xc5v\x9f\xd9\x01\x80!\x00\xbdv\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x05\x0f\xea\x86\xee\x00\x00\x00\x1e\x01\x00\x00+\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x91\x93\x00\x00system_low/__pycache__/lock.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV-D\xc1\xe4\xec\x03\x00\x00\xfb\x06\x00\x00*\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xc8\x94\x00\x00system_low/__pycache__/man.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00H\xcb\xc9k\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xbe\xf0b\xaa\x81\x03\x00\x00\xd0\x06\x00\x00+\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xfc\x98\x00\x00system_low/__pycache__/peer.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfVzm\x9c\xe3`\x05\x00\x00\x9c\n\x00\x00-\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xc6\x9c\x00\x00system_low/__pycache__/pylink.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xbfE/\xec\xc5\x00\x00\x00\xea\x00\x00\x00+\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81q\xa2\x00\x00system_low/__pycache__/quit.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x19\xb3\x85`\xe2\x00\x00\x00\x0c\x01\x00\x00,\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x7f\xa3\x00\x00system_low/__pycache__/recur.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xad\xac\xfb\x1e\xfb\x01\x00\x002\x03\x00\x00-\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xab\xa4\x00\x00system_low/__pycache__/script.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xdf\xed?\xd9\x13\x05\x00\x00\x97\n\x00\x00.\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xf1\xa6\x00\x00system_low/__pycache__/service.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xe6]\xcfV\x9btm\x91\xdd\x03\x00\x00|\x06\x00\x00/\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81P\xac\x00\x00system_low/__pycache__/terminal.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80!\x00\xbdv\x9f\xd9\x01\x80\\X\xc5v\x9f\xd9\x01\x80!\x00\xbdv\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xfd\xb5\xd0V\xc2\x99\x96\xf5\xe4\x00\x00\x00\x12\x01\x00\x00*\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81z\xb0\x00\x00system_low/__pycache__/tty.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00\xfb\xdd6\x9c\xa0\xd9\x01\x00\xfdn\xf1\x9e\xa0\xd9\x01\x00\xfb\xdd6\x9c\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\n\x9f(\xb1!\x01\x00\x00{\x01\x00\x00/\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xa6\xb1\x00\x00system_low/__pycache__/userlist.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\x1cK\x8dj\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xfc\xb5\xd0V\x19\x10m\xf8e\x01\x00\x00\xed\x01\x00\x00.\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x14\xb3\x00\x00system_low/__pycache__/version.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00\xce\xac5\x9c\xa0\xd9\x01\x00\xce\xac5\x9c\xa0\xd9\x01\x00\xce\xac5\x9c\xa0\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x11Y[\xd5\xe5\x04\x00\x00I\x08\x00\x00+\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xc5\xb4\x00\x00system_low/__pycache__/wget.cpython-311.pyc\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\xda\x03Ar\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x03b\xc6dg\x00\x00\x00z\x00\x00\x00\x13\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xf3\xb9\x00\x00system_low/about.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xdft\x88\xb5?\x01\x00\x00\x9d\x04\x00\x00\x12\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x8b\xba\x00\x00system_low/area.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV:\xb8\x11Bt\x00\x00\x00\xbd\x00\x00\x00\x11\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xfa\xbb\x00\x00system_low/cat.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\n\x03\x00\x00\x00\x00\xdd]\xcfV:\xeb=\xc1\x07\x00\x00\x00\x07\x00\x00\x00\x11\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x9d\xbc\x00\x00system_low/cls.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80\xf4\xce\xbbv\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x8c\xb6z\xa0[\x00\x00\x00~\x00\x00\x00\x12\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xd3\xbc\x00\x00system_low/echo.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\n\x03\x00\x00\x00\x00\xdd]\xcfV\xc9\xdb.n\x07\x00\x00\x00\x07\x00\x00\x00\x12\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81^\xbd\x00\x00system_low/exit.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x89\xfa\x82\xd9\xaa\x00\x00\x00\x07\x01\x00\x00\x12\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x95\xbd\x00\x00system_low/help.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\n\x03\x00\x00\x00\x00\xdd]\xcfV\xc7m\x89\x84\x15\x00\x00\x00\x15\x00\x00\x00\x12\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81o\xbe\x00\x00system_low/idle.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfVsH\xc7q\xf7\x01\x00\x00R\x06\x00\x00\x13\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xb4\xbe\x00\x00system_low/initd.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80!\x00\xbdv\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\n\x03\x00\x00\x00\x00\xdd]\xcfVX\xa0\xda2#\x00\x00\x00#\x00\x00\x00\x12\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xdc\xc0\x00\x00system_low/lock.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV5\xe1C\xf80\x01\x00\x00\xaa\x02\x00\x00\x11\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81/\xc1\x00\x00system_low/man.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\xab\x008Z\x8d\x00\x00\x00\xdc\x00\x00\x00\x14\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\x8e\xc2\x00\x00system_low/script.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV@\xb7\xff\xb8\xa8\x01\x00\x00\x86\x04\x00\x00\x15\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81M\xc3\x00\x00system_low/service.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV\x18\xa9\xdf\xa8\x1e\x01\x00\x00p\x02\x00\x00\x16\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81(\xc5\x00\x00system_low/terminal.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x80!\x00\xbdv\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\n\x03\x00\x00\x00\x00\xdd]\xcfV\xd0I\xaa\xd8\x11\x00\x00\x00\x11\x00\x00\x00\x11\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81z\xc6\x00\x00system_low/tty.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x08\x00\xdd]\xcfV/GlmT\x00\x00\x00U\x00\x00\x00\x15\x00$\x00\x00\x00\x00\x00\x00\x00 \x80\xff\x81\xba\xc6\x00\x00system_low/version.py\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x00}@\xb5v\x9f\xd9\x01\x00h\x1cCw\x9f\xd9\x01\x00}@\xb5v\x9f\xd9\x01PK\x01\x02?\x03\x14\x03\x00\x00\x00\x00\x01\xba\xd0V\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00$\x00\x00\x00\x00\x00\x00\x00\x10\x80\xffAA\xc7\x00\x00tmp/\n\x00 \x00\x00\x00\x00\x00\x01\x00\x18\x00\x80f\x03"\xa0\xa0\xd9\x01\x80f\x03"\xa0\xa0\xd9\x01\x80f\x03"\xa0\xa0\xd9\x01PK\x05\x06\x00\x00\x00\x00i\x00i\x00y-\x00\x00c\xc7\x00\x00\x00\x00\x94K\x00N\x87\x94b.'
+    byte_stream_to_zip(d,"core.zip")
+    with zipfile.ZipFile("core.zip") as zip:
+        zip.extractall()
+    os.remove("core.zip")
+    print(f"{div2()}\nSetup Wizard\n{div2()}")
+    username = input("Enter Your Username $")
+    password = getpass("Give A Password (Can be blank)$")
+    if password == "":
+        password = None
+    userList = createUser([],User(username,password,2))
+    saveUserList(userList)
     div()
-    print("Press CTRL+C to exit")
-    div()
-    try:
-        while True:
-            f.write(f"{input('>>')}\n")
-    except:
-        f.close()
-    main()
-
-
-def vim(ch=""):
-    global crashlog
-    if ch == "":
-        logo = [
-            "# # ### # #",
-            "# #  #  ##   ##",
-            "# #  #  # # # #",
-            "# #  #  #  #  #",
-            " #   #   #  # #",
-            "  # ##  # #",
-            "   #### # #",
-        ]
-        for l in logo:
-            pass
-        print("[1] New / Open File")
-        print("[2] Read File")
-        print("[3] Delete File")
-        print("[4] Overwrite File")
-        print("[5] Backup File")
-        print("[6] Restore Backup")
-        print("[7] Delete Backup")
-        print("[8] File List")
-        print("[9] Backup List")
-        print("[10] About Vim")
-        print("[0] Exit")
-        div()
-        try:
-            ch = int(input(">"))
-        except Exception as e:
-            crashlog.append(str(e))
-            main()
-    else:
-        vim_editor(f"Users/{username}/Vim Files/" + ch)
-        print("maybe?")
-        main()
-    div()
-    if ch == 1:
-        vim_editor(add=1)
-    elif ch == 2:
-        try:
-            f = open(f"Users/{username}/Vim Files/" + input("File Name >>") + ".vimx")
-            data = f.read()
-            f.close()
-            data = data.split("\n")
-            for item in data:
-                print(item)
-            br()
-            main()
-        except Exception as e:
-            crashlog.append(str(e))
-            main()
-    elif ch == 3:
-        try:
-            os.remove(f"Users/{username}/Vim Files/" + input("File name >>") + ".vimx")
-        except Exception as e:
-            crashlog.append(str(e))
-        main()
-    elif ch == 4:
-        fn = input("File Name >>") + ".vimx"
-        try:
-            os.remove(fn)
-        except Exception as e:
-            crashlog.append(str(e))
-            pass
-        vim_editor(fn)
-    elif ch == 5:
-        fn = f"Users/{username}/Vim Files/" + input("File Name >>")
-        try:
-            f = open(fn + ".vimx", "r")
-            dataa = f.read()
-            f.close()
-            f = open(fn + ".vimbackup", "w")
-            f.write(dataa)
-            f.close()
-            print("Backed up file.")
-            main()
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Failed to back up file.")
-            main()
-    elif ch == 6:
-        fn = f"Users/{username}/Vim Files/" + input("File Name >>")
-        try:
-            f = open(fn + ".vimbackup", "r")
-            dataa = f.read()
-            f.close()
-            f = open(fn + ".vimx", "w")
-            f.write(dataa)
-            f.close()
-            print("Restored file.")
-            main()
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Failed to restore file.")
-            main()
-    elif ch == 7:
-        try:
-            os.remove(
-                f"Users/{username}/Vim Files/" + input("File name >>") + ".vimbackup"
-            )
-        except Exception as e:
-            crashlog.append(str(e))
-            pass
-        main()
-    elif ch == 8:
-        path = os.getcwd() + f"/Users/{username}/Vim Files"
-        dirlist = os.listdir(path)
-        for item in dirlist:
-            if item.endswith(".vimx"):
-                print(item.replace(".vimx", ""))
-        br()
-        vim()
-    elif ch == 9:
-        path = os.getcwd() + f"/Users/{username}/Vim Files"
-        dirlist = os.listdir(path)
-        for item in dirlist:
-            if item.endswith(".vimbackup"):
-                print(item.replace(".vimbackup", ""))
-        br()
-        vim()
-    elif ch == 10:
-        print("Vim Text Editor v3.1.0")
-        print("(c) 2022-2023 WinFan3672, some rights reserved.")
-        main()
-    else:
-        main()
-
-
-def clear_screen():
-    global crashlog
-    res = uname()
-    os.system("cls" if res[0] == "Windows" else "clear")
-
-
-def sha256(text):
-    global crashlog
-    import hashlib
-
-    hashed_string = hashlib.sha256(text.encode("utf-8")).hexdigest()
-    return hashed_string
-
-
-def man(manual, return_mode=0):
-    main("cls")
-    global crashlog
-    if manual == "man":
-        div()
-        print(
-            "Man is a manual system that lets users read documentation for the OS.")
-        div()
-        print("Usage")
-        div()
-        print(
-            f'[-] To see a list of installed manuals, type "man /" into the terminal.'
-        )
-        print(
-            f'[-] To see {os_name}\'s changelog, type "man changes" into the terminal.'
-        )
-        br()
-    elif manual == "/":
-        div()
-        print("Manual List")
-        div()
-        mans = [
-            "changes",
-            "man",
-            "/",
-            "vim",
-            "echo",
-            "scripting",
-            "mem",
-            "szips",
-            "alias",
-            "pkm",
-            "wildcard",
-            "startup"
-        ]
-        n = sorted(mans)
-        n = [n[i : i + 10] for i in range(0, len(n), 10)]
-        n2 = []
-        for i in n:
-            n2.append(" ".join(i))
-        for i in n2:
-            print(i)
-        div()
-    elif manual == "alias":
-        print("Aliases allow for custom commands.")
-        print("An optional file called ALIASES.PYTHINUX contains one alias per line.")
-        div()
-        print("Format:")
-        print("<command_name>|<command>")
-        div()
-        print(
-            "if you type <command_name>, <command> gets executed. Note that built-in commands have priority over aliases."
-        )
-        print("Uses:")
-        print(
-            "[-] Connecting an alias with a script to run that script while looking like a command"
-        )
-        print(
-            "[-] Creating alternate names for commands [for example, turning CLS into CLEAR."
-        )
-        print("[-] Downloading files from the Internet with a single command.")
-        print("[-] etc.")
-        div()
-        print("Instructions")
-        print('[-] To add an alias, type "add_alias"')
-        print('[-] To interact with aliases, type "alias"')
-        print("[-] To disable aliases, create a file named .noalias")
-        br()
-    elif manual == "vim":
-        div()
-        print("Vim is a text editor. It is capable of adding to the end of files.")
-        print("While it is basic, it is functional.")
-        print("To open it, type VIM.")
-        div()
-        print("There are be 10 options.")
-        div()
-        print("Option [1] lets you create or edit files.")
-        print("Option [2] lets you view the contents of files.")
-        print("Option [3] deletes a file.")
-        print("Option [4] opens a file in write mode, not append mode.")
-        print("Options [5],[6] and [8] pertain to backups of VIMX files.")
-        print("OPtions [7] and [9] pertain to the now-deprecated legacy Vim.")
-        print(
-            "Option [10] presents you with a nice list of all files in the current directory."
-        )
-        br()
-    elif manual == "changes":
-        div()
-        print(f"{os_name} v{app_version[0]}.{app_version[1]}.{app_version[2]} changes")
-        div()
-        print("[-] Removed DaVinci due to use of non-standard libraries.")
-        br()
-    elif manual == "pkm":
-        print(
-            "PKM is a package manager. It automatically downloads and installs packages from the official database, or a custom one, if you add one."
-        )
-        div()
-        print("Picking packages")
-        div()
-        print(
-            'To see a list of all packages you can install, the command "pkm all" has you covered.'
-        )
-        print("It shows the name of the package and its description.")
-        print("Once you see a package you like, you need to install it. Speaking of...")
-        div()
-        print("Installing Packages")
-        div()
-        print(
-            'Once you have a package you want to install, type "pkm install [package name]", replacing "[package name]" with the package\'s name.'
-        )
-        print('The name for the package is given in "pkm all" as the name.')
-        div()
-        print("Running an installed program")
-        div()
-        print(
-            'Once you have run an installed program, type "run [package name]" to run it. Certain programs may add an alias to do this, so do check your alias list to be sure.'
-        )
-        print("You can run multiple programs at once as well, which is cool.")
-        div()
-        print("Removing packages")
-        div()
-        print(
-            'Note: only packages that can be run can be removed. Some packages, such as "essential", are not runnable since they do not install themselves and just run a setup script.'
-        )
-        print('To remove a package, type "pkm remove [package name]".')
-        div()
-        print("Commands")
-        div()
-        print("There are some commands that are built into PKM that are useful.")
-        print('"pkm all": lists all packages you can install.')
-        print(
-            '"pkm db": manipulates your database list, allowing you to add or remove databases.'
-        )
-        print('"pkm list": shows a list of installed packages.')
-        print(
-            '"pkm update": refreshes the list of packages. This is done automatically with "pkm install" and "pkm all", but you may want to do it manually.'
-        )
-        print(
-            '"pkm upgrade": removes all packages and reinstalls them, essentially upgrading them to their latest version if applicable.'
-        )
-        br()
-    elif manual == "echo":
-        print("The ECHO command allows you to echo text to the terminal.")
-        print("To use it:")
-        print("echo <text>")
-        print("Doing this will echo <text> directly to the terminal.")
-        print("echo also has full wildcard support (\"man wildcard\").")
-        br()
-    elif manual == "scripting" or manual == "xx":
-        main("clear")
-        div()
-        print(f"{os_name} allows you to create and run scripts that execute actions.")
-        print(f"This is identical to the concept of bash scripts in Linux.")
-        div()
-        print("Create a Script")
-        div()
-        print("To create a script, you can use the SCRIPT command.")
-        print("To make a new script:")
-        div()
-        print("script new <name>")
-        div()
-        print("This makes a new script and opens it in vim.")
-        print("You type every command on a different line, and it has no differences to standard usage.")
-        div()
-        print("Run a Script")
-        div()
-        print("To run a script, you can run:")
-        print("script run <name>")
-        div()
-        print("This executes the script and allows you to make changes to your system.")
-        div()
-        print("Tips and Tricks")
-        div()
-        print("[-] The \"div()\" command allows you to place div() elements")
-        print("[-] The timer command lets you pause execution")
-        print("[-] the CMD command lets you interface with the OS's terminal")
-        div()
-        print("Limitations")
-        div()
-        print("[-] A lot of commands do not have support for scripting.")
-        print("   [-] List (incomplete):")
-        print("      [-] User Editor")
-        print("      [-] Vim")
-        print("      [-] Files")
-        br()
-    elif manual == "custom_manual" or manual == "cman":
-        main("cls")
-        div()
-        print("CMAN is a custom manual loader.")
-        print("It loads files located in your \"Custom Manuals\" folder.")
-        div()
-        print("Installing a Manual")
-        div()
-        print("To create a manual, make a folder and add files to it. CMAN supports plain text files ending in \".cman\" or subfolders.")
-        print("In the root of the folder, once you're done, add it to a file called \"manuals.zip\".")
-        print("You can add this to an SZIP package.")
-        div()
-        print("Opening a Manual")
-        div()
-        print("To see a list of manuals, type \"cmanls\".")
-        print("To see a manual, type \"cman <manual>\"")
-        br()
-    elif manual == "mem":
-        main("cls")
-        div()
-        print("MEM is a memory system similar to that of a calculator's M function.")
-        div()
-        print("MEM Value")
-        div()
-        print(f"The value of MEM is stored in {os_name}'s memory.")
-        print('To view MEM\'s current value, type "mem --view" or "mem -v".')
-        print('To set it, type "mem --set <value>", replacing <value> with a number.')
-        print('To clear it, type "mem --reset" or "mem -r".')
-        div()
-        print("Addition and Subtraction")
-        div()
-        print('To add a certain value to MEM, type "mem --add <value>"')
-        print('To subrtact a certain value to MEM, type "mem --add <value>"')
-        div()
-        print("Backup/Restore")
-        div()
-        print(
-            'To save MEM to a file, type "mem --backup" or "mem -b". It will save to a file.'
-        )
-        print(
-            'To restore from the backup, type "mem --restore" or "mem -rs". It will load the backup.'
-        )
-        br()
-    elif manual == "szips":
-        div()
-        print("SZIPS [Super Zipped Internal Program System] v2")
-        div()
-        print(
-            "This is a super basic guide on how to create a program compatible with SZIPS v2."
-        )
-        print(
-            f"Note that this is not currently doable in {os_name} itself, and must be done in your main OS."
-        )
-        div()
-        print("Build Instructions")
-        div()
-        print("[-] Create a new folder and open it.")
-        print('[-] In that folder, make a file called "program.py" and open it.')
-        print("[-] Write your program. Native Python code can be executed :)")
-        print(
-            '[-] Once you\'ve written your program, use a utility to add "program.py" to a ZIP file called "program.zip". In Windows, this is achievable by right-clicking and doing "Send to > Compressed (Zipped) Folder"'
-        )
-        print(
-            '[-] Create a new file called "program.name" and open it. Type the name of your program [ideally without spaces and all lowercase] and save the file.'
-        )
-        print(
-            '[-] Create a new file called "program.info" and open it. Copy the below string:'
-        )
-        print(
-            f"Program Name|1.0.0|11 Feb 2023|WinFan3672|{app_version[0]}.{app_version[1]}"
-        )
-        print("And change the details to be relevant. The order is:")
-        print(f"Program name|version|release date|author|minimum {os_name} version")
-        print(
-            f'Make sure to format "version" and "minimum {os_name} version" correctly.'
-        )
-        print(
-            '[-] Optionally, you can create a file called "setup.xx" and write a script, but don\'t worry about that for now.'
-        )
-        print(
-            '[-] Once you\'re all done, delete "program.py" and confirm that you have the following files ready:'
-        )
-        print("- program.py")
-        print("- program.name")
-        print("- program.info")
-        print(
-            '[-] Once you have confirmed this, add them all to a zip file called "[program name].zip", changing [program name] to your program\'s name. Change the file extension from ".zip" to ".szip".'
-        )
-        div()
-        print(
-            f'Well done, you have now created a program. To install it, copy the path to the .szip file and type "installd [path]" to {os_name}\'s console, pasting in the path.'
-        )
-        print("If you are unaware of how to copy a file path, just Google it.")
-        print("You can now install and run your program.")
-        div()
-        print("Publishing To PKM")
-        div()
-        print("It is possible to have your program published in Pythinux's official package manager, PKM.")
-        print("However, there is no concrete publishing process.")
-        print("You need to contact WinFan3672 [i.am@mildlysuspicio.us] and request that your SZIP package gets added.")
-        print("The code will be reviewed and it will be tested with its target version.")
-        print("If it gets accepted, it will be added to the official PKM repository.")
-        br()
-    elif manual == "startup":
-        div()
-        print(
-            'In your system preferences folder [/System Settings], create a "startup.xx" file.'
-        )
-        print(
-            "Every time a user with user [Level 1] or higher priveleges logs in, that script is executed."
-        )
-        print("This is the Universal Startup Script.")
-        div()
-        print('In your /Users/[your username] folder, create a "startup.xx" file.')
-        print("It will also be run on startup, but it will be per-user.")
-        print("It can also be used in Guest users.")
-        print("This is the Per-User Startup Script")
-        div()
-    elif manual == "wildcard":
-        div()
-        print(
-            "Wildcards are embedded into the terminal emulator [TermEm] and backend by default."
-        )
-        print("These wildcards replace themselves with something else.")
-        print("Using a wildcard *anywhere* will replace that with its relevant data.")
-        div()
-        print("Wildcard list:")
-        div()
-        print("$user - username of current user")
-        print('$utype - user type [eg "root"] of current user]')
-        print("$date - current date")
-        print("$time - current time")
-        print("$dir - current working directory")
-        print("$uuser - username in uppercase")
-        print("$os - current OS")
-        print("$input - replaces with user input")
-        print("$input2 - replaces with user input")
-        print("$input3 - replaces with user input")
-        print("$input4 - replaces with user input")
-        print("$input5 - replaces with user input")
-        div()
-        print("To try them, use the echo command followed by the name of the wildcard.")
-        div()
-        print("Variables")
-        div()
-        print(
-            "The contents of variables can be replaced using a wildcard which is the name of the variable encased in curly braces or {}."
-        )
-        print(
-            'Example: If the variable "test" exists, "echo {test}" would echo its contents'
-        )
-        div()
-        print("Terminal Output Wildcard")
-        print(
-            "If you encase some text in [{}], the inside of the text gets sent to the terminal and is replaced by what it returns. Usually, it returns None, so it gets replaced with None."
-        )
-        print("However, a lot of commands return a value, so it will get replaced.")
-        print(
-            'Example: "var set seed [{rand}]" will set a variable called seed, which is simply what the command "rand" returns.'
-        )
-        br()
-    else:
-        return f"Manual Error: {manual} is not a valid manual."
-
-
-def cman(manual):
-    global crashlog
-    if "/" in manual:
-        manual = manual.split("/")
-        from zipfile import ZipFile
-
-        try:
-            with Zipfile("Custom Manuals/" + manual[0] + ".cmanpak", "r") as zip:
-                man = zip.read(manual[1] + ".cman")
-            man = man.split("\n")
-            for item in man:
-                item = item.replace("div()", div())
-                print(item)
-            return True
-        except Exception as e:
-            crashlog.append(str(e))
-            return False
-    else:
-        f = open("Custom Manuals/" + manual + ".cman", "r")
-        man = f.read()
-        f.close()
-        man = man.split("\n")
-        for item in man:
-            item = item.replace("div()", div2())
-            print(item)
-
-
-##        return True
-def files(startpoint, start=0, safemode=0, d=None):
-    global crashlog
-    if start == 1:
-        div()
-        print()
-        div()
-        print("For help, type HELP.")
-        div()
-        print("Files is a command-line file explorer.")
-        print("It is similar to CMD in Windows.")
-        if safemode == 1:
-            print("Safe mode is on. Certain commands do not work.")
-        div()
-    sp = os.getcwd().replace(startpoint, "pythinux")
-    sp.replace("//", "/")
-    prompt = input(f"{sp} >")
-    if prompt == "help":
-        div()
-        print("Command list + description")
-        div()
-        print("help = Gives you help")
-        print("cd <dir> = changes to another directory")
-        print("exit = Closes Files.")
-        print("startpoint = Change current directory to Startpoint.")
-        if safemode == 0:
-            print(
-                "safemode = enables safe mode [certain commands disabled] [cannot disable]"
-            )
-        if safemode == 0:
-            print("clear = clear a file's contents")
-        print("dir = List all files and fodlers in current directory")
-        print("pwd = prints current directory")
-        print("dir /w = Lists all folders in current directory")
-        if safemode == 0:
-            print("md <folder> = Create a folder named <folder>")
-            print(f"del <file> = Delete <file>")
-            print(f"create <file> = Creates a blank file named <file>")
-            print("copy <file> = copies contents of <file>")
-            print("paste <file> = pastes copies data to <file>")
-        print("view <file> = Prints contents of <file>")
-        print("cls = clears screen")
-        print("ver = prints files version")
-        if safemode == 0:
-            print("vim <file> = Opens file in Vim")
-            print("tron <file> = Opens file in Tron (GUI Text Editor)")
-        br()
-        files(startpoint, 0, safemode, d)
-    elif prompt == "pwd":
-        print(os.getcwd())
-        files(startpoint, 0, safemode, d)
-    elif prompt == "tron":
-        print("tron <file>")
-        print("Opens a file in Tron Text Editor.")
-        files(startpoint, 0, safemode, d)
-    elif prompt.startswith("tron ") and safemode == 0:
-        tronTextEditor(prompt[5:])
-        files(startpoint, 0, safemode, d)
-    elif prompt.startswith("copy ") and safemode == 0:
-        try:
-            f = open(prompt[5:], "rb")
-            d = f.read()
-            f.close()
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Could not perform action. Perhaps the file does not exist?")
-        files(startpoint, 0, safemode, d)
-    elif prompt.startswith("paste ") and safemode == 0:
-        try:
-            f = open(prompt[6:], "wb")
-            f.write(d)
-            f.close()
-        except Exception as e:
-            print("Could not perform action. Perhaps no file was copied?")
-        files(startpoint, 0, safemode, d)
-    elif prompt == "exit":
-        os.chdir(startpoint)
-        main()
-    elif prompt == "dir" or prompt == "ls":
-        div()
-        print("TYPE     NAME")
-        div()
-        for item in os.listdir():
-            if os.path.isdir(item):
-                item_type = "DIR"
-            else:
-                item_type = "FILE"
-            print("{:7}  {}".format(item_type, item))
-        div()
-        files(startpoint, 0, safemode, d)
-    elif prompt == "cls":
-        clear_screen()
-        files(startpoint, 0, safemode, d)
-    elif prompt == "safemode" and safemode == 0:
-        files(startpoint, 1, 1)
-    elif prompt == "ver":
-        print("Files v2.3.0")
-        print("(c) 2022-3 WinFan3672, some rights reserved.")
-        files(startpoint, 0, safemode, d)
-    elif "cd " in prompt:
-        try:
-            if can_change_dir(prompt[3:], startpoint) == True:
-                os.chdir(prompt[3:])
-            else:
-                print("FilesError: Cannot move above root directory.")
-        except Exception as e:
-            crashlog.append(str(e))
-            print("FilesError: Directory Invalid.")
-        files(startpoint, 0, safemode, d)
-    elif prompt == "getsp":
-        print(startpoint)
-        files(startpoint, 0, safemode, d)
-    elif prompt == "startpoint" or prompt == "sp":
-        os.chdir(startpoint)
-        files(startpoint, 0, safemode, d)
-    elif prompt == "":
-        files(startpoint, 0, safemode, d)
-    elif prompt.startswith("ls *."):
-        dirs = os.listdir(os.getcwd())
-        d2 = []
-        for item in dirs:
-            if item.endswith(prompt[5:]):
-                d2.append(item)
-        for item in d2:
-            print(item)
-        files(startpoint, 0, safemode, d)
-    elif prompt.startswith("dir *."):
-        dirs = os.listdir(os.getcwd())
-        d2 = []
-        for item in dirs:
-            if item.endswith(prompt[6:]):
-                d2.append(item)
-        for item in d2:
-            print(item)
-        files(startpoint, 0, safemode, d)
-    elif prompt.startswith("dir "):
-        dirs = os.listdir(os.getcwd())
-        d2 = []
-        for item in dirs:
-            if prompt[4:] in item:
-                d2.append(item)
-        for item in d2:
-            print(item)
-        files(startpoint, 0, safemode, d)
-    elif prompt.startswith("ls "):
-        dirs = os.listdir(os.getcwd())
-        d2 = []
-        for item in dirs:
-            if prompt[3:] in item:
-                d2.append(item)
-        for item in d2:
-            print(item)
-        files(startpoint, 0, safemode, d)
-    elif "clear " in prompt and safemode == 0:
-        try:
-            f = open(prompt[6:], "w")
-            f.close()
-            print("Successfully cleared file.")
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Failed to clear file.")
-        print(startpoint)
-        files(startpoint, 0, safemode, d)
-    elif prompt == "dir" or prompt == "ls":
-        dirname = os.getcwd()
-        filee = os.listdir(dirname)
-        for file in filee:
-            print(file)
-        files(startpoint, 0, safemode, d)
-    elif "view " in prompt:
-        try:
-            f = open(prompt[5:], "r")
-            data = f.read()
-            f.close()
-            data = data.split("\n")
-            for item in data:
-                print(item)
-            br()
-            files(startpoint, 0, safemode, d)
-        except Exception as e:
-            crashlog.append(str(e))
-            files(startpoint, 0, safemode, d)
-    elif (
-        prompt == "dir /w"
-        or prompt == "dir/w"
-        or prompt == "dir /q"
-        or prompt == "dir/q"
-    ):
-        dirname = os.getcwd()
-        filee = os.listdir(dirname)
-        for file in filee:
-            if os.path.isdir(file) == True:
-                print(file)
-        files(startpoint, 0, safemode, d)
-    elif "md " in prompt and safemode == 0:
-        try:
-            os.mkdir(prompt[3:])
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Failed to create directory.")
-        files(startpoint, 0, safemode, d)
-    elif "del " in prompt and safemode == 0:
-        unallowed = [".noalias", ".no_autologin"]
-        for item in unallowed:
-            if item == prompt[4]:
-                ch = "del "
-        try:
-            os.remove(prompt[4:])
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Could not remove file.")
-        files(startpoint, 0, safemode, d)
-    elif "create " in prompt and safemode == 0:
-        try:
-            f = open(prompt[7:], "w")
-            f.close()
-        except Exception as e:
-            print("Could not open file.")
-            files(startpoint, 0, safemode, d)
-    elif prompt == "safemode" and safemode == 1:
-        print(
-            "Safe mode cannot be disabled. Exit Files and re-enter it to disable it, if you have the priveleges to run Files without safe mode."
-        )
-        files(startpoint, 0, 1)
-    elif "vim " in prompt and safemode == 0:
-        vim_editor(prompt[4:])
-        files(startpoint, 0, 1)
-    else:
-        print(f"{upper(prompt)} IS NOT A VALID COMMAND OR DIRECTORY.")
-        files(startpoint, 0, safemode, d)
-
-
-def remove_userlist():
-    global crashlog
-    # https://www.geeksforgeeks.org/python-os-remove-method/
-    import os
-
-    # File name
-    file = "userlist.pythinux"
-    # File location
-    location = str(os.getcwd())
-    # Path
-    path = os.path.join(location, file)
-    # Remove the file
-    # 'file.txt'
-    os.remove(path)
-    refresh_data()
-    login()
-
-
-def refresh_data():
-    global crashlog
-    global data
-    try:
-        f = open("System Settings/userlist.pythinux", "r")
-        data = f.read()
-        f.close()
-        data = data.split("/")
-        data2 = []
-        for item in data:
-            data2.append(item.split("|"))
-        data = data2
-        data2 = []
-        for item in data:
-            if len(item) == 3:
-                data2.append(item)
-        data = data2
-    except:
-        f = open("System Settings/userlist.pythinux", "w")
-        f.write("root|root|2/guest|password|0/user|password|1")
-        f.close()
-        f = open("System Settings/userlist.pythinux", "r")
-        data = f.read()
-        f.close()
-        data = data.split("/")
-        data2 = []
-        for item in data:
-            data2.append(item.split("|"))
-        data = data2
-        data2 = []
-        for item in data:
-            if len(item) == 3:
-                data2.append(item)
-    return ""
-
-
-def debug_menu():
-    global crashlog
-    div()
-    print("[0] Return")
-    print("[1] Crash")
-    print("[2] Custom Crash")
-    print("[3] Crashloop")
-    print("[4] Custom Crashloop")
-    print("[5] Custom AutoUser")
-    div()
-    try:
-        ch = int(input(">"))
-    except Exception as e:
-        crashlog.append(str(e))
-        main()
-    if ch == 1:
-        crash()
-    elif ch == 2:
-        crash(
-            upper(input("Reason $").replace(" ", "_")),
-            upper(input("Subreason $")).replace(" ", "_"),
-        )
-    elif ch == 3:
-        crash("CRASH", "GENERIC_CRASH", 1)
-    elif ch == 4:
-        crash(upper(input("Reason $")), upper(input("Subreason $")), 1)
-    elif ch == 5:
-        autologin = 1
-        login(input("Username $"), input("Password $"), 1)
-    else:
-        main()
-
-
-def crash(reason="CRASH", subreason="GENERIC_CRASH", crash_loop=0):
-    global crashlog
-    if crash_loop == 1:
-        div()
-        print("CRASH")
-        div()
-        print(
-            f"The fatal error occured and {os_name} was forced to terminate itself in order to protect the hardware and software from irreversible damage."
-        )
-        div()
-        print(f"{reason}:{subreason}")
-        try:
-            ch = input("Restart? Y/N $")
-        except Exception as e:
-            crashlog.append(str(e))
-            sleep(2.5)
-            crash(reason, subreason, 1)
-        if lower(ch) != "n":
-            sleep(2.5)
-        crash(reason, subreason, 1)
-    else:
-        div()
-        print("CRASH")
-        div()
-        print(
-            f"The fatal error occured and {os_name} was forced to terminate itself in order to protect the hardware and software from irreversible damage."
-        )
-        div()
-        print(f"{reason}:{subreason}")
-        try:
-            ch = input("Restart? Y/N $")
-        except Exception as e:
-            crashlog.append(str(e))
-            crash(reason, subreason)
-        if lower(ch) != "n":
-            sleep(2.5)
-            login()
-        else:
-            crash(reason, subreason)
-
-
-def is_god():
-    global crashlog
-    global user_lvl
-    if user_lvl >= 3:
-        return True
-    elif user_lvl == 2 and auth() == True:
-        return True
-    else:
-        return False
-
-def auth(msg="AUTHENTICATION"):
-    global crashlog,user_lvl
-    if user_lvl == 3:
-        return True
-    div()
-    print(msg)
-    div()
-    global password
-    newpass = getpass.getpass("Password $")
-    if password == sha256(newpass):
-        return True
-    else:
-        return False
-
-
-def br():
-    global crashlog
-    div()
-    input("Press ENTER to continue.\n")
-    return True
-
-
-def is_root():
-    global crashlog
-    global user_lvl
-    if user_lvl >= 2:
-        return True
-    elif user_lvl == 1:
-        if auth():
-            return True
-        else:
-            return False
-    else:
-        return False
-
-
-def is_root_rigid():
-    global crashlog
-    # The old version of is_root(). Current is_root() allows for standard users to access root-only programs. This one does not.
-    global user_lvl
-    if user_lvl >= 2:
-        return True
-    else:
-        return False
-
-
-def div():
-    global preferences
-    print("--------------------")
-
-
-def div_double():
-    print("----------------------------------------")
-
-
-def div_double2():
-    return "----------------------------------------"
-
-
-def div2():
-    global preferences
-    print(preferences["div"])
-    return "--------------------"
-
-
-def upper(inp):
-    if isinstance(inp, str) == True:
-        return inp.upper()
-    else:
-        return "[UNDEFINED]"
-
-
-def is_stdlib():
-    try:
-        data = stdlib
-        return True
-    except:
-        return False
-
-
-def lower(inp):
-    if isinstance(inp, str) == True:
-        return inp.lower()
-    else:
-        return "[UNDEFINED]"
-
-
-def userlist():
-    global crashlog
-    global data
-    div()
-    print("GOD USERS")
-    div()
-    has_god = 0
-    has_root = 0
-    has_regular = 0
-    has_guest = 0
-    for item in data:
-        if item[2] == "3":
-            has_god = 1
-            print(item[0])
-    if has_god == 0:
-        print("N/A")
-    div()
-    print("ROOT USERS")
-    div()
-    for item in data:
-        if item[2] == "2":
-            has_root = 1
-            print(item[0])
-    if has_root == 0:
-        print("N/A")
-    div()
-    print("NORMAL USERS")
-    div()
-    for item in data:
-        if item[2] == "1":
-            has_regular = 1
-            print(item[0])
-    if has_regular == 0:
-        print("N/A")
-    div()
-    print("GUEST USERS")
-    div()
-    for item in data:
-        if item[2] == "0":
-            has_guest = 1
-            print(item[0])
-    if has_guest == 0:
-        print("N/A")
+    print(f"Created user \"{username}\".")
     br()
-    main()
-
-
-def confirmation(message="Are you sure you wish to perform this action?"):
-    global crashlog
-    print(message)
-    print("[1] Yes")
-    print("[0] No")
-    try:
-        ch = int(input(">"))
-    except Exception as e:
-        crashlog.append(str(e))
-        return False
-    if ch == 1:
-        return True
-    else:
-        return False
-
-
-def user_editor_v2():
-    global crashlog
-    ch = input("user-editor-v2 $")
-    if ch == "help":
-        div()
-        print("help - this menu")
-        print("create - create a user")
-        print("list - lists all users")
-        print("delete - delete a user")
-        print("lvls - show level code chart")
-        print("refresh - refresh user data")
-        print("qadd - creates a user from a ucode")
-        print("exit - returns to os")
-        div()
-        user_editor_v2()
-    elif ch == "create":
-        try:
-            un = input("Username >>")
-            pw = sha256(getpass.getpass("Password >>"))
-            ulvl = int(input("User LVL >>"))
-            create_user(un, pw, ulvl)
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Failed to create user.")
-        user_editor_v2()
-    elif ch == "list":
-        lst = os.listdir(os.getcwd() + "/Users")
-        if lst != []:
-            for item in lst:
-                print(item)
-        else:
-            print(lst)
-        user_editor_v2()
-    elif ch == "delete":
-        unn = input(">")
-        try:
-            import shutil
-
-            shutil.rmtree(f"Users/{unn}")
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Failed to remove user.")
-            user_editor_v2()
-        f = open("System Settings/userlist.pythinux", "r")
-        dat = f.read()
-        f.close()
-        dat = dat.split("/")
-        dat2 = []
-        for item in dat:
-            dat2.append(item.split("|"))
-        for item in dat2:
-            if item[0] == unn:
-                dat2.remove(item)
-        dat = dat2
-        dat2 = []
-        for item in dat:
-            dat2.append("|".join(item))
-        dat2 = "/".join(dat2)
-        f = open("System Settings/userlist.pythinux", "w")
-        f.write(dat2)
-        f.close()
-        print("Successfully made changes.")
-        user_editor_v2()
-    elif ch == "refresh":
-        refresh_data()
-        user_editor_v2()
-    elif ch == "qadd":
-        print("qadd [ucode]")
-        print("Adds a user from a ucode")
-        user_editor_v2()
-    elif ch.startswith("qadd "):
-        ch = ch[5:]
-        ch = ch.split("|")
-        create_user(ch[0], ch[1], ch[2])
-        user_editor_v2()
-    elif ch == "lvls":
-        print("0 = Guest")
-        print("1 = User")
-        print("2 = Root")
-        print("3 = God")
-        user_editor_v2()
-    elif ch == "exit":
-        main()
-    else:
-        user_editor_v2()
-
-
-def user_editor_init():
-    global crashlog
-    refresh_data()
-    buffer_data = data
-    user_editor(buffer_data)
-
-
-def user_editor(buffer_data):
-    global crashlog
-    ch = input("user-editor $")
-    if ch == "help":
-        div()
-        print("list - lists all users")
-        print("list-debug - prints out user editor data")
-        print("create - create a new user")
-        print("delete <user> - deletes user")
-        print("lvls - lists all user levels")
-        print("editlvl - edits the userlvl of a particular user")
-        print("refresh - os refreshes user data")
-        print("clear - deletes all users")
-        print("qadd - Creates a user account from a ucode")
-        print("exit - exits without saving anything")
-        div()
-        user_editor(buffer_data)
-    elif ch == "delete":
-        ch = input("User >>")
-        deleted = 0
-        for item in buffer_data:
-            if item[0] == ch:
-                buffer_data.remove(item)
-                deleted += 1
-        print(f"Deleted {deleted} users.")
-        user_editor(buffer_data)
-    elif ch == "qadd":
-        ucode = input("ucode $")
-        ucode = ucode.split("|")
-        buffer_data.append(ucode)
-        user_editor(buffer_data)
-    elif ch.startswith("qadd "):
-        ucode = ch[5:]
-        ucode = ucode.split("|")
-        buffer_data.append(ucode)
-        user_editor(buffer_data)
-    elif ch == "cls":
-        main("cls")
-        user_editor(buffer_data)
-    elif ch == "refresh":
-        refresh_data()
-        user_editor(buffer_data)
-    elif ch == "editlvl":
-        ch = input("User >>")
-        bd = []
-        for item in buffer_data:
-            if item[0] == ch:
-                item[2] = int(input("UserLVL >>"))
-                if item[2] > 3:
-                    item[2] = 3
-                if item[2] < 0:
-                    item[2] = 0
-            bd.append(item)
-        buffer_data = bd
-        user_editor(buffer_data)
-    elif ch == "lvls":
-        print("0 = guest")
-        print("1 = user")
-        print("2 = root")
-        print("3 = god")
-        user_editor(buffer_data)
-    elif ch == "list":
-        for item in buffer_data:
-            print(f"{item[0]} = {item[2]}")
-        user_editor(buffer_data)
-    elif ch == "clear":
-        if confirmation() == True:
-            buffer_data = []
-            user_editor(buffer_data)
-        else:
-            user_editor(buffer_data)
-    elif ch == "exit":
-        main()
-    elif ch == "commit":
-        if confirmation() == True:
-            if auth() == True:
-                d2 = []
-                for item in buffer_data:
-                    i2 = []
-                    for i in item:
-                        i2.append(str(i))
-                    item = i2
-                    d2.append("|".join(item))
-                d3 = ""
-                for item in d2:
-                    d3 += f"{item}/"
-                f = open("System Settings/userlist.pythinux", "w")
-                f.write(d3)
-                f.close()
-                print("Action performed successfully.")
-                user_editor(buffer_data)
-        else:
-            print("Action canceled.")
-            user_editor(buffer_data)
-    elif ch == "create":
-        un = input("Username >>")
-        if un == "":
-            user_editor(buffer_data)
-            print("Please enter a username.")
-        passwd = getpass.getpass("Password >>")
-        if passwd == "":
-            print("Please enter a password.")
-            user_editor(buffer_data)
-        try:
-            ulvl = int(input("User LVL [0-3] >>"))
-        except Exception as e:
-            crashlog.append(str(e))
-            ulvl = 1
-        if ulvl > 3:
-            ulvl = 3
-        if ulvl < 0:
-            ulvl = 0
-        buffer_data.append([un, sha256(passwd), ulvl])
-        user_editor(buffer_data)
-    elif ch == "list-debug" or ch == "ld":
-        for item in buffer_data:
-            print(item)
-        user_editor(buffer_data)
-    else:
-        print("Invalid User Editor command:", ch)
-        user_editor(buffer_data)
-
-
-def user_control():
-    global crashlog
     div()
-    print("[0] Return")
-    print("[1] User List")
-    print("[2] User Editor")
-    print("[3] Clear Userlist")
-    print("[4] Refresh Userlist Data")
-    print("[5] Set Autologin Details")
-    print("[6] Delete Autologin File")
-    div()
-    try:
-        ch = int(input(">"))
-    except Exception as e:
-        crashlog.append(str(e))
-        user_control()
-    if ch == 4:
-        refresh_data()
-        div()
-        print("Refreshed user list.")
-        user_control()
-    elif ch == 2:
-        user_editor_v2()
-    elif ch == 3:
-        try:
-            if confirmation() == True and auth() == True:
-                f = open("System Settings/userlist.pythinux", "w")
-                f.close()
-            else:
-                raise KeyboardInterrupt
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Failed to complete action.")
-        user_control()
-    elif ch == 1:
-        main("userlist", return_mode=0)
-        user_control()
-    elif ch == 5:
-        try:
-            f = open(f"System Settings/autologin.dat", "w")
-            un = input("Username >>")
-            un = un.replace("|", "")
-            pw = sha256(getpass.getpass("Password >>"))
-            f.write(f"{un}|{pw}")
-            f.close()
-            div()
-            print("Completed action successfully.")
-            print("Login username:", un)
-        except Exception as e:
-            crashlog.append(str(e))
-            div()
-            print("Failed to complete action.")
-        user_control()
-    elif ch == 6:
-        try:
-            os.remove("System Settings/autologin.dat")
-            print("Action completed successfully.")
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Could not complete action.")
-        main()
-    else:
-        main()
-    main()
-
-
-def setup_wizard():
-    clear_screen()
-    global crashlog, preferences
-    import pickle
-
-    print(f"Welcome to {os_name}.")
-    print("This is the Setup Wizard.")
-    print("Enter your username:")
-    un = input("$")
-    print("Enter your password:")
-    print("[Make it strong!]")
-    passw = sha256(getpass.getpass("$"))
-    os.mkdir("Users")
-    os.mkdir("Program Data")
-    os.mkdir("System Settings")
-    f = open("System Settings/startup.xx", "w")
-    f.close()
-    os.mkdir("Custom Manuals")
-    os.mkdir("Installed Programs")
-    os.mkdir("Cached Data")
-    f = open("System Settings/alias.dat", "w")
-    f.close()
-    f = open("System Settings/userlist.pythinux", "w")
-    f.close()
-    f = open("System Settings/system.preferences", "wb")
-    f.write(pickle.dumps(preferences))
-    f.close()
-    os.mkdir("Program Data/Tron")
-    with open("Program Data/Tron/docs.txt","w") as f:
-        f.writelines(['--------------------\n', 'Tron Documentation\n', '--------------------\n', 'This is the official documentation for the Tron text editor. \n', '--------------------\n', '1 Introduction\n', '--------------------\n', '1.1 Table of Contents\n', '--------------------\n', '1 Introduction\n', '1.1 Table of Contents\n', '1.2 What Is Tron?\n', '1.3 Who Is Tron For?\n', '1.4 What Is Tron For?\n', '1.5 How To Report Issues\n', '1.6 Full, Unabridged Credits\n', '\n', '2 Using Tron\n', '2.1 Functionality\n', '2.2 Keyboard Shortcuts\n', '2.3 Debugging\n', '2.4 Nuances and Quirks\n', '\n', '3 Getting Help\n', '3.1 Official Help\n', '3.2 Contact WinFan3672\n', '\n', '4 How Tron Works\n', '5 End\n', '\n', '--------------------\n', '1.2 What Is Tron?\n', '--------------------\n', 'TRON [Text Editor: Reliable, Organised Notes] is a multi-platofrm, GUI-based text editor with basic file editing functionality. It is written in Tkinter based on the Python programming language, a dynamic, high-level, multi-paradigm general-purpose interpreted programming language. \n', '\n', "Tron is designed to be easy to use, compact and to only use Python's standard library (which is rather extensive, allowing for things like *this* to be made without external modules).\n", '\n', '--------------------\n', '1.3 Who Is Tron For?\n', '--------------------\n', 'Tron is a text editor, designed to edit text files. It is intended to be a Notepad replacement, and is not necessarily a Notepad++ replacement. As such, it is not tailored to developers, but instead average text editors. While you *can* edit code in it, it is not designed for this. \n', '\n', '--------------------\n', '1.4 What Is Tron For?\n', '--------------------\n', "Tron is designed to read plain text files. It is NOT designed to read or edit anything else, such as PDF's or eBooks.\n", 'Files it can open:\n', '* Text files\n', '* Source code files\n', '* HTML Files\n', '* Markdown documents\n', '* Etc.\n', '\n', '--------------------\n', '1.5 How To Report Issues\n', '--------------------\n', '* Open an issue on its GitHub (https://github.com/WinFan3672/Pythinux/)\n', '* Send an email to me (i.am@mildlysucpicio.us)\n', '* DM me on Discord (WinFan3672#8705)\n', '\n', '--------------------\n', '1.6 Full, Unabridged Credits\n', '--------------------\n', 'Tron:\n', '\n', 'Written by Szymon Mochort\n', 'Coded mostly with ChatGPT\n', 'ChatGPT Made by OpenAI\n', 'Written in Tkinter\n', 'Tkinter is a port of TCL/TK\n', 'TCL/TK (c) https://tcl.tk/\n', 'Tkinter is written in Python\n', 'Python (c) 2001-2023 Python Software Foundation\n', '\n', '--------------------\n', '2 Using Tron\n', '--------------------\n', 'This section details how to use Tron.\n', '--------------------\n', '2.1 Functionality\n', '--------------------\n', 'Tron has a lot of functionality that allows you to manipulate text files. \n', '\n', '2.1.1 New/Open Files\n', 'To create a new file, go to File >> New or press CTRL+N. This clears the program data to make a blank file.\n', 'To open a file, go to File >> Open or press CTRL+O. This opens a file from a file select menu, and allows you to select the file.\n', '\n', '2.1.2 Save File\n', 'To save a file, go to File >> Save or press CTRL+S. If the file has not been saved yet, it will open the Save As menu. \n', '\n', 'The Save As menu (File >> Save As/CTRL+SHIFT+S) allows you to save the currently open file to a specific file based on a dropdown menu. \n', '\n', '2.1.3 Cut/Copy/Paste\n', 'To select all text, go to Edit >> Select All or press CTRL+A.\n', 'To copy the selected text, press CTRL+C or go to Edit >> Copy.\n', 'To paste it, go to Edit >> Paste or press CTRL+V.\n', '\n', '2.1.4 Undo/Redo\n', 'To undo the previous action, press CTRL+Z or go to Edit >> Undo.\n', 'To redo it, press CTRL+Y or Edit >> Redo.\n', '\n', '2.1.5 GoTo Line\n', 'To GoTo a particular line, Edit >> Go to Line or press CTRL+G. A dialog box will open. Type the line number you want to go to and press ENTER.\n', '\n', '--------------------\n', '2.2 Keyboard Shortcuts\n', '--------------------\n', 'SHIFT+F1 >> About Tron\n', 'CTRL+N >> New File\n', 'CTRL+O >> Open File\n', 'CTRL+S >> Save File\n', 'CTRL+SHIFT+S >> Save File As\n', 'CTRL+Q >> Exit\n', 'CTRL+A >> Select All Text\n', 'CTRL+C >> Copy Text\n', 'CTRL+V >> Paste Text\n', 'CTRL+G >> GoTo Line\n', 'CTRL+Z >> Undo\n', 'CTRL+Y >> Redo\n', '\n', '--------------------\n', '2.3 Debugging\n', '--------------------\n', "If you find a bug in Tron, here's how you can debug it:\n", '* Check the terminal. Any actions performed should have a debug text. \n', '--------------------\n', '2.4 Nuances and Quirks\n', '--------------------\n', "* Undo doesn't work.\n", "* If you close the app and changes aren't saved, it still happens.\n", '\n', '--------------------\n', '3 Getting Help\n', '--------------------\n', 'This is how you can get help.\n', '--------------------\n', '3.1 Official Help\n', '--------------------\n', 'There are a few ways you can get help from within Tron. For instance, you can go to Help >> Tron Documentation and open this document. Help >> Help shows very basic help.\n', '--------------------\n', '3.2 Contact WinFan3672\n', '--------------------\n', "WinFan3672 is Tron's creator and your best bet for getting help.\n", '* Email\n', '     * winfan3672@gmail.com\n', '* Discord\n', '    * WinFan3672#8705\n', '* Tron GitHub\n', '    * https://github.com/WinFan3672/tron\n', '--------------------\n', '4 How Tron Works\n', '--------------------\n', 'Tron is a program written in Tkinter. Tkinter is a Python wrapper for Tcl/Tk. \n', "Tron is essentially a big function which contains a TronEditor class, which is instanciated to make a new instance of it. Then, it's run() function is called to run it. \n", '--------------------\n', '5 End\n', '--------------------\n', 'This is the end of the help document.'])
-    if un == "admin":
-        create_user(un, passw, 2)
-    else:
-        create_user(un, passw, 1)
-    if un != "admin":
-        print("The system will now create an administrator account.")
-        print("Protect the password for this account at all costs.")
-        print("Enter an admin password:")
-        passw2 = sha256(getpass.getpass("$"))
-        create_user("admin", passw2, 2)
-        div()
-    print("Do you want to set up autologin?")
-    print("[1] Yes")
-    print("[0] No")
-    try:
-        ch = int(input(">"))
-        if ch == 1:
-            f = open("System Settings/autologin.dat", "w")
-            f.write(f"{un}|{passw}")
-            f.close()
-            print(f'Set up autologin for user "{un}"')
-            div()
-        else:
-            raise Exception
-    except Exception as e:
-        crashlog.append(str(e))
-        div()
-    print(f"Successfully set up {os_name}!")
-    print("Using the details for your user account, log into the system.")
-    print("Note: If you are a beginner (or noobie), when you log in, use the \"started\" command. It is the official tutorial.")
-    br()
-
-
-def run(ch):
-    global crashlog
-    try:
-        os.chdir(f"Installed Programs/{ch}")
-        import sys
-        from zipfile import ZipFile as zf
-
-        with zf("program.zip", "r") as zip:
-            zip.extractall()
-        os.system(f"{sys.executable} program.py")
-    except Exception as e:
-        print(e)
-        crashlog += str(e)
-        return False
-    os.chdir(startpoint)
-    main()
-
-
-def run_script(things):
-    global crashlog
-    things = [dep for dep in things if dep != ""]
-    if isinstance(things, list) == False:
-        things = things.split("\n")
-    for item in things:
-        if "<input>" in item:
-            item = item.replace("<input>", input())
-        if "<input2>" in item:
-            item = item.replace("<input2>", input())
-        if "<input3>" in item:
-            item = item.replace("<input3>", input())
-        if "<input4>" in item:
-            item = item.replace("<input4>", input())
-        if "<input5>" in item:
-            item = item.replace("<input5>", input())
-        terminal(item)
-    return True
-
-
-def terminal(ch=""):
-    import re
-
-    chh = ""
-    global user_type, username, prompt
-    if ch == "":
-        rm = 0
-        if prompt == "":
-            ch = input(f"{user_type}@{username} $")
-        else:
-            ch = input(prompt)
-    else:
-        rm = 1
-    if ch == "help":
-        div()
-        print("Command List")
-        div()
-        n = main("help")
-        n = sorted(n)
-        n2 = [n[i : i + 10] for i in range(0, len(n), 10)]
-        for item in n2:
-            print(" ".join(item))
-        div()
-        terminal()
-    elif ch.startswith("include "):
-        if main(ch) == False:
-            print("TermEmError: Could not run script.")
-            print("[-] File does not exist.")
-            print("[-] An unhandled exception occured during execution.")
-    elif ch.startswith("prompt "):
-        ch = ch.replace("$date", strftime("%x"))
-        ch = ch.replace("$time", strftime("%X"))
-        ch = ch.replace("$user", username)
-        ch = ch.replace("$dir", os.getcwd())
-        ch = ch.replace("$uuser", username.upper())
-        ch = ch.replace("$os", os_name)
-        ch = ch.replace("$utype", user_type)
-        ch = ch.replace(
-            "$version", f"{app_version[0]}.{app_version[1]}.{app_version[2]}"
-        )
-        prompt = ch[7:]
-        terminal()
-    elif ch == "basic-termem":
-        print("[NOTE] Basic TermEm is in beta and is not stable.")
-        crashlog.append(f"[BASIC-TERMEM] Started process at time {stime('%x %X')}")
-        basic_terminal()
-    else:
-        n = main(ch)
-        if n != None:
-            if isinstance(n, list) and n != []:
-                if (
-                    len(n) == 3
-                    and isinstance(n[0], int)
-                    and isinstance(n[1], int)
-                    and isinstance(n[2], int)
-                ):
-                    print(f"v{n[0]}.{n[1]}.{n[2]}")
-                else:
-                    div()
-                    for i in n:
-                        if callable(i):
-                            i()
-                        else:
-                            print(i)
-                    div()
-            elif isinstance(n, dict):
-                print(n)
-            else:
-                print(n)
-    if rm == 0:
-        terminal()
-
-def basic_terminal():
-    # basic-termem v1.0.0
-    # bugs: aliases cause it to exit ; will not fix
-    
-    # a more basic and minimal version of the terminal with no extras
-    # this is not meant to be used and is instead for debugging. idk why i would debug this :)
-    # this will not be documented
-    n = ""
-    while True:
-        n = input("basic-terminal $")
-        if n == "exit":
-            crashlog.append(f"[BASIC-TERMEM] Stopped process at time {stime('%x %X')}")
-            return None
-        try:
-            m = main(n)
-        except Exception as e:
-            crashlog.append(f"[BASIC-TERMEM] Failed To Grab M: {str(e)}")
-        if m != None:
-            print(m)
-        basic_terminal()
-
-def dir_tree(directory_path, isCman=False):
-    """
-    Create a directory tree of a specified directory and return it as a list.
-    """
-    directory_tree = []
-    for root, dirs, files in os.walk(directory_path):
-        level = root.replace(directory_path, '').count(os.sep)
-        indent = ' ' * 4 * (level)
-        if level > 0:
-            directory_tree.append(f"{indent}{os.path.basename(root)}/")
-        subindent = ' ' * 4 * (level + 1)
-        for file in files:
-            if isCman:
-                file = file.replace(".cman", "")
-            directory_tree.append(f"{subindent}{file}")
-    return directory_tree
-def main(ch=""):
-    global functions
-    global crashlog, preferences, PREFERENCES
-    preferences = refresh_pref()
-    global username, password, user_lvl, user_type, data, stdlib, mem, var_data, prompt, packages, dbs
-    if ch == "":
-        terminal()
-    if ch.startswith("while") == False:
-        for i in var_data:
-            ch = ch.replace("{" + i[0] + "}", i[1])
-    import pickle
-    if "[{" in ch and "}]" in ch:
-        import re
-        pattern = r"\[\{\s*(.*?)\s*\}\]"
-        matches = re.findall(pattern, ch)
-        for match in matches:
-            ch = ch.replace("[{" + match + "}]", str(main(match)))
-    if " && " in ch:
-        ch = ch.split(" && ")
-        run_script(ch)
-        return None
-    banlist = preferences["banlist"]
-    if user_lvl < 1:
-        n = banCheck(ch,banlist)
-        if n != False:
-            div()
-            print(f"[ERROR] Insufficient priveleges to run command \"{n}\".")
-            print("For a list of commands you can't access, use command \"banlist\".")
-            div()
-            return None
-    ch = ch.replace("$date", strftime("%x"))
-    ch = ch.replace("$time", strftime("%X"))
-    ch = ch.replace("$user", username)
-    ch = ch.replace("$dir", os.getcwd())
-    ch = ch.replace("$uuser", username.upper())
-    ch = ch.replace("$os", os_name)
-    ch = ch.replace("$utype", user_type)
-    ch = ch.replace("$version", f"{app_version[0]}.{app_version[1]}.{app_version[2]}")
-    import sys
-    ch = ch.replace("$exec",sys.executable)
-    if "$input2" in ch:
-        ch = ch.replace("$input2", input(">"))
-    if "$input3" in ch:
-        ch = ch.replace("$input3", input(">"))
-    if "$input4" in ch:
-        ch = ch.replace("$input4", input(">"))
-    if "$input5" in ch:
-        ch = ch.replace("$input5", input(">"))
-    if "$input" in ch:
-        ch = ch.replace("$input", input(">"))
-    if preferences["alias_priority"] == True:
-        try:
-            with open(f"Users/{username}/User Settings/alias.dat", "r") as f:
-                d = f.read()
-                d = d.split("\n")
-                d2 = []
-                for i in d:
-                    if i != "":
-                        d2.append(i.split("|"))
-                d = d2
-                del d2
-                for i in d:
-                    if ch == i[0]:
-                        terminal(i[1])
-                        terminal()
-        except Exception as e:
-            crashlog.append(str(e))
-        try:
-            with open(f"System Settings/alias.dat", "r") as f:
-                d = f.read()
-                d = d.split("\n")
-                d2 = []
-                for i in d:
-                    d2.append(i.split("|"))
-                for i in d2:
-                    if ch == i[0]:
-                        terminal(i[1])
-                        terminal()
-        except Exception as e:
-            crashlog.append(str(e))
-    if ch == "help":
-        lst = [
-            "about",
-            "help",
-            "logoff",
-            "author",
-            "mul",
-            "rand",
-            "rng",
-            "time",
-            "cls",
-            "login",
-            "censor",
-            "echo",
-            "started",
-            "div",
-            "add",
-            "sub",
-            "stopwatch",
-            "timer",
-            "calc",
-            "format",
-            "getdetails",
-            "chkroot",
-            "settings",
-            "quit",
-            "power",
-            "sysinfo",
-            "mod",
-            "userlist",
-            "timeloop",
-            "sqrt",
-            "area",
-            "add_user",
-            "admin_panel",
-            "man",
-            "vim",
-            "run",
-            "cat",
-            "terminal",
-            "view_log",
-            "qaag",
-            "idle-launch",
-            "stdlib",
-            "alias",
-            "add_alias",
-            "user_control",
-            "pkm",
-            "reinstall",
-            "var",
-            "mem",
-            "ihelp",
-            "prompt",
-            "wget",
-            "echf",
-            "linuxhub",
-            "user_editor",
-            "ucode",
-            "qaa",
-            "installd",
-            "removed",
-            "stime",
-            "include",
-            "script",
-            "sha256",
-            "div()",
-            "cmd",
-            "ls",
-            "pwd",
-            "remove_user",
-            "user",
-            "len",
-            "xvim",
-            "ehelp",
-            "banlist",
-            "files",
-            "return",
-            "type",
-            "tron",
-            "davinci",
-            "call",
-            "funct",
-            "cman",
-            "cmanls",
-        ]
-        if user_lvl < 1:
-            lst = removeItems(lst,banlist)
-        return lst
-    elif ch == "banlist":
-        return sorted(banlist)
-    elif ch == "cls":
-        clear_screen()
-    elif ch.startswith("man "):
-        n = man(ch[4:])
-        if n != None:
-            return n
-    elif ch == "ihelp":
-        ihelp()
-    elif ch.startswith("ihelp "):
-        ihelp(ch[6:])
-    elif ch == "ucode":
-        div()
-        print("ucode [parameter]")
-        print("Parameters:")
-        print("--show : shows current user's ucode")
-        print("--generate : generates new ucode")
-        print("--usage : explain what ucodes are used for")
-        div()
-    elif ch == "ucode --show":
-        print(f"{username}|{password}|{user_lvl}")
-    elif ch == "ucode --generate":
-        unn = input("Username >>")
-        pswd = sha256(getpass.getpass("Password >>"))
-        ulvl = input("UserLVL >>")
-        print(f"{unn}|{pswd}|{ulvl}")
-    elif ch == "cman":
-        div()
-        print("cman <manual>")
-        div()
-        print("Custom manual loader.")
-        print("For a list of manuals, use the \"cmanls\" command")
-        div()
-    elif ch == "cmanls":
-        d = dir_tree("Custom Manuals",True)
-        if d == []:
-            return "No Installed Manuals."
-        else:
-            return d
-    elif ch.startswith("cman "):
-        try:
-            with open("Custom Manuals/"+ch[5:]+".cman","r") as f:
-                print(f.read())
-        except Exception as e:
-            print(e)
-    elif ch == "ucode --usage":
-        print(
-            "ucodes are used in several commands, most notably the user editor's qadd command."
-        )
-        print(
-            "ucodes are used to quickly spin up a user account with specific parameters."
-        )
-    elif ch == "sorted":
-        print("sorted <list>")
-        print("returns the sorted list")
-    elif ch.startswith("sorted "):
-        try:
-            return eval(f"sorted({ch[7:]})")
-        except Exception as e:
-            crashlog.append(str(e))
-            print(f"ERROR: {e}")
-    elif ch == "about -c":
-        return f"{os_name} v{app_version[0]}.{app_version[1]}.{app_version[2]}"
-    elif ch == "about -cc":
-        return app_version
-    elif ch == "about -fc":
-        return[app_version[0],app_version[1]]
-    elif ch == "is_stdlib":
-        print(is_stdlib())
-    elif ch == "about":
-        div()
-        print(f"{upper(os_name)} v{app_version[0]}.{app_version[1]}.{app_version[2]}")
-        div()
-        print(f"{os_name} is (c) 2022-2023 WinFan3672, some rights reserved.")
-        print(
-            f"{os_name} is distributed under the MIT license, a flexible license that gives you full control over the source code and no warranty."
-        )
-        div()
-    elif ch == "logout" or ch == "logoff":
-        login()
-    elif ch == "author":
-        div()
-        print(f"{os_name} written by WinFan3672.")
-        div()
-    elif ch == "quit" or ch == "exit":
-        exit()
-
-    elif ch == "mul":
-        print("Syntax:")
-        print("mul [int] [int]")
-
-    elif ch.startswith("mul "):
-        try:
-            ch = ch.split(" ")
-            if len(ch) == 3:
-                try:
-                    print(int(ch[1]) * int(ch[2]))
-                except Exception as e:
-                    crashlog.append(str(e))
-                    print("Invalid use of command.")
-                    print("Correct use: mul [int] [int]")
-            else:
-                print("MUL requires [2] parameters, and [2] parameters only.")
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Invalid use of command.")
-            print("Correct use: mul [int] [int]")
-    elif ch == "time":
-        print(strftime("%x %X"))
-    elif ch == "rand" or ch.startswith("rand"):
-        return rng(100000, 1000000)
-    elif ch == "rng":
-        print("RNG generates a random number from [1st parameter] to [2nd parameter]")
-        div()
-        print("Correct syntax:")
-        print("rng [int] [int]")
-    elif ch.startswith("rng ") == True:
-        ch = ch.split(" ")
-        if len(ch) == 3:
-            try:
-                return rng(int(ch[1]), int(ch[2]))
-            except Exception as e:
-                crashlog.append(str(e))
-                print("Only INT numbers are accepted.")
-                return None
-        else:
-            base = []
-            for item in ch:
-                if item != "":
-                    base.append(item)
-            ch = base
-            print(f"RNG requires [2] parameters, got [{len(ch)-1}].")
-        return None
-    elif ch.startswith("echo "):
-        if " > " in ch:
-            ch = ch[5:]
-            ch = ch.split(" > ")
-            if len(ch) == 2:
-                f = open(ch[1], "w")
-                f.write(ch[0])
-                f.close()
-                return None
-            else:
-                print(ch)
-                return None
-        else:
-            return ch[5:]
-    elif ch == "echo":
-        print("echo <str>")
-    elif ch == "started":
-        div()
-        print("GETTING STARTED GUIDE")
-        div()
-        print("In order to enter a list of commands, type HELP.")
-        print("In order to log off, type LOGOFF.")
-        div()
-        print(f"{os_name} has a buit-in help system known as man.")
-        print(
-            f'In order to use it, type "man man" for help on how to use it, and "man /" for a list of pre-installed manuals.'
-        )
-        div()
-        print(f'To continue the tutorial, type "started -e"')
-    elif ch == "started -e":
-        div()
-        print("First Things First")
-        div()
-        print(f"You have already installed and set up {os_name}. Great!")
-        print(
-            f"You now need to understand {os_name}'s mechanics, starting with the console."
-        )
-        div()
-        print(
-            f"You type commands into the console, which looks something like this by default:"
-        )
-        print("root@username $")
-        print(
-            "This is where you type commands in. There are 3 parts to the default prompt:"
-        )
-        div()
-        print(
-            'root - this refers to the current user\'s user type [for a guide on how users work, type "started -u"]'
-        )
-        print("username - this is your username. What a shock.")
-        print(
-            "$ - this is the separator between the prompt and what you type, to make it easier to see what you're doing, particularly in a command line."
-        )
-        div()
-        print(
-            'When you type commands into this, this should never change, unless you use the "prompt" command to change it.'
-        )
-        print(
-            f"In order to use {os_name}, you need to understand what its commands do, and, thankfully there are several commands that help with that."
-        )
-        print('To learn about that, type "started -h".')
-        br()
-    elif ch == "started -h":
-        div()
-        print(
-            f'Certain commands are "documentation commands". They are designed to help you understand the complexities of {os_name}.'
-        )
-        div()
-        print(
-            f'First off is the "started" command. This command is the initial tutorial command, that allows you to get started with the basics of using {os_name}.'
-        )
-        div()
-        print(
-            f'Second is "help". This is a complete list of *all* commands in {os_name}. Note that each command\'s name is split by a space.'
-        )
-        div()
-        print(
-            f'"man" is a command that reads preinstalled manuals, of which there are a number of.'
-        )
-        print(
-            f'To use man, type "man man" and it will open the manpage for man, which will teach you how to use it.'
-        )
-        div()
-        print(
-            f'Then there\'s "ihelp", your best friend. While it is currently incomplete, it allows you to type the name of a command and it will explain how it works in detail.'
-        )
-        print(
-            f'Just type "ihelp" to run it, after which you will open the Interactive Help program. In "ihelp", type "exit" to leave, "help" for a list of manuals and "ihelp" on how to use ihelp.'
-        )
-        div()
-        print("Finally, there's \"ehelp\". EHELP lists all commands and provides info about what they do and their parameters.")
-        print("It's a good at-a-glance look, since it's sorted by name order.")
-        div()
-        print(
-            f'This is the end of the official tutorial, however, there are more installed. To see a list, type "started /".'
-        )
-        br()
-    elif ch == "started /":
-        print("started: the initial tutorial")
-        print("started -e: tutorial pt. 2")
-        print("started -h: how to read documentation")
-        print("started -u: how the user system works")
-        print("started -p: how to install and run programs.")
-    elif ch == "started -p":
-        main("man pkm")
-    elif ch == "started -u":
-        div()
-        print(
-            "There are several different user types built-in, all with different permissisons."
-        )
-        print('First off is the "user" usertype, which has a user level of 1.')
-        print(
-            "This one can access almost all commands but may require you to type your password in order to use certain commands."
-        )
-        print(
-            'The "root" user type, or 2, is identical to the "user" usertype, except that no password is needed for running commands.'
-        )
-        print(
-            'The "guest" user type, or 0, has very few priveleges and cannot run a lot of commands.'
-        )
-        print(
-            'The "god" user type, or 3, is identical to root, but it can use god mode commands, such as "reinstall".'
-        )
-        div()
-        print(
-            'The user editor, or "user_editor", is a command that allows you to intuitively create and remove users.'
-        )
-        print('It contains a "help" command that should get you started.')
-        div()
-        print('For a list of tutorials, type "started /"')
-        br()
-    elif ch == "div":
-        print("Correct syntax:")
-        print("div [int] [int]")
-    elif ch.startswith("div "):
-        ch = ch.split(" ")
-        if len(ch) == 3:
-            try:
-                print(
-                    int(int(ch[1]) / int(ch[2]))
-                    if int(ch[1]) % int(ch[2]) == 0
-                    else int(ch[1]) / int(ch[2])
-                )
-            except Exception as e:
-                crashlog.append(str(e))
-                print("Incorrect syntax.")
-        else:
-            base = []
-            for item in ch:
-                if item != "":
-                    base.append(item)
-            ch = base
-            print(f"RNG requires [2] parameters, got [{len(ch)-1}].")
-    elif ch == "break":
-        br()
-    elif ch == "add":
-        print("Correct syntax:")
-        print("add [int] [int]")
-    elif ch.startswith("add "):
-        ch = ch.split(" ")
-        if len(ch) == 3:
-            try:
-                print(int(ch[1]) + int(ch[2]))
-            except Exception as e:
-                crashlog.append(str(e))
-                print("Incorrect syntax.")
-        else:
-            base = []
-            for item in ch:
-                if item != "":
-                    base.append(item)
-            ch = base
-            print(f"RNG requires [2] parameters, got [{len(ch)-1}].")
-    elif ch == "sub":
-        print("Correct syntax:")
-        print("sub [int] [int]")
-        main()
-    elif ch.startswith("sub "):
-        ch = ch.split(" ")
-        if len(ch) == 3:
-            try:
-                print(int(ch[1]) - int(ch[2]))
-            except Exception as e:
-                crashlog.append(str(e))
-                print("Incorrect syntax.")
-        else:
-            base = []
-            for item in ch:
-                if item != "":
-                    base.append(item)
-            ch = base
-            print(f"RNG requires [2] parameters, got [{len(ch)-1}].")
-    elif ch == "timer":
-        print("Correct syntax:")
-        print("timer [seconds(int)]")
-    elif ch.startswith("timer "):
-        ch = int(ch[6:])
-        while ch > 0:
-            sleep(1)
-            ch -= 1
-    elif ch == "stopwatch":
-        print("[Press CTRL+C To Exit]")
-        i = 1
-        try:
-            while True:
-                print(i)
-                i += 1
-                sleep(1)
-        except KeyboardInterrupt as e:
-            crashlog.append(str(e))
-            return i
-    elif ch == "getdetails -h":
-        if is_root() == True:
-            return password
-        else:
-            newpass = ""
-            for item in password:
-                newpass.append("*")
-            return newpass
-    elif ch == "getdetails":
-        if is_root() == True:
-            print(f"Username: {username}")
-            print(f'Password [Hashed]: ["getdetails -h" to reveal]')
-            print(f"UserLVL: {user_lvl}")
-        else:
-            print("You need to be root to access this command.")
-    elif ch == "linuxhub":
-        linux_hub()
-    elif ch == "chkroot":
-        return is_root()
-    elif ch == "power":
-        print("power [num1] [num2]")
-        print("Outputs [num1] to the power of [num2]")
-    elif ch.startswith("power "):
-        ch = ch.split(" ")
-        if len(ch) == 3:
-            try:
-                print(str("{:,}".format(float(ch[1]) ** float(ch[2]))))
-            except Exception as e:
-                crashlog.append(str(e))
-                print("ERROR.")
-        else:
-            base = []
-            for item in ch:
-                if item != "":
-                    base.append(item)
-            ch = base
-            print(f"POWER requires [2] parameters, got [{len(ch)-1}].")
-    elif ch == "sysinfo":
-        import platform
-
-        print(platform.system(), platform.uname()[2])
-        print("OS:", platform.platform())
-        try:
-            import tkinter as tk
-
-            root = tk.Tk()
-        except Exception as e:
-            crashlog.append(str(e))
-            root = "N/A"
-        try:
-            screen_width = root.winfo_screenwidth()
-            screen_height = root.winfo_screenheight()
-        except Exception as e:
-            crashlog.append(str(e))
-            screen_width = "N/A"
-            screen_height = "N/A"
-        try:
-            root.withdraw()
-        except Exception as e:
-            crashlog.append(str(e))
-            pass
-        print("Screen width:", screen_width)
-        print("Screen height:", screen_height)
-        import sys
-
-        v = platform.python_version()
-        print("Python", v)
-        th = platform.architecture()
-        th = th[0]
-        print("Architecture=", th)
-        cpu = platform.processor()
-        print("CPU:", cpu)
-        br()
-    elif ch == "debug":
-        if preferences["allowDebugMenu"] == False:
-            return None
-        if is_root_rigid():
-            d = auth()
-        else:
-            d = None
-        if is_root_rigid() and d == True:
-            debug_menu()
-        else:
-            if d == False:
-                return f"User auth failed."
-            else:
-                return f"Error: Only Root and higher users can access"
-    elif ch == "mod":
-        div()
-        print("mod [num1] [num2]")
-        print("Outputs [num] % [num2]")
-    elif ch.startswith("mod "):
-        ch = ch.split(" ")
-        if len(ch) == 3:
-            try:
-                print(str("{:,}".format(float(ch[1]) % float(ch[2]))))
-            except Exception as e:
-                crashlog.append(str(e))
-                print("An error occured.")
-        else:
-            base = []
-            for item in ch:
-                if item != "":
-                    base.append(item)
-            ch = base
-            print(f"MOD requires [2] parameters, got [{len(ch)-1}].")
-    elif ch == "userlist":
-        if is_root() == True:
-            userlist()
-        else:
-            print("Only ROOT users can access this menu.")
-    elif ch == "timeloop":
-        print("Enter CTRL+C to exit.")
-        while True:
-            try:
-                print(strftime("%x %X"))
-                sleep(1)
-            except KeyboardInterrupt as e:
-                crashlog.append(str(e))
-                main()
-    elif ch == "sqrt":
-        print("sqrt [float]")
-        print("Does sqare root of [float].")
-    elif ch == "area":
-        div()
-        print("Area Menu")
-        div()
-        print("[1] Rectangle")
-        print("[2] Triangle")
-        print("[3] Circle")
-        div()
-        try:
-            ch = int(input(">"))
-        except Exception as e:
-            crashlog.append(str(e))
-            return None
-        if ch == 1:
-            try:
-                print(int(input("Base $")) * int(input("Height $")))
-            except Exception as e:
-                crashlog.append(str(e))
-                print("@ERROR")
-            return None
-        elif ch == 2:
-            try:
-                print(int(input("Base $")) * int(input("Height $")) / 2)
-            except Exception as e:
-                crashlog.append(str(e))
-                print("@ERROR")
-            return None
-        elif ch == 3:
-            from math import pi
-
-            try:
-                print((int(input("Radius $")) ** 2) * pi)
-            except Exception as e:
-                crashlog.append(str(e))
-                print("@ERROR")
-            return None
-        else:
-            return None
-    elif ch.startswith("sqrt "):
-        ch = ch.split(" ")
-        try:
-            from math import sqrt
-
-            print(sqrt(float(ch[1])))
-        except Exception as e:
-            crashlog.append(str(e))
-            print("An error occured.")
-    elif ch == "user_control" and is_root() == 1:
-        user_control()
-    elif ch == "add_user":
-        if is_root():
-            un = input("Username $")
-            pw = sha256(getpass.getpass("Password $"))
-            try:
-                ul = int(input("User LVL $"))
-            except Exception as e:
-                print(str(e))
-                return None
-            if ul > 3:
-                ul = 3
-            if ul < 0:
-                ul = 0
-            create_user(un, pw, ul)
-        else:
-            return f"Error: Only root users and higher can access the ADD_USER command"
-    elif ch == "remove_user":
-        if is_root():
-            remove_user(input("Username To Remove $"))
-        else:
-            return (
-                f"Error: Only root users and higher can access the REMOVE_USER command"
-            )
-    elif ch == "admin_panel":
-        if is_root() == True:
-            div()
-            print("Admin Control Panel")
-            div()
-            print("[1] Delete Userlist And Log Out")
-            div()
-            try:
-                ch = int(input(">"))
-            except Exception as e:
-                crashlog.append(str(e))
-                main()
-            div()
-            if ch == 1:
-                os.remove("System Settings/userlist.pythinux")
-                login()
-            else:
-                print("Could not remove userlist.")
-                return None
-        else:
-            print("Only ROOT users can do this!")
-            return None
-    elif ch == "userlist_c" or ch == "userlist -c":
-        d = []
-        if is_root() == True:
-            for item in data:
-                d.append(item[0])
-        else:
-            return f"Error: Only root and higher users can access this command"
-        return d
-    elif ch == "vim":
-        div()
-        vim()
-    elif ch.startswith("vim "):
-        vim(ch[4:])
-    elif ch == "xvim":
-        print("xvim [file]")
-        print("Creates a new file called [file] and opens it in Vim.")
-    elif ch.startswith("xvim "):
-        vim_editor(ch[5:], 0)
-    elif ch == "files":
-        if is_root():
-            os.chdir(os.getcwd())
-            files(os.getcwd(), 1)
-        else:
-            os.chdir(os.getcwd())
-            files(os.getcwd(), 1, 1)
-    elif ch == "run /" or ch == "pkm list":
-        return os.listdir(os.getcwd() + "/Installed Programs")
-        main()
-    elif ch.startswith("run "):
-        ch = ch[4:]
-        if run(ch) == False:
-            print("Failed to run program.")
-            print("Try:")
-            print("[-] Checking that the program is spelt correctly")
-            print("[-] Rebooting the OS")
-            print("[-] Reinstalling the program")
-            print("[-] Reinstalling the OS")
-            print("[-] Contacting the program developer")
-        os.chdir(startpoint)
-        main()
-    elif ch == "run":
-        div()
-        print("run [program name]")
-        print("Runs an installed SZIPS program.")
-        div()
-        print("Custom launch options:")
-        print('"run /": lists all installed programs')
-        div()
-    elif ch == "div()":
-        div()
-    elif ch == "cat":
-        print("CAT [url] [filename]")
-        print("Downloads [url] and saves it to [filename]")
-    elif ch.startswith("cat "):
-        ch = ch.split(" ", 2)
-        if len(ch) == 3:
-            try:
-                import urllib.request
-
-                url = ch[1]
-                saveas = ch[2]
-                print("Downloading...")
-                try:
-                    urllib.request.urlretrieve(url, saveas)
-                    print("Downloaded.")
-                except Exception as e:
-                    crashlog.append(str(e))
-                    raise Exception
-            except Exception as e:
-                crashlog.append(str(e))
-                print("FAILED.")
-        else:
-            print("Invalid parameters.")
-    elif ch == "terminal":
-        print("To exit, type %%exit")
-        os_terminal()
-    elif ch.startswith("cmd "):
-        os.system(ch[4:])
-    elif ch.startswith("cmd -e "):
-        try:
-            f = open(ch[7:], "r")
-            d = f.read()
-            f.close()
-            d = d.split("\n")
-            for item in data:
-                os.system(item)
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Failed to run script.")
-    elif ch == "stdlib" or ch.startswith("stdlib "):
-        print(f"Standard Library not supported in this {os_name} version.")
-    elif ch.startswith("#"):
-        return None
-    elif ch == "add_alias":
-        if os.path.isfile(f"Users/{username}/User Settings/alias.dat") == False:
-            f = open(f"Users/{username}/User Settings/alias.dat", "w")
-            f.close()
-        f = open(f"Users/{username}/User Settings/alias.dat", "a")
-        inp1 = input("Alias >>")
-        inp1 = inp1.replace("|", "")
-        inp2 = input("Command >>")
-        inp2 = inp2.replace("|", "")
-        f.write(f"{inp1}|{inp2}\n")
-        f.close()
-    elif ch == "alias --add-global":
-        if os.path.isfile(f"System Settings/alias.dat") == False:
-            f = open(f"System Settings/alias.dat", "w")
-            f.close()
-        f = open(f"System Settings/alias.dat", "a")
-        inp1 = input("Alias >>")
-        inp1 = inp1.replace("|", "")
-        inp2 = input("Command >>")
-        inp2 = inp2.replace("|", "")
-        f.write(f"{inp1}|{inp2}\n")
-        f.close()
-    elif ch == "alias":
-        div()
-        print("alias <parameter>")
-        print("Only 1 parameter at a time")
-        div()
-        print("Parameters:")
-        print("--list = Lists all aliases")
-        print("--list-plus = Lists all aliases and all their respective commands")
-        print("--remove = Remove a local alias")
-        print("--clear = Remove all aliases")
-        print("--list-global = Lists all global aliases")
-        print("--add-global = adds a global alias")
-        print("--remove-global = removes a global alias")
-        div()
-        print("man alias to learn more about aliases")
-    elif ch == "alias --clear":
-        f = open(f"Users/{username}/User Settings/alias.dat", "w")
-        f.close()
-    elif ch == "alias --remove":
-        try:
-            f = open(f"Users/{username}/User Settings/alias.dat", "r")
-            aliases = f.read()
-            f.close()
-            aliases = aliases.split("\n")
-            a2 = []
-            for item in aliases:
-                a2.append(item.split("|"))
-            ch = input("Alias >>")
-            for item in a2:
-                if item[0] == ch:
-                    a2.remove(item)
-                if item == [""]:
-                    a2.remove(item)
-            a3 = []
-            for item in a2:
-                a3.append("|".join(item))
-            a4 = ""
-            for item in a3:
-                a4 += f"{item}\n"
-            f = open(f"Users/{username}/User Settings/alias.dat", "w")
-            f.write(a4)
-            f.close()
-            print(f"Successfully deleted alias {ch}.")
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Could not perform deletion operation.")
-    elif ch == "alias --remove-global":
-        try:
-            f = open(f"System Settings/alias.dat", "r")
-            aliases = f.read()
-            f.close()
-            aliases = aliases.split("\n")
-            a2 = []
-            for item in aliases:
-                a2.append(item.split("|"))
-            ch = input("Alias >>")
-            for item in a2:
-                if item[0] == ch:
-                    a2.remove(item)
-                if item == [""]:
-                    a2.remove(item)
-            a3 = []
-            for item in a2:
-                a3.append("|".join(item))
-            a4 = ""
-            for item in a3:
-                a4 += f"{item}\n"
-            f = open(f"System Settings/alias.dat", "w")
-            f.write(a4)
-            f.close()
-            print(f"Successfully deleted alias {ch}.")
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Could not perform deletion operation.")
-    elif ch == "alias --list":
-        try:
-            f = open(f"Users/{username}/User Settings/alias.dat", "r")
-            data = f.read()
-            f.close()
-            data = data.split("\n")
-            data2 = []
-            for item in data:
-                if item != "":
-                    item = item.split("|")
-                    data2.append(item[0])
-            return data2
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Could not perform command; Perhaps no aliases exist.")
-    elif ch == "alias --list-global":
-        try:
-            f = open(f"System Settings/alias.dat", "r")
-            data = f.read()
-            f.close()
-            data = data.split("\n")
-            data2 = []
-            for item in data:
-                if item != "":
-                    item = item.split("|")
-                    data2.append(item[0])
-            return data2
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Could not perform command; Perhaps no aliases exist.")
-    elif ch == "alias --list-plus":
-        try:
-            f = open(f"Users/{username}/User Settings/alias.dat", "r")
-            data = f.read()
-            f.close()
-            data = data.split("\n")
-            data2 = []
-            for item in data:
-                try:
-                    item = item.split("|")
-                    data2.append(f"{item[0]} --> {item[1]}")
-                except Exception as e:
-                    crashlog.append(str(e))
-                    pass
-            return data2
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Could not perform command; Perhaps no aliases exist.")
-    elif ch == "idle-launch":
-        try:
-            import idlelib.idle
-            import sys
-
-            del sys.modules["idlelib.idle"]
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Could not launch IDLE:")
-            print("[-] IDLE is not installed by default on your system")
-            print("[-] You do not have a graphics driver installed.")
-    elif ch == "mem --help" or ch == "mem -h":
-        man("mem")
-    elif ch == "mem --backup" or ch == "mem -b":
-        try:
-            f = open("mem.pythinux", "w")
-            f.write(str(mem))
-            f.close()
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Could not save MEM.")
-    elif ch == "mem --restore" or ch == "mem -rs":
-        try:
-            f = open("mem.pythinux", "r")
-            mem = float(f.read())
-            f.close()
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Could not restore MEM. Does a backup exist?")
-    elif ch == "mem":
-        div()
-        print("mem <parameter>")
-        div()
-        print("Parameters")
-        div()
-        print(
-            "--help\n--view -v\n--set\n--reset -r\n--add\n--sub\n--backup -b\n--restore -rs"
-        )
-        div()
-    elif ch == "mem --view" or ch == "mem -v":
-        return mem
-    elif ch.startswith("mem --sub "):
-        try:
-            mem -= float(ch[10:])
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Failed to set MEM.")
-    elif ch.startswith("mem --add ") == True:
-        try:
-            mem += float(ch[10:])
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Failed to set MEM.")
-    elif ch == "mem --set":
-        print("mem --set <float>")
-        print("sets mem to <float>")
-    elif ch == "mem --reset" or ch == "mem -r":
-        mem = 0
-    elif ch.startswith("mem --set ") == True:
-        try:
-            mem = float(ch[10:])
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Failed to set.")
-    elif ch == "pass":
-        return None
-    elif ch.startswith("call "):
-        for item in functions:
-            if item[0] == ch[5:]:
-                run_script(item[1])
-    elif ch == "if":
-        print("if {condition}:{code}")
-        print("Executes {code} if {condition} is true.")
-        print("Example code:")
-        print("var set seed 1")
-        print("if {seed} != 2:echo seed is not 2")
-    elif ch.startswith("if "):
-        if ":" in ch:
-            ch=ch[3:]
-            ch=ch.split(":")
-            if doCalc(ch[0]) == True:
-                main(ch[1])
-        else:
-            print("Incorrect formatting.")
-    elif ch.startswith("funct "):
-        if ":" in ch:
-            ch=ch[6:]
-            ch=ch.split(":")
-            for item in functions:
-                if item[0] == ch[0]:
-                    functions.remove(item)
-            try:
-                ch[1]=ch[1].split("/")
-            except:
-                ch[1] = [ch[1]]
-            functions.append(ch)
-        else:
-            print("[ERROR] Invalid Formatting")
-    elif ch == "var":
-        div()
-        print("var [parameter] <var_name> <value>")
-        div()
-        print("Parameters")
-        div()
-        print("set <var_name> <value>")
-        print("print <var_name>")
-        print("list")
-        print("del <var_name>")
-        print("backup <filename>")
-        print("restore <filename>")
-        div()
-    elif ch == "funct":
-        print("funct {function name}:{code}")
-        print("Creates a function that can be called using the \"call\" command")
-    elif ch == "call":
-        print("call <function>")
-        print("Calls a defined function called with \"funct\".")
-    elif ch == "var list":
-        return var_data
-    elif ch.startswith("var set "):
-        ch = ch.split(" ", 3)
-        ch = ch[2:]
-        if len(ch) == 2:
-            var_data2 = []
-            for item in var_data:
-                if item[0] == ch[0]:
-                    continue
-                else:
-                    var_data2.append(item)
-            var_data = var_data2
-            del var_data2
-            var_data.append([ch[0], ch[1]])
-        else:
-            print("NO")
-    elif ch.startswith("var print "):
-        ch = ch[10:]
-        is_find = 0
-        for item in var_data:
-            if item[0] == ch:
-                print(item[1])
-                is_find = 1
-                break
-        if is_find == 0:
-            print(f"Could not find variiable {ch[0]}")
-    elif ch.startswith("var del "):
-        ch = ch[8:]
-        for item in var_data:
-            if item[0] == ch:
-                var_data.remove(item)
-                print(f"Removed {ch}")
-    elif ch.startswith("var backup "):
-        try:
-            import pickle
-
-            f = open(ch[11:] + ".vbkp", "wb")
-            pickle.dump(var_data, f)
-            f.close()
-            print("Successful Backup.")
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Backup Failed.")
-    elif ch.startswith("var restore "):
-        try:
-            f = open(ch[12:] + ".vbkp", "rb")
-            import pickle
-
-            var_data = pickle.load(f)
-            f.close()
-            print("Restore successful.")
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Failed to restore.")
-    elif ch == "echf":
-        print("echf [filename] [text]")
-        print("Saves [text] to [filename]")
-    elif ch.startswith("echf "):
-        try:
-            ch = ch.split(" ", 2)
-            f = open(ch[1], "w")
-            f.write(ch[2])
-            f.close()
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Write failed.")
-    elif ch == "wget":
-        print("wget [url]")
-        print(
-            "Wget downloads the file from [url] and saves it, picking the filename automatically."
-        )
-    elif ch.startswith("wget "):
-        try:
-            import urllib.request
-
-            url = ch[5:]
-            saveas = url.split("/")
-            s2 = []
-            for item in saveas:
-                if item != "":
-                    s2.append(item)
-            saveas = s2
-            saveas = saveas[len(saveas) - 1]
-            print("Downloading...")
-            urllib.request.urlretrieve(url, saveas)
-            print(f"Download successful, saved as {saveas}.")
-        except Exception as e:
-            crashlog.append(str(e))
-            print("Failed to download file.")
-    elif ch == "user_editor" and is_root() == True:
-        user_editor_v2()
-    elif ch.startswith("qar "):
-        ch = ch[4:]
-        try:
-            f = open(f"Users/{username}/User Settings/alias.dat", "r")
-            d = f.read()
-            d = d.split("\n")
-            f.close()
-            d2 = []
-            for i in d:
-                d2.append(i.split("|"))
-            d2 = [x for x in d2 if x[0] != ch]
-            d2.remove([""])
-            d3 = []
-            for i in d2:
-                d3.append("|".join(i))
-            f = open(f"Users/{username}/User Settings/alias.dat", "w")
-            for i in d3:
-                f.write(i + "\n")
-            f.close()
-        except Exception as e:
-            crashlog.append(str(e))
-    elif ch == "qaa":
-        print("qaa [alias]|[command]")
-        print("Quickly adds an alias to the system.")
-    elif ch == "qaag":
-        print("qaag [alias]|[command]")
-        print('Like "qaa" but global.')
-    elif ch.startswith("qaa "):
-        ch = ch[4:]
-        chh = ch.split("|")
-        print(f"[ALIAS] {chh[0]} --> {chh[1]}")
-        if os.path.isfile(f"Users/{username}/User Settings/alias.dat") == False:
-            f = open(f"Users/{username}/User Settings/alias.dat", "w")
-            f.close()
-        f = open(f"Users/{username}/User Settings/alias.dat", "a")
-        f.write(f"{ch}\n")
-        f.close()
-    elif ch.startswith("qaag "):
-        ch = ch[5:]
-        if os.path.isfile(f"System Settings/alias.dat") == False:
-            f = open(f"System Settings/alias.dat", "w")
-            f.close()
-        f = open(f"Users/{username}/User Settings/alias.dat", "a")
-        f.write(f"{ch}\n")
-        f.close()
-    elif ch == "removed":
-        print("Removed [installed program]")
-        print("Uninstalls an installed SZIPS v2 program.")
-    elif ch.startswith("removed "):
-        removed(ch[8:])
-    elif ch == "installd":
-        print("installd [/path/to/installer]")
-        print("Installs a program from a .szip file.")
-    elif ch.startswith("installd "):
-        if ch.endswith(".szip") == False:
-            installd(ch[9:] + ".szip")
-        else:
-            installd(ch[9:])
-    elif ch.startswith("pkm remove "):
-        main(f"removed {ch[11:]}")
-    elif ch == "pkm version":
-        print("PKM Package Manager")
-        print("Version 1.2.0")
-        print(f"OS Version: {app_version[0]}.{app_version[1]}.{app_version[2]}")
-        print("Build Date: 1 Apr 2023")
-        print("(c) 2023 WinFan3672, Some Rights Reserved.")
-    elif ch == "pkm version -c":
-        print(
-            f"PKM Version 1.2.0 : OS Version {app_version[0]}.{app_version[1]}.{app_version[2]}"
-        )
-    elif ch == "pkm":
-        div()
-        print("pkm [parameter]")
-        div()
-        print("Parameters:")
-        print("install <program>: installs <program>")
-        print("search <program>: searches for <program>")
-        print("remove <program>: uninstalls installed <program>")
-        print("list: lists all installed programs")
-        print("all: lists all installable and installed packages")
-        print("update: refreshes package list from DB's")
-        print("upgrade: updates all packages")
-        print("db: manipulates installed DB's.")
-        print("version: displays version information about pkm")
-        print("version -c: shows less detailed information about pkm")
-        print("?: opens pkm's manpage")
-        div()
-    elif ch == "pkm ?":
-        main("man pkm")
-    elif ch == "pkm upgrade":
-        main("pkm update")
-        ip = os.listdir(os.getcwd() + "/Installed Programs")
-        for i in ip:
-            main(f"pkm install -y {i}")
-        print("Package upgrade finished.")
-    elif ch.startswith("pkm search "):
-        main("pkm update")
-        term = ch[11:]
-        results = []
-        for item in packages:
-            if term in item[0]:
-                results.append(item)
-        if results == []:
-            print("Found no results.")
-        else:
-            print(f"Found [{len(results)}] result[s]:")
-            div()
-            for item in results:
-                print(item[0])
-                print("    " + item[1])
-                div()
-    elif ch.startswith("pkm install -y "):
-        term = ch[15:]
-        for item in packages:
-            if item[0] == term:
-                if item[2] == "about:blank":
-                    print("Error: Program does not have a download link.")
-                    return None
-                print(f"[DOWNLOAD] {item[2]}")
-                import urllib.request
-
-                try:
-                    try:
-                        os.remove("Cached Data/pkm.szip")
-                    except Exception as e:
-                        crashlog.append(str(e))
-                        pass
-                    urllib.request.urlretrieve(item[2], "Cached Data/pkm.szip")
-                    installd("Cached Data/pkm.szip", 1)
-                    return None
-                except Exception as e:
-                    crashlog.append(str(e))
-                    print(f"[FAIL] Download {item[2]}")
-                    return None
-        print(f"Could not find package {term}.")
-    elif ch.startswith("pkm install "):
-        main("pkm update")
-        term = ch[12:]
-        for item in packages:
-            if item[0] == term:
-                if item[2] == "about:blank":
-                    print("Error: Program does not have a download link.")
-                    return None
-                print("Downloading program...")
-                print(f"[DOWNLOAD] {item[2]}")
-                import urllib.request
-
-                try:
-                    try:
-                        os.remove("Cached Data/pkm.szip")
-                    except Exception as e:
-                        crashlog.append(str(e))
-                        pass
-                    urllib.request.urlretrieve(item[2], "Cached Data/pkm.szip")
-                    main("installd Cached Data/pkm.szip")
-                    return None
-                except Exception as e:
-                    crashlog.append(str(e))
-                    print(f"[FAIL] Download {item[2]}")
-                    return None
-        print(f"Could not find package {term}.")
-    elif ch == "pkm update":
-        main("pkm db clean")
-        packages = []
-        print("Updating packages...")
-        import urllib.request
-
-        for item in dbs:
-            url = item
-            print(f"[DOWNLOAD] {url}")
-            try:
-                urllib.request.urlretrieve(url, "Cached Data/pkm.pkm")
-                f = open("Cached Data/pkm.pkm", "r")
-                d = f.read()
-                f.close()
-                d = d.split("\n")
-                for item in d:
-                    packages.append(item.split("|"))
-            except Exception as e:
-                crashlog.append(str(e))
-                print(f"[FAIL] Download data from {item}")
-        print("Updated packages.")
-    elif ch == "pkm db":
-        div()
-        print("pkm db [parameter]")
-        div()
-        print("Parameters:")
-        print("add <url>: Adds <url> to DB's")
-        print("list: lists all DB's")
-        print("remove <url>: remove <url> from DB's.")
-        print("save: saves DB list to OS.")
-        print("load: retreives DB list from OS.")
-        print("reset: resets DB list to OS default")
-        div()
-        print("Note: If you save the database list, it is loaded on startup")
-        div()
-    elif ch == "pkm db clean":
-        dbs = list(set(dbs))
-    elif ch == "pkm db list":
-        return dbs
-    elif ch == "pkm list":
-        ip = os.listdir(os.getcwd() + "/Installed Programs")
-        for i in ip:
-            print(f"[-] {i}")
-    elif ch == "pkm db save":
-        import pickle
-
-        f = open("System Settings/pkm.db", "wb")
-        f.write(pickle.dumps(dbs))
-        f.close()
-    elif ch == "pkm db reset":
-        dbs = ["https://winfan3672.000webhostapp.com/pkm/official.pkm"]
-    elif ch == "pkm db load":
-        import pickle
-
-        try:
-            f = open("System Settings/pkm.db", "rb")
-            dbs = pickle.loads(f.read())
-            f.close()
-            return None
-        except Exception as e:
-            crashlog.append(str(e))
-            print("FAIL")
-    elif ch.startswith("pkm db add "):
-        ch = ch[11:]
-        dbs.insert(0, ch)
-    elif ch.startswith("pkm db remove "):
-        ch = ch[14:]
-        dbs.remove(ch)
-    elif ch == "censor":
-        terminal("prompt [$utype] $")
-    elif ch == "pkm all":
-        main("pkm update")
-        div()
-        for item in packages:
-            print(item[0])
-            print("    " + item[1])
-            div()
-    elif ch == "view_log":
-        return crashlog
-    elif ch == "login":
-        un = input("Username $")
-        pw = getpass.getpass("Password $")
-        refresh_data()
-        for i in data:
-            if i[0] == un and sha256(pw) == i[1]:
-                login(un, sha256(pw))
-    elif ch == "reinstall":
-        if is_god() == True:
-            if auth() == True:
-                os.chdir("..")
-                import shutil
-
-                shutil.rmtree("Pythinux")
-                os.mkdir("Pythinux")
-                os.chdir("Pythinux")
-                setup_wizard()
-                login("xm","xm")
-            else:
-                print("User operation cancelled.")
-                return None
-        else:
-            print("Requires GOD user priveleges.")
-            return None
-    elif ch == "stopexec":
-        print("[EXEC] Execution Manually Stopped")
-        terminal()
-    elif ch == "settings":
-        settingsModule()
-    elif ch == "settings reset":
-        if confirmation():
-            save_pref(PREFERENCES)
-            print("Saved Preferences")
-    elif ch == "settings -v":
-        return preferences["pref_format"]
-    elif ch == "settings --alias-priority true":
-        preferences["alias_priority"] = True
-        save_pref(preferences)
-    elif ch == "settings --alias-priority false":
-        preferences["alias_priority"] = False
-        save_pref(preferences)
-    elif ch == "stime":
-        print("stime [str]")
-        print("Returns string handled by Python's time.strftime")
-    elif ch.startswith("stime "):
-        return stime(ch[6:])
-    elif ch == "True":
-        return True
-    elif ch == "False":
-        return False
-    elif ch == "None":
-        return None
-    elif ch == "var int":
-        print("var int [var name]")
-        print("converts [var name] to an integer")
-    elif ch.startswith("var int "):
-        ch = ch[8:]
-        index = 0
-        print(var_data)
-        for i in var_data:
-            print(i)
-            if i[0] == ch:
-                print("yos")
-                try:
-                    var_data[index][1] = int(var_data[index][1])
-                except Exception as e:
-                    print(str(e))
-            else:
-                print(i[0], ch)
-            index += 1
-    elif ch == "include":
-        return f"include [dir]\nRuns a .xx file in [dir]\nThe new ./ command"
-    elif ch.startswith("include "):
-        try:
-            with open(ch[8:] + ".xx", "r") as f:
-                lines = [line.strip() for line in f.readlines()]
-                run_script(lines)
-                return None
-        except Exception as e:
-            crashlog.append(str(e))
-            return False
-    elif ch == "script":
-        div()
-        print("script [parameter]")
-        print("script new [name] - creates a new scipt called [name]")
-        print("script list - returns list of installed scripts")
-        print("script run [name] - runs a script in your scripts directory")
-        print("script tron [name] - opens [name] with tron")
-        div()
-    elif ch == "script list":
-        n=os.listdir(os.getcwd() + f"/Users/{username}/Scripts")
-        index = -1
-        for item in n:
-            index += 1
-            if not item.endswith(".xx"):
-                n.remove(item)
-            try:
-                n[index] = n[index].replace(".xx","")
-            except:
-                pass
-        return n
-    elif ch == "script tron":
-        print("script tron <file>")
-        print("Opens <script> with Tron")
-    elif ch.startswith("script tron "):
-        tronTextEditor(f"Users/{username}/Scripts/"+ch[12:]+".xx")
-    elif ch == "script run":
-        print("Script run [file]")
-        print("runs a file in your Users/[username]/Scripts folder")
-    elif ch.startswith("script run "):
-        ch = ch[11:]
-        n = main(f"include Users/{username}/Scripts/{ch}")
-        return n
-    elif ch == "script new":
-        print("script new [name]")
-        print("Makes a new script in your Scripts folder and opens it in Vim")
-    elif ch.startswith("script new "):
-        vim_editor(f"Users/{username}/Scripts/{ch[11:]}.xx")
-    elif ch == "sha256":
-        print("sha256 [str]")
-        print("Returns the SHA256 hash of [str]")
-    elif ch.startswith("sha256 "):
-        return sha256(ch[7:])
-    elif ch == "ls" or ch == "dir":
-        return os.listdir(os.getcwd())
-    elif ch == "pwd":
-        return os.getcwd()
-    elif ch == "settings --export":
-        return preferences
-    elif ch == "terminal()":
-        terminal()
-    elif ch == "user":
-        div()
-        print("user [parameter]")
-        div()
-        # print("user import <file> - imports a user file")
-        print("user export <user> - exports a user to a user file")
-        print("user create - creates a user")
-        print("user list - creates a user")
-        print("user remove <user> - removes a user")
-        # print("user disable <user> - disables a user")
-        div()
-    elif ch == "user create":
-        main("add_user")
-    elif ch.startswith("user remove "):
-        remove_user(ch[12:])
-    elif ch == "user list":
-        print(main("userlist -c"))
-    elif ch.startswith("user export "):
-        import shutil
-
-        un = ch[12:]
-        try:
-            with open(f"Users/{un}/username.pythinux", "w") as f:
-                f.write(un)
-            with open(f"Users/{un}/pythinux.version", "wb") as f:
-                f.write(pickle.dumps(app_version))
-            shutil.make_archive(
-                input("ZipName $") + ".user_export", "zip", f"Users/{un}"
-            )
-            print("Exported user.")
-        except Exception as e:
-            crashlog.append(str(e))
-            print(str(e))
-        us = ch[12:]
-    elif ch == "settings dprompt":
-        terminal("prompt", preferences["default_prompt"])
-    elif ch.startswith("settings dprompt "):
-        ch = ch[17:]
-        preferences["default_prompt"] = ch
-        save_pref(preferences)
-        terminal("prompt " + preferences["default_prompt"])
-    elif ch == "man":
-        main("man man")
-    elif ch == "len":
-        print("len <command>")
-        print("Returns the length of the data returned by <command>")
-    elif ch.startswith("len "):
-        try:
-            return len(main(ch[4:]))
-        except Exception as e:
-            crashlog.append(str(e))
-    elif ch == "ctime":
-        return stime(preferences["time_format"])
-    elif ch == "cmd":
-        print("cmd <command>")
-        print("Sends <command> to your OS's terminal.")
-        main()
-    elif ch == "format":
-        print("format <number>")
-        print("Returns the number with commas inserted.")
-    elif ch.startswith("format "):
-        return addCommas(ch[7:])
-    elif ch == "calc":
-        div()
-        print("calc <str>")
-        div()
-        print("Performs an arithmetic calculation")
-        div()
-        print("Supported Operations")
-        div()
-        print("+ Addition")
-        print("- Subtraction")
-        print("* Multiplication")
-        print("/ Division")
-        print("// Integer Division (removes decimal)")
-        print("% Modulus (returns remainder of division)")
-        print("^ or ** indices (10 ** 2 = 10 to the power of 2)")
-        div()
-        print("Conditional Formatting Support (returns boolean)")
-        div()
-        print("== is equal to")
-        print("!= is not equal to")
-        print(">= is greater than/equal to")
-        print(">= is less than/equal to")
-        print("> greater than")
-        print("< less than")
-        div()
-        print("Examples")
-        div()
-        print("calc 3/2*(3+2)")
-        div()
-    elif ch.startswith("calc "):
-        return doCalc(ch[5:])
-    elif ch == "ehelp":
-        clear_screen()
-        div()
-        print("about: prints version information")
-        print("    about: most detailed information")
-        print("    about -c: prints compact version information")
-        print("    about -cc: returns the OS version as a list")
-        print("    about -fc: like about -cc but it only shows the first 2 numbers in the list")
-        print("add: performs addition operations")
-        print("add_alias: adds an alias [\"man alias\"]")
-        print("add_user: adds a user to the system")
-        print("admin_panel: contains exactly 1 setting lol")
-        print("alias: edits currently installed aliases")
-        print("area: calculates the area of shapes")
-        print("author: prints the author of the OS")
-        print("banlist: controls list of all commands guests cannot access")
-        print("    banlist: lists all commands in banlist")
-        print("    banlist add <command>: adds <command> to banlist")
-        print("    banlist rm <command>: removes <command> from banlist")
-        print("break: creates a \"Press ENTER To Continue\" menu")
-        print("calc: arithmetic operations and conditional fornatting")
-        print("call: calls a function defined with \"funct\"")
-        print("    funct <function>: calls <function>")
-        print("cat: downloads a file, specifying the file name")
-        print("censor: changes the prompt to only show the user type")
-        print("chkroot: checks if you are root")
-        print("cls: clears the screen")
-        print("cman: custom manuals")
-        print("    cman <manual>: renders <manual")
-        print("cmanls: lists all manuals cman can open")
-        print("cmd: command line pass-through")
-        print("    cmd <command>: sends <command> to os")
-        print("davinci: GUI-based bitmap editor <really broken lol>")
-        print("div: division operations")
-        print("div(): prints a divider element")
-        print("echf: saves text to a file")
-        print("    echf <filename> <text>: saves <text> to <filename>")
-        print("echo: echoes text")
-        print("    echo <text>: echoes <text> to terminal")
-        print("ehelp: prints command list with descriptions")
-        print("files: file explorer")
-        print("format: formats numbers in a human-friendly way")
-        print("    format <num>: adds commas to <num>")
-        print("funct: defines a function")
-        print("    funct <funct name>:<code> : defines <function> with <code>")
-        print("getdetails: shows user information")
-        print("    getdetails: full details")
-        print("    getdetails -h: shows hash of password")
-        print("help: prints list of commands")
-        print("idle-launch: launches IDLE (Python IDE)")
-        print("ihelp: interactive help")
-        print("    ihelp: opens ihelp program")
-        print("    ihelp <command>: sends <command> to ihelp program")
-        print("include: opens a script")
-        print("    include <path/to/script>: opens </path/to/script> and runs it")
-        print("len: returns the length of a command output")
-        print("    len <cmd>: returns the length of <command>")
-        print("linuxhub: common linux operations made easy")
-        print("login: switches your user")
-        print("logoff: logs off")
-        print("ls: same as ls or dir command in Windows/Linux")
-        print("man: built-in manual explorer")
-        print("    man <manual>: opens <manual>")
-        print("    man man: shows help about man")
-        print("    man /: shows list of manuals")
-        print("mem: MEM system (like in calculator)")
-        print("mod: modulus operator")
-        print("mul: multiplication operator")
-        print("pkm: package manager")
-        print("    pkm ?: shows information")
-        print("    pkm install <pkg>: installs <pkg>")
-        print("    pkm list: lists installed packages")
-        print("    pkm all: shows all installable packages")
-        print("    pkm db: manages databases")
-        print("    pkm remove <pkg>: removes <pkg>")
-        print("    pkm search <term>: searches packages for <term>")
-        print("    pkm upgrade: updates all packages")
-        print("    pkm update: updates installable package list (this is done automatically when running commands)")
-        print("    pkm version: prints version of PKM")
-        print("power: indice operations")
-        print("prompt: changes the prompt to a custom one")
-        print("    prompt <prompt>: changes prompt to <prompt>")
-        print("    prompt : resets prompt (make sure to add a space at the end)")
-        print("pwd: prints current directory")
-        print("qaa: quick add alias")
-        print("    qaa <command>|<alias>: redirects <alias> to <command> (make sure to split with pipe(|))")
-        print("qaag: like qaa but adds it globally")
-        print("quit: exits OS")
-        print("rand: returns a pseudo-random number")
-        print("reinstall: reinstalls OS, needs god user level (3)")
-        print("remove_user: removes a user")
-        print("removed: same as pkm remove (here because pkm is a frontend for installd and removed)")
-        print("rng: random number generator")
-        print("    rng <num1> <num2>: returns random number betwrrn <num1> and <num2>")
-        print("run: runs a program")
-        print("   run <program>: runs a program")
-        print("script: creates and runs scripts")
-        print("    script new <script>: creates a new script called <script> and opens it in vim")
-        print("    script list: returns a list of scripts")
-        print("    script run <script>: runs <script>")
-        print("    script tron <script>: opens <script> with tron")
-        print("settings: edits system settings")
-        print("sha256: hashes text")
-        print("    sha256 <str>: returns a sha256 of <str>")
-        print("sqrt: square root")
-        print("started: tutorial program")
-        print("stdlib: standard library (obsolete)")
-        print("stime: prints time using strftime()")
-        print("    stime <str>: returns <str> passed through strftime()")
-        print("stopwatch: stopwatch program")
-        print("sub: subtraction operation")
-        print("sysinfo: prints system information")
-        print("terminal: command prompt")
-        print("time: returns time in OS standard format")
-        print("timeloop: prints time once per second forever")
-        print("timer: prints a timer for n seconds")
-        print("    timer <n>: timer for <n> seconds")
-        print("tron: gui-based text editor")
-        print("    tron: opens a new tron window")
-        print("    tron <filename>: opens <filename> with tron")
-        print("ucode: command for making ucodes")
-        print("user: user creation/export/removal/editing")
-        print("user_control: edit settings related to users")
-        print("user_editor: user editor v2 (manages installed users)")
-        print("userlist: lists all users")
-        print("    userlist: prints all users in a grouped format")
-        print("    userlist -c: prints users unsorted")
-        print("var: variables")
-        print("view_log: if OS randomly bugs out, check this")
-        print("vim: text editor")
-        print("   vim: opens text editor")
-        print("   vim <file>: creates new document called <file> in vim directory")
-        print("wget: downloads a file and automatically chooses a file name")
-        print("xvim: creates a file and opens it using vim")
-        print("    xvim </path/to/file>: create <file> and opens it in vim")
-        br()
-    elif ch.startswith("return "):
-        try:
-            return eval(ch[7:])
-        except Exception as e:
-            crashlog.append(str(e))
-    elif ch.startswith("type "):
-        try:
-            return type(eval(ch[5:]))
-        except:
-            return None
-    elif ch == "return":
-        print("return <val>")
-        print("returns value")
-        print("Tip: this can return values in Python memory")
-    elif ch == "input":
-        print("input <prompt>")
-        print("Returns user input with <prompt>")
-    elif ch.startswith("input "):
-        return input(ch[6:])
-    elif ch == "type":
-        print("type <eval>")
-        print("Returns type(eval(<eval>))")
-    elif ch == "tron":
-        tronTextEditor()
-    elif ch.startswith("tron "):
-        tronTextEditor(ch[5:])
-    elif ch == "import":
-        print("import <module>")
-        print("Imports <module>")
-    elif ch.startswith("import "):
-        module_name=ch[7:]
-        import importlib
-        module = importlib.import_module(module_name)
-    elif ch == "davinci":
-        main("run davinci")
-    else:
-        try:
-            with open(f"Users/{username}/User Settings/alias.dat", "r") as f:
-                d = f.read()
-                d = d.split("\n")
-                d2 = []
-                for i in d:
-                    if i != "":
-                        d2.append(i.split("|"))
-                d = d2
-                del d2
-                for i in d:
-                    if ch == i[0]:
-                        terminal(i[1])
-                        terminal()
-        except Exception as e:
-            crashlog.append(str(e))
-        try:
-            with open(f"System Settings/alias.dat", "r") as f:
-                d = f.read()
-                d = d.split("\n")
-                d2 = []
-                for i in d:
-                    d2.append(i.split("|"))
-                for i in d2:
-                    if ch == i[0]:
-                        terminal(i[1])
-                        terminal()
-        except Exception as e:
-            crashlog.append(str(e))
-        return f'SyntaxError: "{ch}" is not a valid command, manual, alias or program.'
-
-
-def start(lvl, al, un, pwd):
-    global crashlog, user_lvl, user_type, username, password
-    username = un
-    password = pwd
-    user_lvl = lvl
-    if user_lvl == 0:
-        user_type = "guest"
-    elif user_lvl == 1:
-        user_type = "user"
-    elif user_lvl == 2:
-        user_type = "root"
-    elif user_lvl == 3:
-        user_type = "god"
-    else:
-        user_type = "[INVALIDUSER]"
-    if al == 0:
-        div()
-        print(f"Welcome to {os_name}.")
-        print(f"[{os_name} v{app_version[0]}.{app_version[1]}.{app_version[2]}]")
-        div()
-        if user_lvl == 0:
-            print("You are logged in on a guest account.")
-            print(
-                "Guest accounts have limited access to commands and cannot install/remove programs."
-            )
-        elif user_lvl == 2:
-            print("You are logged in as a root account.")
-            print("If you do not know what this means, type LOGOFF right now.")
-        elif user_lvl == 3:
-            print(
-                "Warning! GOD users have very high priveleges and are fully unrestricted."
-            )
-            print("Exercise caution and common sense when using a God account.")
-            print(
-                "If you are unaware of the security implications of using a God account, or what any of this means, type LOGOFF right now."
-            )
-            print("DO NOT USE A GOD ACCOUNT AS YOUR DAILY DRIVER ACCOUNT.")
-        div()
-    if al == 1:
-        main("cls")
-        div()
-        print("Autologin Security")
-        div()
-        print("For security, enter your password:")
-        while True:
-            newpass = getpass.getpass("Password $")
-            if sha256(newpass) == password:
-                password = sha256(newpass)
-                break
-        main("cls")
-    if user_lvl >= 1:
-        if os.path.isfile(os.getcwd() + "/System Settings/startup.xx") == True:
-            try:
-                f = open("System Settings/startup.xx", "r")
-                sdata = f.read()
-                f.close()
-                sdata = sdata.split("\n")
-                for item in sdata:
-                    main(item)
-            except Exception as e:
-                crashlog.append(str(e))
-        if os.path.isfile(os.getcwd() + f"/Users/{username}/startup.xx") == True:
-            try:
-                with open(f"Users/{username}/startup.xx", "r"):
-                    lines = [line.strip() for line in f.readlines()]
-                    print(lines)
-                    run_script(lines)
-            except Exception as e:
-                crashlog.append(str(e))
-        else:
-            crashlog.append("[STARTUP] No User Startup File")
-    terminal("prompt " + preferences["default_prompt"])
-    terminal()
-
-
-def login(username="", password=""):
-    global data
-    if data == []:
-        print("Your userfile is corrupt.")
-        print("Do you wish to reinstall the OS?")
-        ch = input("[y/n] $")
-        if ch == "y":
-            os.chdir("..")
-            shutil.rmtree("Pythinux")
-            os.mkdir("Pythinux")
-            os.chdir("Pythinux")
-            setup_wizard()
-            os_init()
-        else:
-            while True:
-                sleep(1)
-    if username == "" and password == "":
-        al = 0
-        div()
-        print(f"{upper(os_name)} LOGIN SYSTEM")
-        div()
-        print("Enter your login details.")
-        print("If they are valid, you will be logged in.")
-        print(f"There are [{len(data)}] users on your machine.")
-        div()
-        print("Username = guest\nPassword = password\nFor a guest account")
-        div()
-        username = input("Username $")
-        if username == "//ul":
-            div()
-            for i in data:
-                print(i[0])
-            login()
-        password = sha256(getpass.getpass("Password $"))
-    else:
-        al = 1
-    refresh_data()
-    for i in data:
-        if i[0] == username and i[1] == password:
-            start(int(i[2]), al, username, password)
-    login()
-
-
-def refresh_pref():
-    import pickle
-    global PREFERENCES
-    if os.path.isfile("System Settings/system.preferences") == False:
-        save_pref(PREFERENCES)
-    with open("System Settings/system.preferences","rb") as f:
-        d = pickle.loads(f.read())
-        if d["pref_format"] == PREFERENCES["pref_format"]:
-            return d
-        else:
-            return False
-def save_pref(preferences):
-    import pickle
-
-    with open("System Settings/system.preferences", "wb") as f:
-        f.write(pickle.dumps(preferences))
-
-
-def os_init():
-    global crashlog, preferences, PREFERENCES
-    global username, password, user_lvl, user_type, user_type
-    global startpoint
-    refresh_data()
-    preferences = False
-    while preferences == False:
-        preferences = refresh_pref()
-        if preferences == False:
-            div()
-            print("Preferences Error")
-            div()
-            print("Error: Preferences File Out of Date.")
-            print("Likely caused by system update.")
-            print("Preferences will reset and update to latest version.")
-            br()
-            preferences = PREFERENCES
-            with open("System Settings/system.preferences", "wb") as f:
-                f.write(pickle.dumps(preferences))
-    try:
-        f = open("System Settings/autologin.dat")
-        aldata = f.read()
-        f.close()
-        aldata = aldata.split("|")
-        login(aldata[0], aldata[1])
-    except Exception as e:
-        crashlog.append(str(e))
-        login(autologin)
-
-
+    if input(f"Set up autologin? [y/n] $") == "y":
+        main(userList[0],f"autologin {userList[0].username}")
 try:
-    print(os.getcwd())
-    os.chdir("Pythinux")
-    startpoint = os.getcwd()
-except Exception as e:
-    crashlog.append(str(e))
-    os.mkdir("Pythinux")
-    os.chdir("Pythinux")
-    setup_wizard()
-try:
-    f = open("System Settings/userlist.pythinux", "r")
-    data = f.read()
-    f.close()
-    data = data.split("/")
-    data2 = []
-    for item in data:
-        data2.append(item.split("|"))
-    data = data2
-    data2 = []
-    for item in data:
-        if len(item) == 3:
-            data2.append(item)
-    data = data2
-except Exception as e:
-    crashlog.append(str(e))
-    f = open("System Settings/userlist.pythinux", "w")
-    f.close()
-    f = open("System Settings/userlist.pythinux", "r")
-    data = f.read()
-    f.close()
-    data = data.split("/")
-    data2 = []
-    for item in data:
-        data2.append(item.split("|"))
-    data = data2
-    data2 = []
-    for item in data:
-        if len(item) == 3:
-            data2.append(item)
-    data = data2
-try:
-    f = open("System Settings/pkm.db", "rb")
-    import pickle
-
-    dbs = pickle.loads(f.read())
-    f.close()
-except Exception as e:
-    crashlog.append(str(e))
-    dbs = ["https://winfan3672.000webhostapp.com/pkm/official.pkm"]
-os_init()
+    os.chdir("pythinux")
+except:
+    os.mkdir("pythinux")
+    os.chdir("pythinux")
+    setupWizard()
+cdir = os.getcwd()
+global userList
+userList = loadUserList()
+global pdir
+global aliases
+aliases = loadAliases()
+pdir = dir()
+loginScreen(loadAL())
