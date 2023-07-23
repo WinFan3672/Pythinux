@@ -112,7 +112,6 @@ def CompileOS():
             except Exception:
                 pass
     print("Cleared Pythinux install.")
-    print("Reopen OS to open setup wizard.")
 
 
 class FileError(Exception):
