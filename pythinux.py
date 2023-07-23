@@ -789,7 +789,7 @@ def loadProgramBase(
             sp = copy(sys.path)
             sp.insert(0, "app")
             shared_objects = {
-                "castObject":copy(castObject),
+                "castObject": copy(castObject),
                 "Base": copy(Base),
                 "__name__": copy(__name__),
                 "currentUser": copy(user),
