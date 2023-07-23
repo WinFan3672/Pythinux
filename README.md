@@ -30,7 +30,3 @@ Here are a few tips to get you started:
 
 ## Contributing
 Submit an issue/pull request and I will look into it.
-
-## Contact 📨
-* My email is winfan3672@gmail.com.
-* My discord handle is winfan3672

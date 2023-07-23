@@ -1,4 +1,6 @@
 # Directory Listing
+* Community/
+	* The community pkm repository.
 * Documentation/
 	- Commands/
 		+ Help for commands.
