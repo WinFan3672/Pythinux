@@ -1,9 +1,7 @@
-** TODO: Redo Readme**
-# Pythinux 💽
-### **Current Version: v2.2.0**
-### A fully-featured, multi-purpose virtual operating system written in Python
+# Pythinux
+### A fully-featured, multi-purpose operating system written entirely in Python
 ## Features 👾
-* 80+ built-in commands
+* 30+ built-in commands
 * Setup Wizard
 * User system
 * User manager
@@ -24,22 +22,15 @@ Any platform that supports Python 3.9 or higher.
 [Download Python](https://python.org/)
 ## Using
 Here are a few tips to get you started:
-* The HELP command shows a list of commands
+* The `help` command shows a list of commands
   * Every entry is split by a space
-* The STARTED command provides a series of tutorials you can follow.
-  * The STARTED command has multiple tutorials - for a list of all of them, `started /` is your friend.
-* THE IHELP command is an interactive utility for seeing what a command does
-* The MAN command contains built-in manpages.
-* To install a program, use PKM
-* To run a program, use RUN <name of program>.
-* Here are some important commands:
-  * help, ihelp, started, man, started, cls, pkm, run, logoff, echo, alias, terminal, user_control, user_editor, view_log
+* The `man` command contains built-in manpages.
+* To install a program, use `pkm`.
+* The Documentation/ directory contains all the docs you'll ever need for the latest Pythinux release.
 
 ## Contributing
 Submit an issue/pull request and I will look into it.
-## Docs 📄
-TBA
 
-[Dev Roadmap](https://github.com/WinFan3672/pythinux/blob/main/ROADMAP.md)
 ## Contact 📨
-Contact me at ```i.am@mildlysuspicio.us```. I will respond.
+* My email is winfan3672@gmail.com.
+* My discord handle is winfan3672
