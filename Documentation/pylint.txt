@@ -1,0 +1,7 @@
+************* Module pythinux
+pythinux.py:70:0: C0301: Line too long (134/100) (line-too-long)
+pythinux.py:277:0: C0301: Line too long (108/100) (line-too-long)
+pythinux.py:279:0: C0301: Line too long (101/100) (line-too-long)
+pythinux.py:302:0: C0301: Line too long (102/100) (line-too-long)
+pythinux.py:303:0: C0301: Line too long (168/100) (line-too-long)
+pythinux.py:323:0: C0301: Line too long (109/100) (line-too-long)
