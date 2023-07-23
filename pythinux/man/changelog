@@ -1,0 +1,17 @@
+div()
+Pythinix 2.2 Changelog
+div()
+2.2 is a minor update that adds a few new features. It doesn't change much, but is important regardless.
+* Code Quality
+    * flake8 output are now included as a manual.
+    * Almost all flake8 issues have been resolved.
+    * Removed dependency on compiled zip file.
+        * This means that the kernel is now 33kb and not 1.6mb.
+        * This makes development easier and loss of data less likely.
+* pkm
+    * Upgrade dialogue has been improved.
+    * Other minor improvements.
+* installd
+    * Minor improvements to backend.
+Note: 2.3 and 2.4 will include major improvements. See ROADMAP.md in the repo.
+div()
