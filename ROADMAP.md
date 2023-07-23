@@ -9,14 +9,14 @@ This is my long-term plan for the future of Pythinux.
 	    + Version tracking allows for skipping up-to-date packages.
 	    
 	- Expected PKM version: 3.0
-	- Expected Release: 2.2
+	- Expected Release: 2.3
 	
 * Users
 	- Custom Groups
 	- Group Permissions
 	- User Manager
 		+ 1.x had one, 2.x should as well.
-	- Expected Release: 2.2
+	- Expected Release: 2.3
 ## 3.x	
 3.0 will implement a proper GUI system, with a window manager and built-in applications. A terminal emulator will allow for running terminal commands, as always. 
 
