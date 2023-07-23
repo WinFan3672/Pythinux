@@ -20,6 +20,8 @@
 	- Shell script for making automated changes.
 * DIRLISTING.md
 	- This file. Lists all files and what they do.
+* kate.sh
+	- Script for launching common files in the Kate text editor.
 * LICENSE
 	- License listing.
 * pythinux.py
