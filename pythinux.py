@@ -15,11 +15,60 @@ import importlib.util
 import threading
 import ast
 from io import StringIO
+import types
 
 global osName, version, cdir, var
 osName = "Pythinux"
 version = [2, 2, 0]
 var = {}
+
+
+def castObject(obj, new_type):
+    """
+    Create a new object of a specified type or use an existing object, copying all attributes (excluding methods) of the original object to the new one.
+
+    Args:
+        obj: The original object to cast
+        cast_type: The type or object to cast the original object to. If `cast_type` is a type, a new object of that type is created. If `cast_type` is an object, the original object is copied to that object.
+
+    Returns:
+        A new object of the specified type, with all attributes (excluding methods) of the original object copied over. If `cast_type` is an object, the original object is copied to that object and returned.
+    """
+    if isinstance(new_type, type):
+        new_obj = new_type()
+    else:
+        new_obj = new_type
+
+    for key, value in obj.__dict__.items():
+        if not callable(value):
+            setattr(new_obj, key, value)
+
+    return new_obj
+
+
+def castObject(obj, new_type):
+    """
+    Create a new object of a specified type or use an existing object, copying all attributes (excluding methods) of the original object to the new one.
+
+    Args:
+        obj: The original object to cast
+        cast_type: The type or object to cast the original object to. If `cast_type` is a type, a new object of that type is created. If `cast_type` is an object, the original object is copied to that object.
+
+    Returns:
+        A new object of the specified type, with all attributes (excluding methods) of the original object copied over. If `cast_type` is an object, the original object is copied to that object and returned.
+    """
+    # Create a new instance of the specified type
+    if isinstance(new_type, type):
+        new_obj = new_type()
+    else:
+        new_obj = new_type
+
+    # Copy over all non-callable attributes from the original object
+    for key, value in obj.__dict__.items():
+        if not callable(value):
+            setattr(new_obj, key, value)
+
+    return new_obj
 
 
 def setVars(var):
@@ -740,7 +789,9 @@ def loadProgramBase(
             sp = copy(sys.path)
             sp.insert(0, "app")
             shared_objects = {
-                "__name__": __name__,
+                "castObject":copy(castObject),
+                "Base": copy(Base),
+                "__name__": copy(__name__),
                 "currentUser": copy(user),
                 "div": copy(div),
                 "div2": copy(div2),
@@ -1218,9 +1269,9 @@ if __name__ == "__main__":
         br()
     cdir = os.getcwd()
     global userList
-    userList = loadUserList()
-    if userList == []:
+    if loadUserList() == []:
         setupWizard()
+    userList = loadUserList()
     global pdir
     global aliases
     aliases = loadAliases()

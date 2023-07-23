@@ -1,10 +1,22 @@
 import pickle
-
+import urllib.request
 global db, dbs
 db = {}
 dbs = {}
 
-import urllib.request
+class PackageInf(Base):
+    def __init__(self,name="",version=[1,0,0],deps=[]):
+        self.name=name
+        self.version=version
+        self.deps=deps
+def loadPackageInfs():
+    with open("config/pkginf.d","rb") as f:
+        return pickle.load(f)
+def registerPkgInf(pkgInf):
+    pkgInfs = loadPackageInfs()
+    pkgInfs[pkgInf["name"]] = pkgInf
+    with open("config/pkginf.d","wb") as f:
+        pickle.dump(pkgInfs,f)
 def downloadFile(url, fileName):
     if os.path.isfile(url):
         with open(url,"rb") as f:
@@ -19,12 +31,9 @@ def save_db(db):
         pickle.dump(db,f)
 def list_app():
     z = []
-    dirs = ["app","app_high"]
-    for d in dirs:
-        x = os.listdir(d)
-        for i in x:
-            if i.endswith(".py"):
-                z.append(i.replace(".py",""))
+    pkgs = loadPackageInfs()
+    for pkg in pkgs:
+        z.append(pkg)
     return sorted(z)
 def update_db():
     try:
@@ -165,16 +174,10 @@ elif args == ["all"]:
     div()
 elif args == ["allc"]:
     db = give_dbs(True,True)
-    div()
     for item in db:
         print(item)
-    div()
 elif args == ["list"]:
     z = list_app()
-    x = []
-    for i in z:
-        x.append(i.replace(".py",""))
-    z=x
     if z:
         div()
         print(" ".join(z))
@@ -202,6 +205,22 @@ elif args == ["upgrade"]:
         print("({}/{}) Upgrading '{}'...".format(i,len(z),item))
         main(currentUser,f"pkm install -y {item}",True)
     print("All packages upgraded.")
+elif "register" in args and len(args) == 4:
+    if getTerm() == "installd":
+        name = args[1]
+        version = args[2]
+        version = version.split(".")
+        deps = args[3]
+        if deps == "[]":
+            deps = []
+        else:
+            deps = deps.split("|")
+        c = {"name":name, "version":version,"deps": deps}
+        registerPkgInf(c)
+    else:
+        print("Error: This is a hidden argument.")
+        print("It is intended for use by internal programs only.")
+        print("Trying to run it can break your system.")
 elif args == ["db","reset"]:
     save_db({"official":"https://winfan3672.000webhostapp.com/pkm3/pkm.db.cfg"})
 else:

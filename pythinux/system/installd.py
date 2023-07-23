@@ -3,6 +3,8 @@ import importlib
 import zipfile
 import traceback
 import shutil
+pkm = silent(lambda:load_program("pkm",currentUser))
+PackageInf = pkm.PackageInf
 class InstallerError(Exception):
     def __init__(self,message="Could not install program"):
         self.msg = message
@@ -82,6 +84,8 @@ def installd(path,yesMode=False,depMode=False):
             return None
         else:
             os.chdir("..")
+            cmd = "pkm register '{}' '{}' '{}'".format(name,info[1],"|".join(deps) if deps else [])
+            load_program(cmd,currentUser,shell="installd")
             no = 1
             for item in deps:
                 print(f"({no}/{len(deps)}) Installing '{item}' (dependency of '{name}')...")
