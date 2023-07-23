@@ -68,6 +68,7 @@ def installd(path,yesMode=False,depMode=False):
         name = name.replace(" ","")
         name=name.replace("\n","")
         if not yesMode:
+            cls()
             div()
             print("Install Program?")
             div()

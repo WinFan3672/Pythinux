@@ -10,13 +10,20 @@ class PackageInf(Base):
         self.version=version
         self.deps=deps
 def loadPackageInfs():
-    with open("config/pkginf.d","rb") as f:
-        return pickle.load(f)
+    try:
+        with open("config/pkginf.d","rb") as f:
+            return pickle.load(f)
+    except:
+        with open("config/pkhgind.d","wb") as f:
+            pickle.dump({},f)
+            return {}
+def savePackageInfs(pkgInfs):
+    with open("config/pkginf.d","wb") as f:
+        pickle.dump(pkgInfs,f)
 def registerPkgInf(pkgInf):
     pkgInfs = loadPackageInfs()
     pkgInfs[pkgInf["name"]] = pkgInf
-    with open("config/pkginf.d","wb") as f:
-        pickle.dump(pkgInfs,f)
+    savePackageInfs(pkgInfs)
 def downloadFile(url, fileName):
     if os.path.isfile(url):
         with open(url,"rb") as f:
@@ -36,12 +43,16 @@ def list_app():
         z.append(pkg)
     return sorted(z)
 def update_db():
+    DB = {
+        "official":"https://winfan3672.000webhostapp.com/pkm3/pkm.db.cfg",
+        "community":"https://github.com/WinFan3672/Pythinux/raw/main/Community/community.db.cfg",
+        }
     try:
         with open("config/pkm3.cfg","rb") as f:
             return pickle.load(f)
     except:
-        save_db({"official":"https://winfan3672.000webhostapp.com/pkm3/pkm.db.cfg"})
-        return {"official":"https://winfan3672.000webhostapp.com/pkm3/pkm.db.cfg"}
+        save_db(DB)
+        return DB
 def give_dbs(online=False,silent=False,fileName="config/db.pkm"):
     if not online:
         silent = True
@@ -67,7 +78,6 @@ def give_dbs(online=False,silent=False,fileName="config/db.pkm"):
             with open(fileName,"rb") as f:
                 return pickle.load(f)
         except:
-            print("No local copy, downloading fresh copy...")
             return give_dbs(True)
     if not silent:
         div()
@@ -75,7 +85,7 @@ def give_dbs(online=False,silent=False,fileName="config/db.pkm"):
     return db
 if args == ["version"] or args == ["-v"]:
     div()
-    print("PKM 2.5.5")
+    print("PKM 3.0.0")
     div()
     print("PKM (c) 2023 WinFan3672, some rights reserved.")
     div()
@@ -146,7 +156,10 @@ elif args == ["db","remove"]:
     print("Removes [db] from database list.")
     div()
 elif "remove" in args and len(args) == 2:
-    main(currentUser,f"removed {args[1]}")
+    p = loadPackageInfs()
+    p.pop(args[1])
+    savePackageInfs(p)
+    load_program(f"removed {args[1]}",currentUser,shell="pkm")
 elif "db" in args and "remove" in args and len(args) == 3:
     dbs = update_db()
     dbs.pop(args[2])

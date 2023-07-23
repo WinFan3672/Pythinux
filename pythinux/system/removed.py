@@ -1,15 +1,19 @@
-if args:
-    args = " ".join(args)
-    if os.path.exists(f"app/{args}.py"):
-        os.remove(f"app/{args}.py")
-    elif os.path.exists(f"app_high/{args}.py"):
-        os.remove(f"app_high/{args}.py")
+if getTerm() == "pkm":
+    if args:
+        args = " ".join(args)
+        if os.path.exists(f"app/{args}.py"):
+            os.remove(f"app/{args}.py")
+        elif os.path.exists(f"app_high/{args}.py"):
+            os.remove(f"app_high/{args}.py")
+        else:
+            raise OSError(f"Cannot find package '{args}'")
+        print(f"Successfully removed {args}.")
     else:
-        raise OSError(f"Cannot find package '{args}'")
-    print(f"Successfully removed {args}.")
+        div()
+        print("removed <program>")
+        div()
+        print("Removes an installed program.")
+        div()
 else:
-    div()
-    print("removed <program>")
-    div()
-    print("Removes an installed program.")
-    div()
+    cmd = "pkm remove " + " ".join(args)
+    main(currentUser,cmd)

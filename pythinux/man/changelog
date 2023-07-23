@@ -4,5 +4,8 @@ div()
 * pkm/installd
     * pkm and installd are now much smarter.
     * You can no longer remove dependencies of a program.
-    * 
+* Documentation has been improved.
+* removed
+    * Now redirects to `pkm remove` unless it is being run by `pkm`.
+        * This is done to make sure that pkm can check for dependencies.
 div()

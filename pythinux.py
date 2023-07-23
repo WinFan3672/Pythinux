@@ -15,7 +15,6 @@ import importlib.util
 import threading
 import ast
 from io import StringIO
-import types
 
 global osName, version, cdir, var
 osName = "Pythinux"
@@ -454,6 +453,13 @@ def logEvent(text, log="base_log"):
 
 
 def verifyHash(plaintext, saltedHashString):
+    """
+    Verifies a hash.
+    Args:
+        plaintext: the string to check against.
+        saltedHashString: a hash generated using hashString()
+    Returns a boolean depending on whether or not the two match.
+    """
     salt = saltedHashString[-32:]
     hashed_plaintext = hashString(plaintext, salt)
     return hashed_plaintext == saltedHashString
@@ -603,7 +609,7 @@ def parseInput(user, string, shell):
 
 
 def main(user, prompt, sudoMode=False, shell="terminal", doNotExecute=False):
-    """ "
+    """
     Main function. Used to execute commands.
     Args:
         (User) user: the User object.
@@ -655,6 +661,11 @@ def loadAliases():
 
 
 def exposeObjects(module, objects):
+    """
+    Internal function that adds a dictionary containing objects to a module.
+    The dictionary is in the format {name:object}.
+    Returns the module with the objects exposed.
+    """
     for object_name, obj in objects.items():
         setattr(module, object_name, obj)
 

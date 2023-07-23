@@ -207,7 +207,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(username, password='d95829ebdf8a20aba7c2293188e77942675c0ee773ec4029bd711c37754d47bf675b4da42d9ced5dad2b09bb459409f8', lvl=1)
+     |  User(username, password='2ac910996dc25e0ab6a00bceb900959d11b400bba7b5ee015a958ca3a90b5a7b2000413b0c2bc290ef0c18fce4b32553', lvl=1)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -224,7 +224,7 @@ CLASSES
      |      Level 0 returns "guest", lv1 returns "user", 2 "root", 3 "god",
      |      and other values return "#INVALID".
      |  
-     |  __init__(self, username, password='d95829ebdf8a20aba7c2293188e77942675c0ee773ec4029bd711c37754d47bf675b4da42d9ced5dad2b09bb459409f8', lvl=1)
+     |  __init__(self, username, password='2ac910996dc25e0ab6a00bceb900959d11b400bba7b5ee015a958ca3a90b5a7b2000413b0c2bc290ef0c18fce4b32553', lvl=1)
      |      Constructor for User class.
      |      Args:
      |          username: string, the username for the user.
@@ -244,7 +244,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='4d566834d5d3eda93c371b93848780090ec7f657b46e4fef91176142e872283d620caafe165aa92173814f7a17fe0057')
+     |  check(self, username, password='51110efb747c21af8e0271b3cdc39e36849302ad7c011dc870513b50bf0f5966999f11224b7a42a40afed15e35b10da1')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -402,6 +402,9 @@ FUNCTIONS
         Adds the contents of globals() to a module.
     
     exposeObjects(module, objects)
+        Internal function that adds a dictionary containing objects to a module.
+        The dictionary is in the format {name:object}.
+        Returns the module with the objects exposed.
     
     giveOutput(command, user, split=False, shell='terminal')
            Returns the output of a command.
@@ -473,7 +476,6 @@ FUNCTIONS
         Once you enter your details, init() is called.
     
     main(user, prompt, sudoMode=False, shell='terminal', doNotExecute=False)
-        "
         Main function. Used to execute commands.
         Args:
             (User) user: the User object.
@@ -576,6 +578,11 @@ FUNCTIONS
         and False if they fail after 10 tries.
     
     verifyHash(plaintext, saltedHashString)
+        Verifies a hash.
+        Args:
+            plaintext: the string to check against.
+            saltedHashString: a hash generated using hashString()
+        Returns a boolean depending on whether or not the two match.
     
     zip_to_byte_stream(zip_path)
         Converts a zip file to a byte stream that can be inserted into source code.

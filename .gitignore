@@ -1,7 +1,5 @@
 
 *.backup
-*.cfg
-*.d
 pythinux/app/*
 pythinux/app_high/*
 pythinux/config/*
