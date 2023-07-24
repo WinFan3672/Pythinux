@@ -1,10 +1,11 @@
 User = User
 if arguments == ["list"]:
     for item in userList:
-        div()
-        print(f"Username: {item.username}")
-        print(f"Password: {item.password}")
-        print(f"LVL: {item.lvl}")
+        if not item.hidden:
+            div()
+            print(f"Username: {item.username}")
+            print(f"Password: {item.password}")
+            print(f"LVL: {item.lvl}")
     div()
 elif arguments == ["add"]:
     div()

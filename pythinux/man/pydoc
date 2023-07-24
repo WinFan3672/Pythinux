@@ -207,7 +207,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(username, password='2ac910996dc25e0ab6a00bceb900959d11b400bba7b5ee015a958ca3a90b5a7b2000413b0c2bc290ef0c18fce4b32553', lvl=1)
+     |  User(username, password='a95d17caa2a8aa0e2c9ae3d471ad59bf2bdfd3ff65a5ed1b7f83081b3ed2240df73ce208d89595791de990651ef673c4', lvl=1)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -224,7 +224,7 @@ CLASSES
      |      Level 0 returns "guest", lv1 returns "user", 2 "root", 3 "god",
      |      and other values return "#INVALID".
      |  
-     |  __init__(self, username, password='2ac910996dc25e0ab6a00bceb900959d11b400bba7b5ee015a958ca3a90b5a7b2000413b0c2bc290ef0c18fce4b32553', lvl=1)
+     |  __init__(self, username, password='a95d17caa2a8aa0e2c9ae3d471ad59bf2bdfd3ff65a5ed1b7f83081b3ed2240df73ce208d89595791de990651ef673c4', lvl=1)
      |      Constructor for User class.
      |      Args:
      |          username: string, the username for the user.
@@ -244,7 +244,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='51110efb747c21af8e0271b3cdc39e36849302ad7c011dc870513b50bf0f5966999f11224b7a42a40afed15e35b10da1')
+     |  check(self, username, password='f14da4b1568c47b0dbce2a90a2cf8bbc67563d57c477d2116724bcc552c558a21928634b6e2214c148b631ac8da30306')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -346,14 +346,22 @@ FUNCTIONS
         output_path: The filename to write the new zip file to.
     
     castObject(obj, new_type)
-        Create a new object of a specified type or use an existing object, copying all attributes (excluding methods) of the original object to the new one.
+        Create a new object of a specified type or use an existing object,
+        copying all attributes (excluding methods) of the
+        original object to the new one.
         
         Args:
             obj: The original object to cast
-            cast_type: The type or object to cast the original object to. If `cast_type` is a type, a new object of that type is created. If `cast_type` is an object, the original object is copied to that object.
+            cast_type: The type or object to cast the original object to.
+            If `cast_type` is a type, a new object of that type is created.
+            If `cast_type` is an object, the original object is
+            copied to that object.
         
         Returns:
-            A new object of the specified type, with all attributes (excluding methods) of the original object copied over. If `cast_type` is an object, the original object is copied to that object and returned.
+            A new object of the specified type, with all attributes
+            (excluding methods) of the original object copied over.
+            If `cast_type` is an object, the original object is copied to
+            that object and returned.
     
     clearTemp()
         Clears the contents of the tmp/ directory in the
@@ -595,4 +603,4 @@ FUNCTIONS
 DATA
     osName = 'Pythinux'
     var = {}
-    version = [2, 2, 0]
+    version = [2, 3, 0]

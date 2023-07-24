@@ -18,51 +18,34 @@ from io import StringIO
 
 global osName, version, cdir, var
 osName = "Pythinux"
-version = [2, 2, 0]
+version = [2, 3, 0]
 var = {}
 
 
 def castObject(obj, new_type):
     """
-    Create a new object of a specified type or use an existing object, copying all attributes (excluding methods) of the original object to the new one.
+    Create a new object of a specified type or use an existing object,
+    copying all attributes (excluding methods) of the
+    original object to the new one.
 
     Args:
         obj: The original object to cast
-        cast_type: The type or object to cast the original object to. If `cast_type` is a type, a new object of that type is created. If `cast_type` is an object, the original object is copied to that object.
+        cast_type: The type or object to cast the original object to.
+        If `cast_type` is a type, a new object of that type is created.
+        If `cast_type` is an object, the original object is
+        copied to that object.
 
     Returns:
-        A new object of the specified type, with all attributes (excluding methods) of the original object copied over. If `cast_type` is an object, the original object is copied to that object and returned.
+        A new object of the specified type, with all attributes
+        (excluding methods) of the original object copied over.
+        If `cast_type` is an object, the original object is copied to
+        that object and returned.
     """
     if isinstance(new_type, type):
         new_obj = new_type()
     else:
         new_obj = new_type
 
-    for key, value in obj.__dict__.items():
-        if not callable(value):
-            setattr(new_obj, key, value)
-
-    return new_obj
-
-
-def castObject(obj, new_type):
-    """
-    Create a new object of a specified type or use an existing object, copying all attributes (excluding methods) of the original object to the new one.
-
-    Args:
-        obj: The original object to cast
-        cast_type: The type or object to cast the original object to. If `cast_type` is a type, a new object of that type is created. If `cast_type` is an object, the original object is copied to that object.
-
-    Returns:
-        A new object of the specified type, with all attributes (excluding methods) of the original object copied over. If `cast_type` is an object, the original object is copied to that object and returned.
-    """
-    # Create a new instance of the specified type
-    if isinstance(new_type, type):
-        new_obj = new_type()
-    else:
-        new_obj = new_type
-
-    # Copy over all non-callable attributes from the original object
     for key, value in obj.__dict__.items():
         if not callable(value):
             setattr(new_obj, key, value)
@@ -356,7 +339,7 @@ class User(Base):
     See __init__() for how to create User objects properly.
     """
 
-    def __init__(self, username, password=hashString(""), lvl=1):
+    def __init__(self, username, password=hashString(""), lvl=1, hidden = False):
         """
         Constructor for User class.
         Args:
@@ -377,6 +360,7 @@ class User(Base):
         self.username = username
         self.password = hashString(password)
         self.lvl = lvl
+        self.hidden = hidden
 
     def check(self, username, password=hashString("")):
         """
@@ -1232,6 +1216,7 @@ def pprint(obj):
 
 
 def setupWizard():
+    cls()
     """
     Setup wizard.
     * Sets up a user account, complete with username,
@@ -1249,12 +1234,14 @@ def setupWizard():
         password = None
     userList = createUser([], User(username, password, 2))
     saveUserList(userList)
+    cls()
     div()
     print(f'Created user "{username}".')
     br()
-    div()
-    if input("Set up autologin? [y/n] $") == "y":
+    cls()
+    if input("Set up autologin? [y/n] $").lower() == "y":
         saveAL(username)
+    cls()
     div()
     print("Thank you for setting up Pythinux.")
     print("To login, use your username and password.")

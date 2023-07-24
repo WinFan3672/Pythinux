@@ -10,7 +10,7 @@ class InstallerError(Exception):
         self.msg = message
     def __str__(self):
         return self.msg
-def installd(path,yesMode=False,depMode=False):
+def installd(path,yesMode=False,depMode=False,upgradeMode=False):
     try:
         with open(path,"rb") as f:
             x = f.read()
@@ -30,6 +30,8 @@ def installd(path,yesMode=False,depMode=False):
         if os.path.isfile("requirements.txt"):
             with open("requirements.txt") as f:
                 deps = f.read().split()
+                os.chdir("..")
+                os.chdir("tmp")
         else:
             deps = []
         if os.path.isfile("program.info"):
@@ -85,7 +87,9 @@ def installd(path,yesMode=False,depMode=False):
             return None
         else:
             os.chdir("..")
-            cmd = "pkm register '{}' '{}' '{}'".format(name,info[1],"|".join(deps) if deps else [])
+            if upgradeMode:
+                return info
+            cmd = "pkm register '{}' '{}' '{}' {}".format(name,info[1],"|".join(deps) if deps else [],1 if program else 0)
             load_program(cmd,currentUser,shell="installd")
             no = 1
             for item in deps:
@@ -173,7 +177,12 @@ if arguments:
         depMode=True
     else:
         depMode=False
-    installd(" ".join(arguments),yesMode,depMode)
+    if "-u" in args:
+        args.remove("-u")
+        upMode=True
+    else:
+        upMode=False
+    installd(" ".join(arguments),yesMode,depMode,upMode)
 else:
     div()
     print("installd <path/to/installer.szip3>")
