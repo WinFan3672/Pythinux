@@ -1253,18 +1253,7 @@ def setupWizard():
 
 
 if __name__ == "__main__":
-    try:
-        os.chdir("pythinux")
-    except Exception:
-        div()
-        print("CRITICAL ERROR!")
-        div()
-        print("The Pythinux install directory has been removed.")
-        print(
-            "Reinstall Pythinux from source: "
-            "https://github.com/WinFan3672/Pythinux"
-        )
-        br()
+    os.chdir("pythinux")
     cdir = os.getcwd()
     global userList
     if loadUserList() == []:
