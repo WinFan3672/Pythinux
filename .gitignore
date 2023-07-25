@@ -9,3 +9,4 @@ pythinux/home/*
 pythinux/lib/*
 pythinux/log/*
 *.pyc
+*.pyc
