@@ -8,3 +8,4 @@ pythinux/tmp/*
 pythinux/home/*
 pythinux/lib/*
 pythinux/log/*
+*.pyc
