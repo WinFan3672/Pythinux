@@ -21,7 +21,13 @@ osName = "Pythinux"
 version = [2, 3, 0]
 var = {}
 
-
+def fixDirectories():
+    """
+    Reconstructs the blank directories if they do not exist, because git doesn't count directories as files.
+    """
+    for item in ["app","app_high","config","home","lib","log"]:
+        if not os.path.isdir(item):
+            os.mkdir(item)
 def castObject(obj, new_type):
     """
     Create a new object of a specified type or use an existing object,
@@ -1253,7 +1259,19 @@ def setupWizard():
 
 
 if __name__ == "__main__":
-    os.chdir("pythinux")
+    try:
+        os.chdir("pythinux")
+        fixDirectories()
+    except Exception:
+        div()
+        print("CRITICAL ERROR!")
+        div()
+        print("The Pythinux install directory has been removed.")
+        print(
+            "Reinstall Pythinux from source: "
+            "https://github.com/WinFan3672/Pythinux"
+        )
+        br()
     cdir = os.getcwd()
     global userList
     if loadUserList() == []:
