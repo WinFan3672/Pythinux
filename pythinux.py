@@ -292,7 +292,7 @@ def doCalc(text):
             if isinstance(node, ast.BinOp) and not isinstance(
                 node.op, allowed_operators
             ):
-                raise ValueError("Invalid expression")
+                raise ValueError("Invalid expression: {}".format(text))
         namespace = {}
         exec(compile(module, filename="<ast>", mode="exec"), namespace)
         result = namespace["result"]
@@ -522,7 +522,7 @@ class UserList(Base):
 
     def byName(self, name):
         for item in self.users:
-            if name == item.name:
+            if name == item.username:
                 return item
         raise PythinuxError("Invalid user by name.")
 
@@ -963,6 +963,7 @@ def loadProgramBase(
                     "currentUser": user,
                     "aliases": aliases,
                     "userList": userList,
+                    "groupList":groupList,
                     "saveAliases": copy(saveAliases),
                     "createUser": copy(createUser),
                     "saveUserList": saveUserList,

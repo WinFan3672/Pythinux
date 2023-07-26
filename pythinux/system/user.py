@@ -9,7 +9,7 @@ if args == ["list"]:
     div()
 elif args == ["add"]:
     div()
-    print("user add <username> <password> <group_name>)
+    print("user add <username> <password> <group_name>")
     div()
     print("For a list of groups:")
     print("group list")
@@ -30,6 +30,15 @@ elif "remove" in args and len(args) == 2:
     for i in userList:
         if i.username == args[1]:
             removeUser(userList,i)
+elif args == ["info"]:
+    div()
+    print("user info <username>")
+    div()
+    print("Lists info about a user.")
+    div()
+elif "info" in args and len(args) == 2:
+    u = userList.byName(args[1])
+    pprint(u)
 else:
     div()
     print("user [args]")
