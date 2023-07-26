@@ -21,13 +21,16 @@ osName = "Pythinux"
 version = [2, 3, 0]
 var = {}
 
+
 def fixDirectories():
     """
     Reconstructs the blank directories if they do not exist, because git doesn't count directories as files.
     """
-    for item in ["app","app_high","config","home","lib","log"]:
+    for item in ["app", "app_high", "config", "home", "lib", "log"]:
         if not os.path.isdir(item):
             os.mkdir(item)
+
+
 def castObject(obj, new_type):
     """
     Create a new object of a specified type or use an existing object,
@@ -345,7 +348,7 @@ class User(Base):
     See __init__() for how to create User objects properly.
     """
 
-    def __init__(self, username, password=hashString(""), lvl=1, hidden = False):
+    def __init__(self, username, password=hashString(""), lvl=1, hidden=False):
         """
         Constructor for User class.
         Args:
@@ -1223,6 +1226,13 @@ def pprint(obj):
 
 def setupWizard():
     cls()
+    if os.path.isfile("../LICENSE"):
+        with open("../LICENSE") as f:
+            div()
+            print("Legal Licensing Information")
+            div()
+            print(f.read())
+            br()
     """
     Setup wizard.
     * Sets up a user account, complete with username,
