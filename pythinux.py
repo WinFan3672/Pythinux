@@ -34,7 +34,7 @@ def loadGroupList():
     try:
         with open("config/usergroups.cfg", "rb") as f:
             return pickle.load(f)
-    except:
+    except Exception:
         g = GroupList()
         saveGroupList(g)
         return g
@@ -450,6 +450,9 @@ class GroupList(Base):
             if item.name == name:
                 return item
 
+    def __len__(self):
+        return len(self.groups)
+
 
 class User(Base):
     """
@@ -527,10 +530,13 @@ class UserList(Base):
         raise PythinuxError("Invalid user by name.")
 
     def remove(self, user):
-        self.users.remove(name)
+        self.users.remove(user)
 
     def list(self):
         return copy(self.users)
+
+    def __len__(self):
+        return len(self.users)
 
 
 def copy(obj):
@@ -958,12 +964,13 @@ def loadProgramBase(
                     "User": copy(User),
                     "Group": copy(Group),
                     "GroupList": copy(GroupList),
+                    "UserList": copy(UserList),
                     "loadGroupList": copy(loadGroupList),
                     "saveGroupList": copy(saveGroupList),
                     "currentUser": user,
                     "aliases": aliases,
                     "userList": userList,
-                    "groupList":groupList,
+                    "groupList": groupList,
                     "saveAliases": copy(saveAliases),
                     "createUser": copy(createUser),
                     "saveUserList": saveUserList,
@@ -1380,11 +1387,6 @@ def setupWizard():
     userList = UserList()
     userList = createUser(userList, user)
     saveUserList(userList)
-    cls()
-    div()
-    pprint(userList)
-    pprint(user)
-    br()
     cls()
     div()
     print(f'Created user "{username}".')

@@ -183,6 +183,9 @@ CLASSES
      |  __init__(self)
      |      Initialize self.  See help(type(self)) for accurate signature.
      |  
+     |  __len__(self)
+     |      Runing len() for a Base object returns the amount of attributes it has.
+     |  
      |  add(self, group)
      |      Adds a group to the GroupList.
      |      Args:
@@ -208,9 +211,6 @@ CLASSES
      |  __iter__(self)
      |      Iterating through a Base object iterates through the keys and not the
      |      values.
-     |  
-     |  __len__(self)
-     |      Runing len() for a Base object returns the amount of attributes it has.
      |  
      |  __str__(self)
      |      Printing an object will return the object passed
@@ -386,7 +386,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='4e5818897b12fb7b1577110682b197ccee39e80316296d9380f47460140c4315eda54054a66def5b0f7bf07bd185d458', hidden=False)
+     |  User(group, username, password='795d1d97819fb032f251a057c56d863c44d5db3d3b353b4794a7bd1d142e09709adb67b2f330f0af063a541dd1f86505', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -401,7 +401,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='4e5818897b12fb7b1577110682b197ccee39e80316296d9380f47460140c4315eda54054a66def5b0f7bf07bd185d458', hidden=False)
+     |  __init__(self, group, username, password='795d1d97819fb032f251a057c56d863c44d5db3d3b353b4794a7bd1d142e09709adb67b2f330f0af063a541dd1f86505', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -416,7 +416,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='dbd7207f4c0f0c6df24fdf2863c59d70d089f1b87666bb66b8519bdeebaf049ad4ab7ce1b31d0c1b8b2c151ffc5a6ab2')
+     |  check(self, username, password='27c49d81087970a028aa4b58da41ec10bf8f46aa7baeb13a9166685c380ffefc091125a661d23df0f6bbcbabe7ab9ff1')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -466,6 +466,9 @@ CLASSES
      |  __init__(self)
      |      Initialize self.  See help(type(self)) for accurate signature.
      |  
+     |  __len__(self)
+     |      Runing len() for a Base object returns the amount of attributes it has.
+     |  
      |  add(self, user)
      |  
      |  byName(self, name)
@@ -486,9 +489,6 @@ CLASSES
      |  __iter__(self)
      |      Iterating through a Base object iterates through the keys and not the
      |      values.
-     |  
-     |  __len__(self)
-     |      Runing len() for a Base object returns the amount of attributes it has.
      |  
      |  __str__(self)
      |      Printing an object will return the object passed
