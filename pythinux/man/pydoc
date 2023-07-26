@@ -122,7 +122,7 @@ CLASSES
      |  args
     
     class Group(Base)
-     |  Group(name, canApp=False, canAppHigh=False, canSys=False, canSysHigh=False)
+     |  Group(name, canApp=False, canAppHigh=False, canSys=False, canSysHigh=False, canSudo=False, locked=False)
      |  
      |  User groups with custom permissions.
      |  
@@ -133,7 +133,7 @@ CLASSES
      |  
      |  Methods defined here:
      |  
-     |  __init__(self, name, canApp=False, canAppHigh=False, canSys=False, canSysHigh=False)
+     |  __init__(self, name, canApp=False, canAppHigh=False, canSys=False, canSysHigh=False, canSudo=False, locked=False)
      |      Defines nanme and permissions of the Group.
      |      name: name of group. Set to all-lowercase.
      |      canApp: Boolean. Defines whether or not the user can access apps.
@@ -143,6 +143,7 @@ CLASSES
      |          apps in the "system" directory.
      |      canSysHigh: Boolean. Defines whether or not the user can access system
      |          apps in the "system_high" directory.
+     |      canSudo: Boolean. Determines whether or not the user can use `sudo`.
      |  
      |  ----------------------------------------------------------------------
      |  Data descriptors defined here:
@@ -386,7 +387,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='c87927c177e3429e5cf47635c7b58ca042f413db28c488514db0b3942084e26435f00a8ae3dfb9f22fd3044b65ebe578', hidden=False)
+     |  User(group, username, password='26300a27a6e655f1e037e47883cbf6b7a12d0de7ce40155c53d3e88ffdb9e599f77c2200e6616cfb11beb3af25dd116a', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -401,7 +402,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='c87927c177e3429e5cf47635c7b58ca042f413db28c488514db0b3942084e26435f00a8ae3dfb9f22fd3044b65ebe578', hidden=False)
+     |  __init__(self, group, username, password='26300a27a6e655f1e037e47883cbf6b7a12d0de7ce40155c53d3e88ffdb9e599f77c2200e6616cfb11beb3af25dd116a', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -416,7 +417,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='50516ac075ef9270e28de330bd8fe4fb7f41a6476300bddc0569b2c1619c7ca33d667bb19b3d622fcc271eb24b17326c')
+     |  check(self, username, password='5936b2210910b3b3033c5a63b657fc3f3e219203405440380291a922c08d66034ee8425fabafa053c74e6f6be04e8c1c')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -778,6 +779,10 @@ FUNCTIONS
         Unused.
     
     setupWizard()
+        Setup wizard.
+        * Sets up a user account, complete with username,
+          password, init script, etc.
+        * Sets up autologin, depending on user choice.
     
     sha256(string, salt=None)
         Performs a SHA256 og a string.

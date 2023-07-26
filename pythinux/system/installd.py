@@ -4,6 +4,8 @@ import zipfile
 import traceback
 import shutil
 pkm = silent(lambda:load_program("pkm",currentUser))
+def filterDeps(deps):
+    return [x for x in deps if x not in pkm.list_app()], deps
 PackageInf = pkm.PackageInf
 class InstallerError(Exception):
     def __init__(self,message="Could not install program"):
@@ -31,6 +33,7 @@ def installd(path,yesMode=False,depMode=False,upgradeMode=False):
             with open("requirements.txt") as f:
                 deps = f.read().split()
                 os.chdir("..")
+                deps, originalDeps = filterDeps(deps)
                 os.chdir("tmp")
         else:
             deps = []
@@ -78,7 +81,7 @@ def installd(path,yesMode=False,depMode=False,upgradeMode=False):
             print(f"Version: {info[1]}")
             print(f"Release Date: {info[2]}")
             print(f"Author: {info[3]}")
-            print(f"Dependencies: {deps}")
+            print("Dependencies: {}".format("; ".join(deps) if deps else "None"))
             div()
             ch = input("[y/n] $").lower()
         else:
@@ -89,7 +92,7 @@ def installd(path,yesMode=False,depMode=False,upgradeMode=False):
             os.chdir("..")
             if upgradeMode:
                 return info
-            cmd = "pkm register '{}' '{}' '{}' {}".format(name,info[1],"|".join(deps) if deps else [],1 if program else 0)
+            cmd = "pkm register '{}' '{}' '{}' {}".format(name,info[1],"|".join(originalDeps) if originalDeps else [],1 if program else 0)
             load_program(cmd,currentUser,shell="installd")
             no = 1
             for item in deps:

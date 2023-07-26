@@ -390,6 +390,8 @@ class Group(Base):
         canAppHigh=False,
         canSys=False,
         canSysHigh=False,
+        canSudo=False,
+        locked=False,
     ):
         """
         Defines nanme and permissions of the Group.
@@ -401,12 +403,15 @@ class Group(Base):
             apps in the "system" directory.
         canSysHigh: Boolean. Defines whether or not the user can access system
             apps in the "system_high" directory.
+        canSudo: Boolean. Determines whether or not the user can use `sudo`.
         """
         self.name = name.lower()
         self.canApp = canApp
         self.canAppHigh = canAppHigh
         self.canSys = canSys
         self.canSysHigh = canSysHigh
+        self.canSudo = canSudo
+        self.locked = locked
 
 
 class GroupList(Base):
@@ -417,9 +422,9 @@ class GroupList(Base):
     def __init__(self):
         self.groups = [
             Group("guest"),
-            Group("user", True),
-            Group("root", True, True, True),
-            Group("god", True, True, True, True),
+            Group("user", True, canSudo=True, locked=True),
+            Group("root", True, True, True, canSudo=True, locked=True),
+            Group("god", True, True, True, True, True),
         ]
 
     def add(self, group):
@@ -434,7 +439,10 @@ class GroupList(Base):
             raise PythinuxError("Cannot add a non-Group object a GroupList.")
 
     def remove(self, group):
-        self.groups.remove(group)
+        if group.locked:
+            raise PythinuxError("Cannot remove a built-in group.")
+        else:
+            self.groups.remove(group)
 
     def list(self):
         """
@@ -1114,11 +1122,14 @@ def list_loadable_programs(user, sudoMode=False):
     app_directory = os.path.join(current_directory, "app")
     happ_directory = os.path.join(current_directory, "app_high")
 
-    directories = [lsystem_directory, app_directory]
-    if user.admin() or sudoMode:
+    directories = [lsystem_directory]
+    if user.group.canApp:
+        directories.append(app_directory)
+    if user.group.canSys:
         directories.append(system_directory)
+    if user.group.canAppHigh:
         directories.append(happ_directory)
-    if user.god():
+    if user.group.canSysHigh:
         directories.append(hsystem_directory)
     loadable_programs = set()
 
@@ -1358,20 +1369,21 @@ def pprint(obj):
 
 
 def setupWizard():
-    cls()
-    if os.path.isfile("../LICENSE"):
-        with open("../LICENSE") as f:
-            div()
-            print("Legal Licensing Information")
-            div()
-            print(f.read())
-            br()
     """
     Setup wizard.
     * Sets up a user account, complete with username,
       password, init script, etc.
     * Sets up autologin, depending on user choice.
     """
+    if os.path.isfile("../LICENSE"):
+        cls()
+        with open("../LICENSE") as f:
+            div()
+            print("Legal Licensing Information")
+            div()
+            print(f.read())
+            br()
+    cls()
     print(f"{div2()}\nSetup Wizard\n{div2()}")
     username = input("Enter Your Username $")
     password = ""
