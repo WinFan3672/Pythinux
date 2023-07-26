@@ -387,7 +387,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='6e06a0001724134127a7aec585da4b5981c263ffb96aaa48d9308fc923c4881d6d0b016d59827c4be5a6b303ace63f2b', hidden=False)
+     |  User(group, username, password='d29d4d1cb811782130479db7b5b76a9aa3b7913f4609af6b6ac36315ff01cd7ce0c5177e2d15290130a2f9ffa9009b20', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -402,7 +402,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='6e06a0001724134127a7aec585da4b5981c263ffb96aaa48d9308fc923c4881d6d0b016d59827c4be5a6b303ace63f2b', hidden=False)
+     |  __init__(self, group, username, password='d29d4d1cb811782130479db7b5b76a9aa3b7913f4609af6b6ac36315ff01cd7ce0c5177e2d15290130a2f9ffa9009b20', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -417,7 +417,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='d37f16b3bf76c55cd7e4802dcb5719fd2cb2e76ae5987e506bae6e58dfa02d432acf722c5400f6d44fd7a33fb2b06c14')
+     |  check(self, username, password='0cd5d3a2f3abbab4fe2e9931296b09ddd6cc2cd941725ccccf0f8ab841a57a32a01ef1bdab8a1fdf3645ec9ad25e1bcf')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -561,12 +561,6 @@ FUNCTIONS
     
     br()
         Displays a "Press ENTER To continue" screen when called.
-    
-    byte_stream_to_zip(byte_stream, output_path)
-        Opposite of zip_to_byte_stream.
-        Args:
-        byte_stream: The byte stream to be parsed
-        output_path: The filename to write the new zip file to.
     
     castObject(obj, new_type)
         Create a new object of a specified type or use an existing object,
@@ -822,16 +816,8 @@ FUNCTIONS
             plaintext: the string to check against.
             saltedHashString: a hash generated using hashString()
         Returns a boolean depending on whether or not the two match.
-    
-    zip_to_byte_stream(zip_path)
-        Converts a zip file to a byte stream that can be inserted into source code.
-        Args:
-        zip_path: path to the zip file.
-        Returns: a bytes object that can be used by byte_stream_to_zip.
-        Warning: Its output can sometimes be corrupt, so don't delete the original
-        files, just in case. Guess what I did for Pythinux 2.1?
 
 DATA
     osName = 'Pythinux'
     var = {}
-    version = [2, 4, 0]
+    version = [2, 5, 0]

@@ -1,16 +1,12 @@
 div()
-Pythinix 2.4 Changelog
+Pythinix 2.5 Changelog
 div()
-* pkm/installd
-    * When installing dependencies, only the required dependencies are installed.
-    * Dependencies are displayed in a more human-friendly way.
-* Users
-    * Added custom user groups.
-        * These custom groups have customisable permissions with the new `group` command.
-        * The `root` and `user` groups are locked by default. Locked groups are unremovable.
-    * userlist is no longer stored as a list. 
-* `sudo` command
-    * Allows for running root commands as a non-root user.
-* `su` command
-    * Runs your current terminal as a root user.
+* Removed some functions
+    * byte_stream_to_zip
+    * zip_to_byte_stream
+* Removed a program: service
+* `tutorial` command
+    * Interactive tutorial.
+* `welcome` command
+    * Basic welcome message.
 div()

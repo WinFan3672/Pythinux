@@ -18,7 +18,7 @@ from io import StringIO
 
 global osName, version, cdir, var
 osName = "Pythinux"
-version = [2, 4, 0]
+version = [2, 5, 0]
 var = {}
 
 
@@ -130,34 +130,6 @@ def silent(function):
     x = function()
     sys.stdout = stdout
     return x
-
-
-def zip_to_byte_stream(zip_path):
-    """
-    Converts a zip file to a byte stream that can be inserted into source code.
-    Args:
-    zip_path: path to the zip file.
-    Returns: a bytes object that can be used by byte_stream_to_zip.
-    Warning: Its output can sometimes be corrupt, so don't delete the original
-    files, just in case. Guess what I did for Pythinux 2.1?
-    """
-    # Read the zip file into a byte stream
-    with open(zip_path, "rb") as file:
-        byte_stream = io.BytesIO(file.read())
-    return pickle.dumps(byte_stream)
-
-
-def byte_stream_to_zip(byte_stream, output_path):
-    """
-    Opposite of zip_to_byte_stream.
-    Args:
-    byte_stream: The byte stream to be parsed
-    output_path: The filename to write the new zip file to.
-    """
-    byte_stream = pickle.loads(byte_stream)
-    # Convert the byte stream to a zip file
-    with open(output_path, "wb") as file:
-        file.write(byte_stream.getvalue())
 
 
 def CompileOS():
@@ -966,8 +938,6 @@ def loadProgramBase(
                 "osName": copy(osName),
                 "FileError": copy(FileError),
                 "startService": copy(startService),
-                "zip_to_byte_stream": copy(zip_to_byte_stream),
-                "byte_stream_to_zip": copy(byte_stream_to_zip),
                 "createModule": copy(createModule),
                 "silent": copy(silent),
                 "setVars": copy(setVars),
@@ -1420,14 +1390,10 @@ def setupWizard():
     cls()
     if input("Set up autologin? [y/n] $").lower() == "y":
         saveAL(username)
-    cls()
+        cls()
     div()
     print("Thank you for setting up Pythinux.")
-    print("To login, use your username and password.")
-    print(
-        "For support, refer back to the GitHub "
-        "(https://github.com/WinFan3672/Pythinux)."
-    )
+    print("For an introduction to Pythinux, run the `welcome` command.")
     br()
 
 
