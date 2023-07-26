@@ -18,7 +18,7 @@ from io import StringIO
 
 global osName, version, cdir, var
 osName = "Pythinux"
-version = [2, 3, 0]
+version = [2, 3, 2]
 var = {}
 
 
@@ -26,7 +26,7 @@ def fixDirectories():
     """
     Reconstructs the blank directories if they do not exist, because git doesn't count directories as files.
     """
-    for item in ["app", "app_high", "config", "home", "lib", "log"]:
+    for item in ["app", "app_high", "config", "home", "lib", "log", "tmp"]:
         if not os.path.isdir(item):
             os.mkdir(item)
 
