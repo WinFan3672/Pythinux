@@ -467,9 +467,8 @@ class User(Base):
             pass it through hashString().
                 If no password is given, the password is blank.
                 (the hash obviously still exists. pydoc represents the
-                output of hashString("") as the default password.
+                output of hashString("") as the default password.)
         """
-        super().__init__()
         self.group = group
         self.username = username
         self.password = hashString(password)
@@ -508,6 +507,30 @@ class User(Base):
         Returns the name of the user's group.
         """
         return self.group.name
+
+
+class UserList(Base):
+    def __init__(self):
+        self.users = []
+        self.append = self.add
+
+    def add(self, user):
+        if isinstance(user, User):
+            self.users.append(user)
+        else:
+            raise PythinuxError("Invalid User to add to userlist.")
+
+    def byName(self, name):
+        for item in self.users:
+            if name == item.name:
+                return item
+        raise PythinuxError("Invalid user by name.")
+
+    def remove(self, user):
+        self.users.remove(name)
+
+    def list(self):
+        return copy(self.users)
 
 
 def copy(obj):
@@ -933,6 +956,10 @@ def loadProgramBase(
                 system_objects = {
                     "cdir": copy(cdir),
                     "User": copy(User),
+                    "Group": copy(Group),
+                    "GroupList": copy(GroupList),
+                    "loadGroupList": copy(loadGroupList),
+                    "saveGroupList": copy(saveGroupList),
                     "currentUser": user,
                     "aliases": aliases,
                     "userList": userList,
@@ -1130,8 +1157,11 @@ def saveUserList(userList):
     Saves a userlist to the file system.
     userlist: a userlist (returned by loadUserlist()).
     """
-    with open("config/users.cfg", "wb") as f:
-        pickle.dump(userList, f)
+    if isinstance(userList, UserList):
+        with open("config/users.cfg", "wb") as f:
+            pickle.dump(userList, f)
+    else:
+        raise PythinuxError("Cannot save invalid userlist.")
 
 
 def loadUserList():
@@ -1143,7 +1173,7 @@ def loadUserList():
         with open("config/users.cfg", "rb") as f:
             return pickle.load(f)
     except Exception:
-        return []
+        return UserList()
 
 
 def loginScreen(username=None, password=None):
@@ -1168,14 +1198,16 @@ def loginScreen(username=None, password=None):
         username = input("Username $")
     if not password:
         password = getpass("Password $")
-    for item in userList:
+    print(userList.list())
+    for item in userList.list():
         if item.check(username, password):
             init(item, x)
+            return
     if x:
         div()
         print("Incorrect username/password sequence.")
         br()
-    loginScreen()
+        loginScreen(username, password)
 
 
 def makeDir():
@@ -1229,9 +1261,9 @@ def createUser(userlist, user):
     Returns:
         userlist: a userlist that can be passed to saveUserList().
     """
-    if not isinstance(userlist, list) or not isinstance(user, User):
+    if not isinstance(userlist, UserList) or not isinstance(user, User):
         raise TypeError
-    for item in userlist:
+    for item in userlist.list():
         if item.username == user.username:
             removeUser(userlist, item)
     try:
@@ -1240,7 +1272,7 @@ def createUser(userlist, user):
         pass
     with open(f"home/{user.username}/init.d", "w") as f:
         f.write("terminal")
-    userlist.append(user)
+    userlist.add(user)
     return userlist
 
 
@@ -1342,9 +1374,16 @@ def setupWizard():
     if password == "":
         password = None
     groupList = GroupList()
-    user = User(groupList.byName("root"), username, password)
-    userList = createUser([], user)
+    g = groupList.byName("root")
+    user = User(g, username, password)
+    userList = UserList()
+    userList = createUser(userList, user)
     saveUserList(userList)
+    cls()
+    div()
+    pprint(userList)
+    pprint(user)
+    br()
     cls()
     div()
     print(f'Created user "{username}".')
@@ -1379,7 +1418,7 @@ if __name__ == "__main__":
         br()
     cdir = os.getcwd()
     global userList, groupList
-    if loadUserList() == []:
+    if loadUserList().users == []:
         setupWizard()
     userList = loadUserList()
     groupList = loadGroupList()
@@ -1388,3 +1427,18 @@ if __name__ == "__main__":
     aliases = loadAliases()
     pdir = dir()
     loginScreen(loadAL())
+else:
+    # Assuming you have already defined the Group class and hashString function
+
+    # Create a Group instance
+    group = Group("test")  # You need to pass the appropriate arguments here
+
+    # Create a User instance
+    user = User(group, "john_doe", "password123")
+
+    # Now, call the check method on the user instance
+    result = user.check("john_doe", "password123")
+
+    # The result will be True if the username and password match the User's properties,
+    # otherwise, it will be False.
+    print(result)

@@ -1,3 +1,4 @@
+True
 Help on module pythinux:
 
 NAME
@@ -13,6 +14,7 @@ CLASSES
             Group
             GroupList
             User
+            UserList
         LOGOFFEVENT
         rangedInt
     
@@ -385,7 +387,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='5e927c37e389c472495a4273e59aaaec2d38507accec4041ea9c108f4db47ed32915e36944f39609bf841b4fd53f65a7', hidden=False)
+     |  User(group, username, password='61b6c9f894a8af1bd2bf837654a98ef8f9b6e915a6f494ad7b334af51adf1ee6f9baf9340996dbec88de24d71886d0c9', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -400,7 +402,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='5e927c37e389c472495a4273e59aaaec2d38507accec4041ea9c108f4db47ed32915e36944f39609bf841b4fd53f65a7', hidden=False)
+     |  __init__(self, group, username, password='61b6c9f894a8af1bd2bf837654a98ef8f9b6e915a6f494ad7b334af51adf1ee6f9baf9340996dbec88de24d71886d0c9', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -409,13 +411,13 @@ CLASSES
      |          pass it through hashString().
      |              If no password is given, the password is blank.
      |              (the hash obviously still exists. pydoc represents the
-     |              output of hashString("") as the default password.
+     |              output of hashString("") as the default password.)
      |  
      |  admin(self)
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='3ca7f93b1e1bb0ce7f25b8d66f01b68a190adbc90c1d7995c612430c8053fa2a1513b370a217f1a5d1af12c9d0a6a443')
+     |  check(self, username, password='089dd1352aada6841e0f92c167a963625716113b314f856a3a80d5bb104e5165898ffaa1df418a1f0886995ed0625305')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -427,6 +429,51 @@ CLASSES
      |  god(self)
      |      Returns whether or not the user's level is 3 or higher,
      |      indicating a god user.
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from Base:
+     |  
+     |  __iter__(self)
+     |      Iterating through a Base object iterates through the keys and not the
+     |      values.
+     |  
+     |  __len__(self)
+     |      Runing len() for a Base object returns the amount of attributes it has.
+     |  
+     |  __str__(self)
+     |      Printing an object will return the object passed
+     |      through pprint_dict(obj_to_dict()).
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Base:
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+    
+    class UserList(Base)
+     |  Method resolution order:
+     |      UserList
+     |      Base
+     |      builtins.object
+     |  
+     |  Methods defined here:
+     |  
+     |  __init__(self)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  add(self, user)
+     |  
+     |  byName(self, name)
+     |  
+     |  list(self)
+     |  
+     |  remove(self, user)
      |  
      |  ----------------------------------------------------------------------
      |  Data descriptors defined here:
@@ -776,6 +823,9 @@ FUNCTIONS
         files, just in case. Guess what I did for Pythinux 2.1?
 
 DATA
+    group = <pythinux.Group object>
     osName = 'Pythinux'
+    result = True
+    user = <pythinux.User object>
     var = {}
     version = [2, 4, 0]

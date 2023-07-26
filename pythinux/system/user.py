@@ -1,5 +1,5 @@
 User = User
-if arguments == ["list"]:
+if args == ["list"]:
     for item in userList:
         if not item.hidden:
             div()
@@ -7,23 +7,20 @@ if arguments == ["list"]:
             print(f"Password: {item.password}")
             print(f"LVL: {item.lvl}")
     div()
-elif arguments == ["add"]:
+elif args == ["add"]:
     div()
-    print("user add <username> <password> [lvl]")
+    print("user add <username> <password> <group_name>)
     div()
-    print("LVL Guide:")
-    print("0 - Guest")
-    print("1 - User")
-    print("2 - Root")
-    print("3 - God")
+    print("For a list of groups:")
+    print("group list")
     div()
-elif "add" in arguments and len(arguments) >= 3:
-    if len(arguments) == 3:
-        arguments.append(1)
-    u = User(arguments[1],arguments[2],int(arguments[3]))
+elif "add" in args and len(args) == 4:
+    gl = loadGroupList()
+    g = gl.byName(args[3])
+    u = User(g, args[1],args[2])
     userList = createUser(userList,u)
     saveUserList(userList)
-elif arguments == ["remove"]:
+elif args == ["remove"]:
     div()
     print("user remove <user>")
     div()
