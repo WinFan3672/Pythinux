@@ -207,7 +207,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(username, password='640d6e364bb2c2024662b2795a621c0965e0878b393ce7ea48b7ffe15678a8f82da0fb677c79e254fabfbc17fe59ab7f', lvl=1, hidden=False)
+     |  User(username, password='1572d828e06a3b0a3e00b8bfa84a0abde9d0000767126a8b7c37d9d0f9f5bae74884eb661c335dafa1cdfa44782e3b49', lvl=1, hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -224,7 +224,7 @@ CLASSES
      |      Level 0 returns "guest", lv1 returns "user", 2 "root", 3 "god",
      |      and other values return "#INVALID".
      |  
-     |  __init__(self, username, password='640d6e364bb2c2024662b2795a621c0965e0878b393ce7ea48b7ffe15678a8f82da0fb677c79e254fabfbc17fe59ab7f', lvl=1, hidden=False)
+     |  __init__(self, username, password='1572d828e06a3b0a3e00b8bfa84a0abde9d0000767126a8b7c37d9d0f9f5bae74884eb661c335dafa1cdfa44782e3b49', lvl=1, hidden=False)
      |      Constructor for User class.
      |      Args:
      |          username: string, the username for the user.
@@ -244,7 +244,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='197ed39e70f6260f7b16e5a43b8b66e59c6dd0e3a41c556b2e2afbfbd842de5b0a2ec53c9a6219c5aa96e17ad0a9ba41')
+     |  check(self, username, password='fdb5c43f1757ebbf942ed9b22b27f98698bfa3516aae73f6da3801a410e99e015b257225f2704192cf982045e413b2d0')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -415,7 +415,8 @@ FUNCTIONS
         Returns the module with the objects exposed.
     
     fixDirectories()
-        Reconstructs the blank directories if they do not exist, because git doesn't count directories as files.
+        Reconstructs the blank directories if they do not exist,
+        because git doesn't count directories as files.
     
     giveOutput(command, user, split=False, shell='terminal')
            Returns the output of a command.
