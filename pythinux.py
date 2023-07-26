@@ -1427,18 +1427,3 @@ if __name__ == "__main__":
     aliases = loadAliases()
     pdir = dir()
     loginScreen(loadAL())
-else:
-    # Assuming you have already defined the Group class and hashString function
-
-    # Create a Group instance
-    group = Group("test")  # You need to pass the appropriate arguments here
-
-    # Create a User instance
-    user = User(group, "john_doe", "password123")
-
-    # Now, call the check method on the user instance
-    result = user.check("john_doe", "password123")
-
-    # The result will be True if the username and password match the User's properties,
-    # otherwise, it will be False.
-    print(result)
