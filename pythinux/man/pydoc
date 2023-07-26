@@ -207,7 +207,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(username, password='041df7ebd0198a574fba88453d7b9ce2794e5dcfea89428abc140e60276f24c686f95df731dd66477d4eaabd7909bdbe', lvl=1, hidden=False)
+     |  User(username, password='dd16140fd78ac91c5c108d2902d54d94615d765ef6748016092fec716ebc0b0fb936b340f23c46a346b0e84e108a9d10', lvl=1, hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -224,7 +224,7 @@ CLASSES
      |      Level 0 returns "guest", lv1 returns "user", 2 "root", 3 "god",
      |      and other values return "#INVALID".
      |  
-     |  __init__(self, username, password='041df7ebd0198a574fba88453d7b9ce2794e5dcfea89428abc140e60276f24c686f95df731dd66477d4eaabd7909bdbe', lvl=1, hidden=False)
+     |  __init__(self, username, password='dd16140fd78ac91c5c108d2902d54d94615d765ef6748016092fec716ebc0b0fb936b340f23c46a346b0e84e108a9d10', lvl=1, hidden=False)
      |      Constructor for User class.
      |      Args:
      |          username: string, the username for the user.
@@ -244,7 +244,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='e7c7d610d37af35a23be82fd2425307700681b18f14c83042cc837763ffa3800f9f6f6a24ac7730ad6c44cecc46abdd0')
+     |  check(self, username, password='fd43ec460c5eebaa1c13d74f63f6c39b1150d7529e1ae0464a58e3038fc53e39d0dc8180acc4751e730acda52ccb04f4')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
