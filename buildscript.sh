@@ -12,7 +12,7 @@ touch .working
 echo BUILD START.
 echo RESET INSTALLATION
 python resetinstall.py
-echo CLEANING UP INSTALLATION
+echo CLEANING UP INSTALLATION [PASS 1/2]
 delete_pyc
 delete_pycache
 echo GENERATE PYDOC
@@ -33,4 +33,7 @@ echo '# flake8 is a code linter that lists all violations of python standards.' 
 flake8 pythinux.py --exclude E722 >> pythinux/man/lint
 cp pythinux/man/lint Documentation/Technical/lint.txt
 rm .working
+echo CLEANING UP INSTALLATION [PASS 2/2]
+delete_pyc
+delete_pycache
 echo BUILD COMPLETE.
