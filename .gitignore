@@ -1,2 +1,12 @@
+
 *.backup
+pythinux/app/*
+pythinux/app_high/*
+pythinux/config/*
+pythinux/rscript/*
+pythinux/tmp/*
+pythinux/home/*
+pythinux/lib/*
+pythinux/log/*
+*.pyc
 *.pyc
