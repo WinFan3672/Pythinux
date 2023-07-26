@@ -18,8 +18,34 @@ from io import StringIO
 
 global osName, version, cdir, var
 osName = "Pythinux"
-version = [2, 3, 2]
+version = [2, 4, 0]
 var = {}
+
+
+class PythinuxError(Exception):
+    def __init__(self, text):
+        self.text = str(text)
+
+    def __str__(self):
+        return self.text
+
+
+def loadGroupList():
+    try:
+        with open("config/usergroups.cfg", "rb") as f:
+            return pickle.load(f)
+    except:
+        g = GroupList()
+        saveGroupList(g)
+        return g
+
+
+def saveGroupList(groupList):
+    if isinstance(groupList, GroupList):
+        with open("config/usergroups.cfg", "wb") as f:
+            pickle.dump(groupList, f)
+    else:
+        raise PythinuxError("Invalid grouplist to save.")
 
 
 def fixDirectories():
@@ -27,7 +53,16 @@ def fixDirectories():
     Reconstructs the blank directories if they do not exist,
     because git doesn't count directories as files.
     """
-    for item in ["app", "app_high", "config", "home", "lib", "log", "tmp"]:
+    for item in [
+        "app",
+        "app_high",
+        "config",
+        "home",
+        "lib",
+        "log",
+        "rscript",
+        "tmp",
+    ]:
         if not os.path.isdir(item):
             os.mkdir(item)
 
@@ -343,33 +378,101 @@ def doNothing(obj):
     return obj
 
 
+class Group(Base):
+    """
+    User groups with custom permissions.
+    """
+
+    def __init__(
+        self,
+        name,
+        canApp=False,
+        canAppHigh=False,
+        canSys=False,
+        canSysHigh=False,
+    ):
+        """
+        Defines nanme and permissions of the Group.
+        name: name of group. Set to all-lowercase.
+        canApp: Boolean. Defines whether or not the user can access apps.
+        canAppHigh: Boolean. Defines whether or not the user can access
+            high-access apps.
+        canSys: Boolean. Defines whether or not the user can access system
+            apps in the "system" directory.
+        canSysHigh: Boolean. Defines whether or not the user can access system
+            apps in the "system_high" directory.
+        """
+        self.name = name.lower()
+        self.canApp = canApp
+        self.canAppHigh = canAppHigh
+        self.canSys = canSys
+        self.canSysHigh = canSysHigh
+
+
+class GroupList(Base):
+    """
+    GroupList class for use in saveGroupList()/loadGroupList().
+    """
+
+    def __init__(self):
+        self.groups = [
+            Group("guest"),
+            Group("user", True),
+            Group("root", True, True, True),
+            Group("god", True, True, True, True),
+        ]
+
+    def add(self, group):
+        """
+        Adds a group to the GroupList.
+        Args:
+        * group: a Group instance.
+        """
+        if isinstance(group, Group):
+            self.groups.append(group)
+        else:
+            raise PythinuxError("Cannot add a non-Group object a GroupList.")
+
+    def remove(self, group):
+        self.groups.remove(group)
+
+    def list(self):
+        """
+        Returns the list of groups.
+        """
+        return copy(self.groups)
+
+    def byName(self, name):
+        """
+        Returns the first instance of a group based on its name.
+        """
+        for item in self.groups:
+            if item.name == name:
+                return item
+
+
 class User(Base):
     """
     User class used by Pythinux.
     See __init__() for how to create User objects properly.
     """
 
-    def __init__(self, username, password=hashString(""), lvl=1, hidden=False):
+    def __init__(self, group, username, password=hashString(""), hidden=False):
         """
         Constructor for User class.
         Args:
+            group: a Group object.
             username: string, the username for the user.
             password: string passed through hashString() (Note: you MUST
             pass it through hashString().
                 If no password is given, the password is blank.
                 (the hash obviously still exists. pydoc represents the
                 output of hashString("") as the default password.
-            lvl: integer represenging the user's level.
-                0: guest, has very limited access to programs.
-                1: user, can access system_low programs.
-                2: root, can access all programs.
-                3: god, can access system_high programs. Generally not used.
-                Other values: invalid user, causes bugs.
         """
         super().__init__()
+        self.group = group
         self.username = username
         self.password = hashString(password)
-        self.lvl = lvl
         self.hidden = hidden
 
     def check(self, username, password=hashString("")):
@@ -391,31 +494,20 @@ class User(Base):
         Returns whether or not the user's level is 2 or higher,
         indicating a root user.
         """
-        return self.lvl > 1
+        return self.group.canAppHigh
 
     def god(self):
         """
         Returns whether or not the user's level is 3 or higher,
         indicating a god user.
         """
-        return self.lvl > 2
+        return self.group.canSysHigh
 
     def USERTYPE(self):
         """
-        Returns a string of the user's user type based on the stored value.
-        Level 0 returns "guest", lv1 returns "user", 2 "root", 3 "god",
-        and other values return "#INVALID".
+        Returns the name of the user's group.
         """
-        if self.lvl == 0:
-            return "guest"
-        elif self.lvl == 1:
-            return "user"
-        elif self.lvl == 2:
-            return "root"
-        elif self.lvl == 3:
-            return "god"
-        else:
-            return "#INVALID"
+        return self.group.name
 
 
 def copy(obj):
@@ -1064,7 +1156,7 @@ def loginScreen(username=None, password=None):
         Passing both the username and password bypasses the input.
     Once you enter your details, init() is called.
     """
-    load_program("cls", User(""))
+    cls()
     if not password:
         div()
         print("Unlock System" if username else "Pythinux Login Screen")
@@ -1249,7 +1341,9 @@ def setupWizard():
             print("Error: Cannot set blank password.")
     if password == "":
         password = None
-    userList = createUser([], User(username, password, 2))
+    groupList = GroupList()
+    user = User(groupList.byName("root"), username, password)
+    userList = createUser([], user)
     saveUserList(userList)
     cls()
     div()
@@ -1284,10 +1378,11 @@ if __name__ == "__main__":
         )
         br()
     cdir = os.getcwd()
-    global userList
+    global userList, groupList
     if loadUserList() == []:
         setupWizard()
     userList = loadUserList()
+    groupList = loadGroupList()
     global pdir
     global aliases
     aliases = loadAliases()

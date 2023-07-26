@@ -6,9 +6,12 @@ NAME
 CLASSES
     builtins.Exception(builtins.BaseException)
         FileError
+        PythinuxError
         SudoError
     builtins.object
         Base
+            Group
+            GroupList
             User
         LOGOFFEVENT
         rangedInt
@@ -117,6 +120,107 @@ CLASSES
      |  
      |  args
     
+    class Group(Base)
+     |  Group(name, canApp=False, canAppHigh=False, canSys=False, canSysHigh=False)
+     |  
+     |  User groups with custom permissions.
+     |  
+     |  Method resolution order:
+     |      Group
+     |      Base
+     |      builtins.object
+     |  
+     |  Methods defined here:
+     |  
+     |  __init__(self, name, canApp=False, canAppHigh=False, canSys=False, canSysHigh=False)
+     |      Defines nanme and permissions of the Group.
+     |      name: name of group. Set to all-lowercase.
+     |      canApp: Boolean. Defines whether or not the user can access apps.
+     |      canAppHigh: Boolean. Defines whether or not the user can access
+     |          high-access apps.
+     |      canSys: Boolean. Defines whether or not the user can access system
+     |          apps in the "system" directory.
+     |      canSysHigh: Boolean. Defines whether or not the user can access system
+     |          apps in the "system_high" directory.
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from Base:
+     |  
+     |  __iter__(self)
+     |      Iterating through a Base object iterates through the keys and not the
+     |      values.
+     |  
+     |  __len__(self)
+     |      Runing len() for a Base object returns the amount of attributes it has.
+     |  
+     |  __str__(self)
+     |      Printing an object will return the object passed
+     |      through pprint_dict(obj_to_dict()).
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Base:
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+    
+    class GroupList(Base)
+     |  GroupList class for use in saveGroupList()/loadGroupList().
+     |  
+     |  Method resolution order:
+     |      GroupList
+     |      Base
+     |      builtins.object
+     |  
+     |  Methods defined here:
+     |  
+     |  __init__(self)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  add(self, group)
+     |      Adds a group to the GroupList.
+     |      Args:
+     |      * group: a Group instance.
+     |  
+     |  byName(self, name)
+     |      Returns the first instance of a group based on its name.
+     |  
+     |  list(self)
+     |      Returns the list of groups.
+     |  
+     |  remove(self, group)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from Base:
+     |  
+     |  __iter__(self)
+     |      Iterating through a Base object iterates through the keys and not the
+     |      values.
+     |  
+     |  __len__(self)
+     |      Runing len() for a Base object returns the amount of attributes it has.
+     |  
+     |  __str__(self)
+     |      Printing an object will return the object passed
+     |      through pprint_dict(obj_to_dict()).
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Base:
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+    
     class LOGOFFEVENT(builtins.object)
      |  This class(not an instance of it) is returned by main() when
      |  the user uses the "logoff" command.
@@ -128,6 +232,80 @@ CLASSES
      |  
      |  __weakref__
      |      list of weak references to the object (if defined)
+    
+    class PythinuxError(builtins.Exception)
+     |  PythinuxError(text)
+     |  
+     |  Method resolution order:
+     |      PythinuxError
+     |      builtins.Exception
+     |      builtins.BaseException
+     |      builtins.object
+     |  
+     |  Methods defined here:
+     |  
+     |  __init__(self, text)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  __str__(self)
+     |      Return str(self).
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Static methods inherited from builtins.Exception:
+     |  
+     |  __new__(*args, **kwargs) from builtins.type
+     |      Create and return a new object.  See help(type) for accurate signature.
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from builtins.BaseException:
+     |  
+     |  __delattr__(self, name, /)
+     |      Implement delattr(self, name).
+     |  
+     |  __getattribute__(self, name, /)
+     |      Return getattr(self, name).
+     |  
+     |  __reduce__(...)
+     |      Helper for pickle.
+     |  
+     |  __repr__(self, /)
+     |      Return repr(self).
+     |  
+     |  __setattr__(self, name, value, /)
+     |      Implement setattr(self, name, value).
+     |  
+     |  __setstate__(...)
+     |  
+     |  add_note(...)
+     |      Exception.add_note(note) --
+     |      add a note to the exception
+     |  
+     |  with_traceback(...)
+     |      Exception.with_traceback(tb) --
+     |      set self.__traceback__ to tb and return self.
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from builtins.BaseException:
+     |  
+     |  __cause__
+     |      exception cause
+     |  
+     |  __context__
+     |      exception context
+     |  
+     |  __dict__
+     |  
+     |  __suppress_context__
+     |  
+     |  __traceback__
+     |  
+     |  args
     
     class SudoError(builtins.Exception)
      |  Generic exception for issues with sudo priveleges.
@@ -207,7 +385,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(username, password='1572d828e06a3b0a3e00b8bfa84a0abde9d0000767126a8b7c37d9d0f9f5bae74884eb661c335dafa1cdfa44782e3b49', lvl=1, hidden=False)
+     |  User(group, username, password='5e927c37e389c472495a4273e59aaaec2d38507accec4041ea9c108f4db47ed32915e36944f39609bf841b4fd53f65a7', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -220,31 +398,24 @@ CLASSES
      |  Methods defined here:
      |  
      |  USERTYPE(self)
-     |      Returns a string of the user's user type based on the stored value.
-     |      Level 0 returns "guest", lv1 returns "user", 2 "root", 3 "god",
-     |      and other values return "#INVALID".
+     |      Returns the name of the user's group.
      |  
-     |  __init__(self, username, password='1572d828e06a3b0a3e00b8bfa84a0abde9d0000767126a8b7c37d9d0f9f5bae74884eb661c335dafa1cdfa44782e3b49', lvl=1, hidden=False)
+     |  __init__(self, group, username, password='5e927c37e389c472495a4273e59aaaec2d38507accec4041ea9c108f4db47ed32915e36944f39609bf841b4fd53f65a7', hidden=False)
      |      Constructor for User class.
      |      Args:
+     |          group: a Group object.
      |          username: string, the username for the user.
      |          password: string passed through hashString() (Note: you MUST
      |          pass it through hashString().
      |              If no password is given, the password is blank.
      |              (the hash obviously still exists. pydoc represents the
      |              output of hashString("") as the default password.
-     |          lvl: integer represenging the user's level.
-     |              0: guest, has very limited access to programs.
-     |              1: user, can access system_low programs.
-     |              2: root, can access all programs.
-     |              3: god, can access system_high programs. Generally not used.
-     |              Other values: invalid user, causes bugs.
      |  
      |  admin(self)
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='fdb5c43f1757ebbf942ed9b22b27f98698bfa3516aae73f6da3801a410e99e015b257225f2704192cf982045e413b2d0')
+     |  check(self, username, password='3ca7f93b1e1bb0ce7f25b8d66f01b68a190adbc90c1d7995c612430c8053fa2a1513b370a217f1a5d1af12c9d0a6a443')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -464,6 +635,8 @@ FUNCTIONS
     loadAliases()
         Returns the list of aliases, or {} if there isn't one.
     
+    loadGroupList()
+    
     loadProgramBase(program_name_with_args, user, sudoMode=False, shell='terminal', __name__=None, isolatedMode=False)
     
     loadUserList()
@@ -549,6 +722,8 @@ FUNCTIONS
         Args:
             aliases: a list grabbed from loadAliases().
     
+    saveGroupList(groupList)
+    
     saveUserList(userList)
         Saves a userlist to the file system.
         userlist: a userlist (returned by loadUserlist()).
@@ -603,4 +778,4 @@ FUNCTIONS
 DATA
     osName = 'Pythinux'
     var = {}
-    version = [2, 3, 2]
+    version = [2, 4, 0]
