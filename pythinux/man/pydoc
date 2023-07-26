@@ -386,7 +386,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='795d1d97819fb032f251a057c56d863c44d5db3d3b353b4794a7bd1d142e09709adb67b2f330f0af063a541dd1f86505', hidden=False)
+     |  User(group, username, password='c87927c177e3429e5cf47635c7b58ca042f413db28c488514db0b3942084e26435f00a8ae3dfb9f22fd3044b65ebe578', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -401,7 +401,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='795d1d97819fb032f251a057c56d863c44d5db3d3b353b4794a7bd1d142e09709adb67b2f330f0af063a541dd1f86505', hidden=False)
+     |  __init__(self, group, username, password='c87927c177e3429e5cf47635c7b58ca042f413db28c488514db0b3942084e26435f00a8ae3dfb9f22fd3044b65ebe578', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -416,7 +416,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='27c49d81087970a028aa4b58da41ec10bf8f46aa7baeb13a9166685c380ffefc091125a661d23df0f6bbcbabe7ab9ff1')
+     |  check(self, username, password='50516ac075ef9270e28de330bd8fe4fb7f41a6476300bddc0569b2c1619c7ca33d667bb19b3d622fcc271eb24b17326c')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
