@@ -117,13 +117,10 @@ def give_dbs(online=False,silent=False,fileName="config/db.pkm"):
     return db
 if args == ["version"] or args == ["-v"]:
     div()
-    print("PKM 3.0.0")
+    print("PKM 3.1.0")
     div()
     print("PKM (c) 2023 WinFan3672, some rights reserved.")
     div()
-# elif args == ["clear"]:
-#     for item in list_app():
-#         main(currentUser,f"pkm remove {item}")
 elif args == ["update"]:
     if os.path.isfile("config/db.pkm"):
         os.remove("config/db.pkm")

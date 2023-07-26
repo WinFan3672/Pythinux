@@ -546,6 +546,14 @@ class UserList(Base):
     def remove(self, user):
         self.users.remove(user)
 
+    def removeByName(self, name):
+        did = False
+        for item in self.users:
+            if item.username == name:
+                self.users.remove(item)
+                did = True
+        return did
+
     def list(self):
         return copy(self.users)
 
@@ -1223,7 +1231,6 @@ def loginScreen(username=None, password=None):
         username = input("Username $")
     if not password:
         password = getpass("Password $")
-    print(userList.list())
     for item in userList.list():
         if item.check(username, password):
             init(item, x)

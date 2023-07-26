@@ -9,5 +9,5 @@ div()
         * The `root` and `user` groups are locked by default. Locked groups are unremovable.
     * user list is no longer stored as a list. 
 * Sudo command
-    * Allows for running root commands as a user.
+    * Allows for running root commands as a non-root user.
 div()

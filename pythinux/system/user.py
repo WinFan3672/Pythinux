@@ -1,11 +1,11 @@
 User = User
 if args == ["list"]:
-    for item in userList:
+    for item in userList.list():
         if not item.hidden:
             div()
             print(f"Username: {item.username}")
             print(f"Password: {item.password}")
-            print(f"LVL: {item.lvl}")
+            print(f"Group: {item.group.name}")
     div()
 elif args == ["add"]:
     div()
@@ -17,9 +17,13 @@ elif args == ["add"]:
 elif "add" in args and len(args) == 4:
     gl = loadGroupList()
     g = gl.byName(args[3])
-    u = User(g, args[1],args[2])
-    userList = createUser(userList,u)
-    saveUserList(userList)
+    if g:
+        u = User(g, args[1],args[2])
+        userList = createUser(userList,u)
+        saveUserList(userList)
+    else:
+        print("ERROR: Invalid group name.")
+        print("       For a list, run `group list`.")
 elif args == ["remove"]:
     div()
     print("user remove <user>")
@@ -27,9 +31,10 @@ elif args == ["remove"]:
     print("Removes <user> from system.")
     div()
 elif "remove" in args and len(args) == 2:
-    for i in userList:
-        if i.username == args[1]:
-            removeUser(userList,i)
+    if userList.removeByName(args[1]):
+        print("Successfully removed {}.".format(args[1]))
+    else:
+        print("Invalid User:  {}".format(args[1]))
 elif args == ["info"]:
     div()
     print("user info <username>")

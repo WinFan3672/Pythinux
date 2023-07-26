@@ -10,3 +10,5 @@ pythinux/lib/*
 pythinux/log/*
 *.pyc
 *.pyc
+pickle
+urllib.request
