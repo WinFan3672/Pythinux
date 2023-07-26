@@ -45,7 +45,7 @@ units = [
     # CommandUnit("Install StartPKG","pkm install -y startpkg")
     FunctionUnit("Run All Programs",loadAllPrograms)
 ]
-print("Begin...")
+print("Begin unit test")
 for unit in units:
     print("[{}/{}] {}".format(i, len(units), unit.name))
     unit.execute()

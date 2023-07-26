@@ -526,12 +526,18 @@ class UserList(Base):
         self.append = self.add
 
     def add(self, user):
+        """
+        Adds a user to the user list.
+        """
         if isinstance(user, User):
             self.users.append(user)
         else:
             raise PythinuxError("Invalid User to add to userlist.")
 
     def byName(self, name):
+        """
+        Returns the first instance of a user in the userlist with the same name.
+        """
         for item in self.users:
             if name == item.username:
                 return item
