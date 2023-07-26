@@ -536,7 +536,8 @@ class UserList(Base):
 
     def byName(self, name):
         """
-        Returns the first instance of a user in the userlist with the same name.
+        Returns the first instance of
+        a user in the userlist with the same name.
         """
         for item in self.users:
             if name == item.username:

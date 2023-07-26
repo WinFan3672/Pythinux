@@ -1,18 +1,7 @@
 # Roadmap
 This is my long-term plan for the future of Pythinux.
 ## 2.x
-* Package Manager
-    - Smarter upgrades
-	    + Version tracking allows for skipping up-to-date packages.
-	- Expected PKM version: 3.1
-	- Expected Release: 2.4
-	
-* Users
-	- Custom Groups
-	- Group Permissions
-	- User Manager
-		+ 1.x had one, 2.x should as well.
-	- Expected Release: 2.4
+2.4 will probably be the last 2.x release, unless I plan to add more API functions or features.
 ## 3.x	
 3.0 will implement a proper GUI system, with a window manager and built-in applications. A terminal emulator will allow for running terminal commands, as always. 
 
