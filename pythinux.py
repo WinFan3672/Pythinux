@@ -793,7 +793,7 @@ def exposeObjects(module, objects):
         setattr(module, object_name, obj)
 
 
-def sudo(user, inca=0):
+def sudo(user, maxAttempts=10, incorrectAttempts=0):
     """
     Password authentication.
     Args:
@@ -801,13 +801,13 @@ def sudo(user, inca=0):
     Returns True if the user types their password,
     and False if they fail after 10 tries.
     """
-    if inca > 9:
+    if incorrectAttempts >= maxAttempts:
         return False
     p = getpass(f"[sudo] password for {user.username}: ")
     if verifyHash(p, user.password):
         return True
     else:
-        sudo(user, inca + 1)
+        sudo(user, maxAttempts, incorrectAttempts + 1)
 
 
 def splitString(string):

@@ -387,7 +387,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='26300a27a6e655f1e037e47883cbf6b7a12d0de7ce40155c53d3e88ffdb9e599f77c2200e6616cfb11beb3af25dd116a', hidden=False)
+     |  User(group, username, password='741472c4d9c79a369c987132a5efdeb97ef3972473c1c60533721b539e0ae9e677ca29b191a1d4f1e0f4e913a64249b7', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -402,7 +402,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='26300a27a6e655f1e037e47883cbf6b7a12d0de7ce40155c53d3e88ffdb9e599f77c2200e6616cfb11beb3af25dd116a', hidden=False)
+     |  __init__(self, group, username, password='741472c4d9c79a369c987132a5efdeb97ef3972473c1c60533721b539e0ae9e677ca29b191a1d4f1e0f4e913a64249b7', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -417,7 +417,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='5936b2210910b3b3033c5a63b657fc3f3e219203405440380291a922c08d66034ee8425fabafa053c74e6f6be04e8c1c')
+     |  check(self, username, password='dbfda5173cd450eae60777c50bf93e72f38d5a9155f6d8828c73f5c6103ba2c6bb581fa36f8f42359dcee82696b95699')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -804,7 +804,7 @@ FUNCTIONS
         thread: a service generated using createService()
         name: name of the service.
     
-    sudo(user, inca=0)
+    sudo(user, maxAttempts=10, incorrectAttempts=0)
         Password authentication.
         Args:
             user: the user getting authenticated.

@@ -5,7 +5,8 @@ import traceback
 import shutil
 pkm = silent(lambda:load_program("pkm",currentUser))
 def filterDeps(deps):
-    return [x for x in deps if x not in pkm.list_app()], deps
+    filtered_deps = [x for x in deps if x not in pkm.list_app()]
+    return filtered_deps, deps
 PackageInf = pkm.PackageInf
 class InstallerError(Exception):
     def __init__(self,message="Could not install program"):
@@ -37,6 +38,7 @@ def installd(path,yesMode=False,depMode=False,upgradeMode=False):
                 os.chdir("tmp")
         else:
             deps = []
+            originalDeps = []
         if os.path.isfile("program.info"):
             with open("program.info") as f:
                 info = f.read().split("|")
@@ -92,7 +94,8 @@ def installd(path,yesMode=False,depMode=False,upgradeMode=False):
             os.chdir("..")
             if upgradeMode:
                 return info
-            cmd = "pkm register '{}' '{}' '{}' {}".format(name,info[1],"|".join(originalDeps) if originalDeps else [],1 if program else 0)
+            dd = "|".join(originalDeps)
+            cmd = "pkm register '{}' '{}' '{}' {}".format(name,info[1],dd if originalDeps else [],1 if program else 0)
             load_program(cmd,currentUser,shell="installd")
             no = 1
             for item in deps:
