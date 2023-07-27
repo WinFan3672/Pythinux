@@ -279,14 +279,19 @@ elif args == ["upgrade"]:
     z = list_app()
     pkgInfs = loadPackageInfs()
     x = []
+    xdb = give_dbs(True)
     for item in z:
-        if db[item]["version"] > pkgInfs[item]["version"]:
+        if xdb[item]["version"] > pkgInfs[item]["version"]:
             x.append(item)
-    for item in x:
-        print("({}/{}) Upgrading '{}'...".format(i,len(x),item))
-        main(currentUser,f"pkm install -y {item}",True)
-        i += 1
-    print("All packages upgraded.")
+    if x:
+        for item in x:
+            print("({}/{}) Upgrading '{}'...".format(i,len(x),item))
+            main(currentUser,f"pkm install -y {item}",True)
+            i += 1
+        print("All packages upgraded.")
+    else:
+        print("ERROR: No packages to upgrade.")
+        print("Your system is fully up-to-date.")
 elif "register" in args and len(args) == 7:
     if getTerm() == "installd":
         name = args[1]

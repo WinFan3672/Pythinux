@@ -439,7 +439,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='31bdd041e86d2476e048712f0048556823b17307165bc2c480bb6bbd53caa18b6a0c812c832ae72500a45746f352d2b3', hidden=False)
+     |  User(group, username, password='ddd3142499fa1b0f6839f2d009446c3cf6da522e8c1ea823a1e3a7e062f0e012246d731120128690658c0a26c00bba2a', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -454,7 +454,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='31bdd041e86d2476e048712f0048556823b17307165bc2c480bb6bbd53caa18b6a0c812c832ae72500a45746f352d2b3', hidden=False)
+     |  __init__(self, group, username, password='ddd3142499fa1b0f6839f2d009446c3cf6da522e8c1ea823a1e3a7e062f0e012246d731120128690658c0a26c00bba2a', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -469,7 +469,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='2acab035a3f8446aab167126161a67057a2ea343fd4089024fcd0e6a8e20fc3dfbfdb0777779f85ecc9899c73201d290')
+     |  check(self, username, password='01d2785fbf95dfe9045f66869bf08a006fc795b8da6393c74de063a1e79af57266499edfd2e7e768ef38320d7e23e176')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -906,11 +906,11 @@ Begin unit tests.
         "name": "testgroup"
     },
     "hidden": false,
-    "password": "d0d12308479bd37406f71b22114ee5cb0616bc109b9b26cdfa913e9ec7a7f576b50741693da7f91d917554f73d02bcf1",
+    "password": "8dad7264787ba5bccafc44681084795c728bcbffd9f4182fb8aceb9205c1dbbb52c2f03ffe5ec0da96c09b377be6b38b",
     "username": "testuser"
 }
 [10/14] Loadable Programs
-['about', 'alias', 'area', 'autologin', 'basic-terminal', 'break', 'bwm', 'bwmadd', 'calc', 'cat', 'cls', 'cmd', 'echo', 'essential', 'exit', 'flapgui', 'ftpx', 'group', 'help', 'idle', 'initd', 'installd', 'libimporter', 'license', 'linecount', 'lock', 'ls', 'man', 'md', 'passwd', 'pip', 'pkm', 'python', 'reinstall', 'removed', 'script', 'su', 'sudo', 'terminal', 'tty', 'tutorial', 'user', 'var', 'version', 'welcome', 'whoami', 'wowshell', 'xcount', 'xhide', 'xlock', 'xremove', 'xunlock', 'xview', 'zcalc']
+['about', 'alias', 'area', 'autologin', 'basic-terminal', 'break', 'bwm', 'bwmadd', 'calc', 'cat', 'cls', 'cmd', 'echo', 'essential', 'exit', 'flapgui', 'ftpx', 'group', 'help', 'idle', 'initd', 'installd', 'libimporter', 'license', 'linecount', 'lock', 'ls', 'man', 'md', 'passwd', 'pip', 'pkm', 'python', 'reinstall', 'removed', 'script', 'su', 'sudo', 'terminal', 'tty', 'tutorial', 'user', 'usersext', 'var', 'version', 'welcome', 'whoami', 'wowshell', 'xcount', 'xhide', 'xlock', 'xremove', 'xunlock', 'xview', 'zcalc']
 [11/14] Lint Test [unittest]
 [12/14] Lint Test [pythinux]
 [13/14] Lint Test [resetInstall]

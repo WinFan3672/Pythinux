@@ -8,10 +8,24 @@ class Div(Point):
         div()
 class Break(Point):
     def execute(self):
-        br()
+        if self.text:
+            input("Press ENTER to continue.")
+        else:
+            br()
 class Clear(Point):
     def execute(self):
         cls()
+class NETerminal(Point):
+    def execute(self):
+        prompt = ""
+        while prompt != self.text:
+            prompt = input("[TUTORIAL] {}@{} $".format(currentUser.group.name,currentUser.username))
+            if prompt == "":
+                continue
+            elif prompt != self.text:
+                print("ERROR: Invalid command.")
+                print("HINT: You're supposed to type '{}'.".format(self.text))
+        print("ERROR: The tutorial does not allow you to execute that command.")
 class Terminal(Point):
     def execute(self):
         prompt = ""
@@ -23,7 +37,57 @@ class Terminal(Point):
                 print("ERROR: Invalid command.")
                 print("HINT: You're supposed to type '{}'.".format(self.text))
         main(currentUser,self.text)
-if args == ["3"]:
+if args == ["5"]:
+    points = [
+        Clear(),
+        Div(),
+        Point("This is the final part of the tutorial."),
+        Point("It explains how to get help on almost anything, if you ever become stuck."),
+        Break(),
+        Clear(),
+        Div(),
+        Point("For a list of commands, type `help`."),
+        Point("Commands with arguments will have help information if you don't provide any arguments, so just run them."),
+        Point("The `man` command will help you if a program has a manpage."),
+        Point("If you need to view a program's source code, the `xview` package (included with startpkg) can help."),
+        Point("Worst case scenario, you can go to the GitHub, read through the documentation, and if you're still stuck, create an Issue."),
+        Break(),
+        Clear(),
+        Div(),
+        Point("You have finished the tutorial."),
+        Break(),
+        Clear(),
+        ]
+elif args == ["4"]:
+    points = [
+        Clear(),
+        Point("Now that you're installed and removed some packages, let's examine them further."),
+        Point("pkm info is used to do this."),
+        Point("Use said command on the xutil package."),
+        Terminal("pkm info xutil"),
+        Point("pkm info only works on installed packages."),
+        Point("It shows the dependency tree of the package as well as other info."),
+        Point("You can see what a package depends on and what packages depend on it."),
+        Break(),
+        Clear(),
+        Break(),
+        Point("If you want a list of packages you can install, `pkm all` is your friend."),
+        Point("Continue by testing it out."),
+        Break(),
+        Clear(),
+        Terminal("pkm all"),
+        Break(),
+        Clear(),
+        Point("The `pkm all` command lists all packages as well as their full names and descriptions."),
+        Point("A more compact version (pkm allc) simply lists every installable packages."),
+        Terminal("pkm allc"),
+        Break(),
+        Clear(),
+        Point("The next part of the tutorial can be accessed using `tutorial 5`."),
+        Break(),
+        Clear(),
+        ]
+elif args == ["3"]:
     points = [
         Clear(),
         Div(),
@@ -57,7 +121,19 @@ if args == ["3"]:
         Point("Install the `xutil` package."),
         Terminal("pkm install xutil"),
         Point("The xutil package has several dependencies."),
-        Point("You cannot remove a package if it is a dependency.")
+        Point("You cannot remove a package if it is a dependency."),
+        Break(),
+        Clear(),
+        Point("Try to remove the xcount package."),
+        Terminal("pkm remove xcount"),
+        Point("Oh no, it's locked by xutil. Remove that."),
+        Terminal("pkm remove xutil"),
+        Point("And again."),
+        NETerminal("pkm remove startpkg"),
+        Point("Dependency protection is useful to prevent breaking programs."),
+        Point("To continue the tutorial, run `tutorial 4`."),
+        Break(),
+        Clear(),
         ]      
 elif args == ["2"]:
     points = [
