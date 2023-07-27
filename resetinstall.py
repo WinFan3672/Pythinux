@@ -1,5 +1,5 @@
 #!/usr/bin/python
 import os
-os.chdir("pythinux")
 import pythinux
+os.chdir("pythinux")
 pythinux.CompileOS()
