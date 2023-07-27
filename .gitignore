@@ -12,3 +12,4 @@ pythinux/log/*
 *.pyc
 pickle
 urllib.request
+*.kate-swp
