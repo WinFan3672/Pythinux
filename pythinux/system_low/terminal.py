@@ -1,5 +1,5 @@
 def terminal(user):
-    prompt = main(user,input(f"{user.USERTYPE()}@{user.username} $"))
+    prompt = main(user,input(f"{user.group.name}@{user.username} $"))
     if prompt == LOGOFFEVENT:
         loginScreen()
     elif prompt in ["exit","quit"]:
