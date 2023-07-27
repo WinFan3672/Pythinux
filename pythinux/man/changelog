@@ -13,4 +13,5 @@ div()
     * Added an `info` command.
     * Fixed a bug where the `binary` attribute of a pkgInf always reported to `true`.
     * Cleaned up database update dialog.
+    * Upgrades are now smart! Only new packages will be updated. This change was made as a result of some backend changes.
 div()
