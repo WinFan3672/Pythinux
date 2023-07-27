@@ -169,26 +169,15 @@ elif "info" in args and len(args) == 2:
     pkgs = loadPackageInfs()
     pkg = pkgs[args[0]]
     pkgDeps = pkg["deps"]
+    depended = findDeps(args[0])
+    depended = "; ".join(depended) if depended else "Nothing"
     div()
     print("Name: {}".format(pkg["humanName"]))
     print("Version: {}".format(".".join(pkg["version"])))
     print("Release Date: {}".format(pkg["releaseDate"]))
     print("Dependencies: {}".format("; ".join(pkgDeps) if pkgDeps else "None"))
+    print("Required By: {}".format(depended))
     print("Package Type: {}".format('Binary' if bool(pkg["binary"]) else 'Library'))
-    div()
-elif "dbginfo" in args and len(args) == 2:
-    args.remove("dbginfo")
-    pkgs = loadPackageInfs()
-    pkg = pkgs[args[0]]
-    pkgDeps = pkg["deps"]
-    div()
-    print("Name: {}".format(pkg["humanName"]))
-    print("Version: {}".format(".".join(pkg["version"])))
-    print("Release Date: {}".format(pkg["releaseDate"]))
-    print("Dependencies: {}".format("; ".join(pkgDeps) if pkgDeps else "None"))
-    print("Package Type: {}".format('Binary' if bool(pkg["binary"]) else 'Library'))
-    div()
-    pprint(pkg)
     div()
 elif args == ["db"]:
     div()

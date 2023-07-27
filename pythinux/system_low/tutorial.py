@@ -56,6 +56,8 @@ if args == ["3"]:
         Clear(),
         Point("Install the `xutil` package."),
         Terminal("pkm install xutil"),
+        Point("The xutil package has several dependencies."),
+        Point("You cannot remove a package if it is a dependency.")
         ]      
 elif args == ["2"]:
     points = [
