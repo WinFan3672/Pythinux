@@ -1,8 +1,10 @@
 import pickle
 import urllib.request
-global db, dbs
+
+global db, dbs, VERSION
 db = {}
 dbs = {}
+VERSION = [3,2,0]
 
 def removeProgram(program):
     if os.path.exists(f"app/{program}.py"):
@@ -117,7 +119,7 @@ def give_dbs(online=False,silent=False,fileName="config/db.pkm"):
     return db
 if args == ["version"] or args == ["-v"]:
     div()
-    print("PKM 3.1.0")
+    print("PKM {}".format(".".join([str(x) for x in VERSION])))
     div()
     print("PKM (c) 2023 WinFan3672, some rights reserved.")
     div()
@@ -284,6 +286,11 @@ elif "register" in args and len(args) == 5:
         print("Error: This is a hidden argument.")
         print("It is intended for use by internal programs only.")
         print("Trying to run it can break your system.")
+elif args == ["clear"]:
+    while list_app():
+        for item in list_app():
+            main(currentUser,"pkm remove {}".format(item))
+    print("Successfully removed all programs.")
 elif args == ["db","reset"]:
     os.remove("config/pkm3.cfg")
     update_db()
@@ -296,7 +303,7 @@ else:
     print("Positional arguments:")
     print("    install: installs a package")
     print("    remove: remove a package")
-##    print("    clear: removes all installed packages")
+    print("    clear: removes all installed packages")
     print("    list: lists all installed programs")
     print("    all: lists all installable packages")
     print("    allc: lists all installable packages [compact]")

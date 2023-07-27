@@ -23,7 +23,41 @@ class Terminal(Point):
                 print("ERROR: Invalid command.")
                 print("HINT: You're supposed to type '{}'.".format(self.text))
         main(currentUser,self.text)
-if args == ["2"]:
+if args == ["3"]:
+    points = [
+        Clear(),
+        Div(),
+        Point("Welcome back."),
+        Point("Installing and managing packages is simple."),
+        Point("The pkm command is your friend in that regard."),
+        Break(),
+        Clear(),
+        Point("Try running it."),
+        Terminal("pkm"),
+        Point("As you can see, it can be a bit complex."),
+        Point("However, we will break it down command by command."),
+        Break(),
+        Clear(),
+        Div(),
+        Point("PKM internally caches a database of packages and their URL's."),
+        Point("It sometimes updates it automatically, but it doesn't do so when installing packages."),
+        Break(),
+        Clear(),
+        Point("To manually update it, run `pkm update`."),
+        Terminal("pkm update"),
+        Point("It updated the database so that new packages are registered."),
+        Point("Now to install a package."),
+        Break(),
+        Clear(),
+        Div(),
+        Point("Installing packages is simple."),
+        Point("You run pkm install <package name>."),
+        Break(),
+        Clear(),
+        Point("Install the `xutil` package."),
+        Terminal("pkm install xutil"),
+        ]      
+elif args == ["2"]:
     points = [
         Clear(),
         Div(),
@@ -62,14 +96,6 @@ if args == ["2"]:
         Div(),
         Point("The next part of the tutorial can be loaded by running the following command:"),
         Point("tutorial 3"),
-        Break(),
-        Clear(),
-        ]
-elif args == ["3"]:
-    points = [
-        Clear(),
-        Div(),
-        Point("ERROR: The tutorial is incomplete."),
         Break(),
         Clear(),
         ]
