@@ -5,4 +5,7 @@
     - This document.
 * Kernel.md
     - Information about the kernel.
-    
+* lint.txt
+	- Automated file containing flake8 output.
+* unittest.txt
+	- File containing latest unit test results.

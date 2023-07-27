@@ -20,6 +20,8 @@
 	- Shell script for making automated changes.
 * DIRLISTING.md
 	- This file. Lists all files and what they do.
+* GETTINGSTARTED.md
+	- A basic getting started guide.
 * kate.sh
 	- Script for launching common files in the Kate text editor.
 * LICENSE
@@ -32,3 +34,6 @@
 	- Python file that clears the Pythinux install.
 * ROADMAP.md
 	- Roadmap for the future of Pythinux.
+* unittest.py
+	- Unit test run by the build script.
+	- Requires Linux.
