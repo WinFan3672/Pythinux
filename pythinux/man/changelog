@@ -9,4 +9,8 @@ div()
     * Interactive tutorial.
 * `welcome` command
     * Basic welcome message.
+* pkm 3.2
+    * Added an `info` command.
+    * Fixed a bug where the `binary` attribute of a pkgInf always reported to `true`.
+    * Cleaned up database update dialog.
 div()

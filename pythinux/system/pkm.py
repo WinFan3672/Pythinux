@@ -89,9 +89,7 @@ def give_dbs(online=False,silent=False,fileName="config/db.pkm"):
     if not online:
         silent = True
     if not silent:
-        div()
         print("Updating database...")
-        div()
     dbs = update_db()
     db = {}
     if online:
@@ -114,7 +112,6 @@ def give_dbs(online=False,silent=False,fileName="config/db.pkm"):
         except:
             return give_dbs(True)
     if not silent:
-        div()
         print("Successfully updated database.")
     return db
 if args == ["version"] or args == ["-v"]:
@@ -127,7 +124,6 @@ elif args == ["update"]:
     if os.path.isfile("config/db.pkm"):
         os.remove("config/db.pkm")
     db = give_dbs(True)
-    div()
 elif "install" in args and len(args) >= 2:
     if "-y" in args:
         args.remove("-y")
@@ -162,10 +158,38 @@ elif "install" in args and len(args) >= 2:
                 main(currentUser,"installd -y tmp/pkm.szip3",True)
             else:
                 main(currentUser,"installd  tmp/pkm.szip3",True)
-elif args == ["debug"]:
-    print(give_dbs(online=True))
-    print(getDepList())
-    print(loadPackageInfs())
+elif args == ["info"]:
+    div()
+    print("pkm info [package name]")
+    div()
+    print("Prints information about a package.")
+    div()
+elif "info" in args and len(args) == 2:
+    args.remove("info")
+    pkgs = loadPackageInfs()
+    pkg = pkgs[args[0]]
+    pkgDeps = pkg["deps"]
+    div()
+    print("Name: {}".format(pkg["humanName"]))
+    print("Version: {}".format(".".join(pkg["version"])))
+    print("Release Date: {}".format(pkg["releaseDate"]))
+    print("Dependencies: {}".format("; ".join(pkgDeps) if pkgDeps else "None"))
+    print("Package Type: {}".format('Binary' if bool(pkg["binary"]) else 'Library'))
+    div()
+elif "dbginfo" in args and len(args) == 2:
+    args.remove("dbginfo")
+    pkgs = loadPackageInfs()
+    pkg = pkgs[args[0]]
+    pkgDeps = pkg["deps"]
+    div()
+    print("Name: {}".format(pkg["humanName"]))
+    print("Version: {}".format(".".join(pkg["version"])))
+    print("Release Date: {}".format(pkg["releaseDate"]))
+    print("Dependencies: {}".format("; ".join(pkgDeps) if pkgDeps else "None"))
+    print("Package Type: {}".format('Binary' if bool(pkg["binary"]) else 'Library'))
+    div()
+    pprint(pkg)
+    div()
 elif args == ["db"]:
     div()
     print("pkm db [args]")
@@ -269,18 +293,27 @@ elif args == ["upgrade"]:
         main(currentUser,f"pkm install -y {item}",True)
         i += 1
     print("All packages upgraded.")
-elif "register" in args and len(args) == 5:
+elif "register" in args and len(args) == 7:
     if getTerm() == "installd":
         name = args[1]
         version = args[2]
         version = version.split(".")
         deps = args[3]
-        hasBinary = bool(args[4])
+        hasBinary = bool(int(args[4]))
+        humanName = args[5]
+        releaseDate = args[6]
         if deps == "[]":
             deps = []
         else:
             deps = deps.split("|")
-        c = {"name":name, "version":version,"deps": deps,"binary":hasBinary,}
+        c = {
+            "name":name, 
+            "version":version,
+            "deps": deps,
+            "binary":hasBinary,
+            "humanName":humanName,
+            "releaseDate":releaseDate,
+            }
         registerPkgInf(c)
     else:
         print("Error: This is a hidden argument.")
@@ -305,6 +338,7 @@ else:
     print("    remove: remove a package")
     print("    clear: removes all installed packages")
     print("    list: lists all installed programs")
+    print("    info: prints information about an installed package")
     print("    all: lists all installable packages")
     print("    allc: lists all installable packages [compact]")
     print("    update: updates the database")

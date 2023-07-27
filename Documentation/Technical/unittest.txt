@@ -48,7 +48,7 @@
 ../unittest.py:73:38: E231 missing whitespace after ','
 ../unittest.py:74:42: E231 missing whitespace after ','
 ../unittest.py:75:29: E231 missing whitespace after ','
-../pythinux.py:6:1: F401 'io' imported but unused
+../pythinux.py:14:1: F401 'math' imported but unused
 ../resetinstall.py:4:1: E402 module level import not at top of file
 ../resetinstall.py:5:21: W292 no newline at end of file
 Help on module pythinux:
@@ -440,7 +440,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='9f6b5126d25817d15085ce21464d726cf5038ef159f897ff46a3016b4d75320d0582a43782c6267751fcd0fcd5bf9825', hidden=False)
+     |  User(group, username, password='3f9eaffd4b0c820daf751f2553606a97ce4e76f21877b0f92aa07a28af8676c47c2662e1fdaf33b67e24ad60225799b5', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -455,7 +455,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='9f6b5126d25817d15085ce21464d726cf5038ef159f897ff46a3016b4d75320d0582a43782c6267751fcd0fcd5bf9825', hidden=False)
+     |  __init__(self, group, username, password='3f9eaffd4b0c820daf751f2553606a97ce4e76f21877b0f92aa07a28af8676c47c2662e1fdaf33b67e24ad60225799b5', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -470,7 +470,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='9fa1b77a61f90c9d3ddb7d564537ceab8aa0c1c76abad9c4a134950914f1ae10bf0305e809988316e6df300370de95e1')
+     |  check(self, username, password='b96a5291d4c069af5ba6c08418f2809207e4cac1ae00804a1da11f5ffeda8afe9697bee3936ae02b489a1df1354b9b1d')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -668,7 +668,7 @@ FUNCTIONS
         Returns 20 hyphen/dash symbols as a string.
     
     doCalc(text)
-        A fully safe (but sadly very restricted) version of eval().
+        A fully safe (but very restricted) version of eval().
         Undergoes HEAVY sanitisation before execution.
     
     doNothing(obj)
@@ -907,11 +907,11 @@ Begin unit tests.
         "name": "testgroup"
     },
     "hidden": false,
-    "password": "bd7c7510ed8a2b615dd4e1f1267afa70933209ee0b8af0bf0a4f31c3d168cb254216de9eea33badb4a7c2a2e5356fad5",
+    "password": "993e00719c841960c5a6d39f78c8bd4164ff7e34c00beb642ec749b7908193e871a0ea2c82f1cf791c1442818c149fa6",
     "username": "testuser"
 }
 [10/14] Loadable Programs
-['about', 'alias', 'area', 'autologin', 'basic-terminal', 'break', 'calc', 'cat', 'cls', 'cmd', 'echo', 'exit', 'group', 'help', 'idle', 'initd', 'installd', 'libimporter', 'license', 'lock', 'ls', 'man', 'md', 'pip', 'pkm', 'python', 'reinstall', 'removed', 'script', 'su', 'sudo', 'terminal', 'tty', 'user', 'var', 'version', 'welcome', 'whoami']
+['about', 'alias', 'area', 'autologin', 'basic-terminal', 'break', 'bwm', 'bwmadd', 'calc', 'cat', 'cls', 'cmd', 'echo', 'essential', 'exit', 'flapgui', 'ftpx', 'group', 'help', 'idle', 'initd', 'installd', 'libimporter', 'license', 'linecount', 'lock', 'ls', 'man', 'md', 'passwd', 'pip', 'pkm', 'python', 'reinstall', 'removed', 'script', 'su', 'sudo', 'terminal', 'tty', 'tutorial', 'user', 'var', 'version', 'welcome', 'whoami', 'wowshell', 'xcount', 'xhide', 'xlock', 'xremove', 'xunlock', 'xview', 'zcalc']
 [11/14] Lint Test [unittest]
 [12/14] Lint Test [pythinux]
 [13/14] Lint Test [resetInstall]

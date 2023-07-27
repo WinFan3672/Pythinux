@@ -3,18 +3,18 @@ import os
 import pickle
 import sys
 import hashlib
-import io
 import traceback
 import inspect
 import re
-import copy as cp
-from getpass import getpass
-from platform import uname
+import platform
 import shutil
 import importlib.util
 import threading
 import ast
+import math
+import copy as cp
 from io import StringIO
+from getpass import getpass
 
 global osName, version, cdir, var
 osName = "Pythinux"
@@ -245,7 +245,7 @@ def giveOutput(command, user, split=False, shell="terminal"):
 
 def doCalc(text):
     """
-    A fully safe (but sadly very restricted) version of eval().
+    A fully safe (but very restricted) version of eval().
     Undergoes HEAVY sanitisation before execution.
     """
     allowed_nodes = (ast.BinOp, ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Num)
@@ -1076,7 +1076,7 @@ def cls():
     Clears the terminal screen.
     Works for both Windows and Unix-like systems, so basically everything.
     """
-    res = uname()
+    res = platform.uname()
     os.system("cls" if res[0] == "Windows" else "clear")
 
 

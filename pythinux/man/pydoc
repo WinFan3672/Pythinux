@@ -387,7 +387,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='d29d4d1cb811782130479db7b5b76a9aa3b7913f4609af6b6ac36315ff01cd7ce0c5177e2d15290130a2f9ffa9009b20', hidden=False)
+     |  User(group, username, password='0fda61c5dffea2cc50caf43aeaf21d9b966eb69d740ab72e9f8598b9fd0119487685635d295926ef8dafc0bf54ca755b', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -402,7 +402,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='d29d4d1cb811782130479db7b5b76a9aa3b7913f4609af6b6ac36315ff01cd7ce0c5177e2d15290130a2f9ffa9009b20', hidden=False)
+     |  __init__(self, group, username, password='0fda61c5dffea2cc50caf43aeaf21d9b966eb69d740ab72e9f8598b9fd0119487685635d295926ef8dafc0bf54ca755b', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -417,7 +417,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='0cd5d3a2f3abbab4fe2e9931296b09ddd6cc2cd941725ccccf0f8ab841a57a32a01ef1bdab8a1fdf3645ec9ad25e1bcf')
+     |  check(self, username, password='7fd1fa079c5ab6806f11cc6e3ca664988e4e8319c626a0cbb8e7a31453aedc4d1aff59cd26bcc1a33b730b8ae9f43284')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -615,7 +615,7 @@ FUNCTIONS
         Returns 20 hyphen/dash symbols as a string.
     
     doCalc(text)
-        A fully safe (but sadly very restricted) version of eval().
+        A fully safe (but very restricted) version of eval().
         Undergoes HEAVY sanitisation before execution.
     
     doNothing(obj)

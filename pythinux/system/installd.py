@@ -42,6 +42,8 @@ def installd(path,yesMode=False,depMode=False,upgradeMode=False):
         if os.path.isfile("program.info"):
             with open("program.info") as f:
                 info = f.read().split("|")
+                for item in info:
+                    item.strip()
         else:
             raise InstallerError("No program.info file provided")
         if os.path.isfile("manuals.zip"):
@@ -95,7 +97,7 @@ def installd(path,yesMode=False,depMode=False,upgradeMode=False):
             if upgradeMode:
                 return info
             dd = "|".join(originalDeps)
-            cmd = "pkm register '{}' '{}' '{}' {}".format(name,info[1],dd if originalDeps else [],1 if program else 0)
+            cmd = "pkm register '{}' '{}' '{}' {} '{}' '{}'".format(name,info[1],dd if originalDeps else [],1 if program else 0,info[0],info[2])
             load_program(cmd,currentUser,shell="installd")
             no = 1
             for item in deps:
