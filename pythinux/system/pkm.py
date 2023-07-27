@@ -277,8 +277,13 @@ elif args == ["remove"]:
 elif args == ["upgrade"]:
     i = 1
     z = list_app()
+    pkgInfs = loadPackageInfs()
+    x = []
     for item in z:
-        print("({}/{}) Upgrading '{}'...".format(i,len(z),item))
+        if db[item]["version"] > pkgInfs[item]["version"]:
+            x.append(item)
+    for item in x:
+        print("({}/{}) Upgrading '{}'...".format(i,len(x),item))
         main(currentUser,f"pkm install -y {item}",True)
         i += 1
     print("All packages upgraded.")
