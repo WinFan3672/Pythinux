@@ -22,6 +22,9 @@ var = {}
 
 
 class PythinuxError(Exception):
+    """
+Exception thrown by the kernel when an issue occurs.
+    """
     def __init__(self, text):
         self.text = str(text)
 
@@ -452,7 +455,7 @@ class CurrentProgram:
             )
 
     def __class__(self):
-        return None if self._modifiable else CurrentProgram
+        return type
 
     def lock_class(self):
         self._modifiable = False
