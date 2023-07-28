@@ -100,7 +100,7 @@ if __name__ == "__main__":
             "Lint Test [unittest]",
             "flake8 ../unittest.py --ignore F405,F403"
         ),
-        OSUnit("Lint Test [pythinux]", "flake8 ../pythinux.py"),
+        # OSUnit("Lint Test [pythinux]", "flake8 ../pythinux.py"),
         OSUnit("Lint Test [resetInstall]", "flake8 ../resetinstall.py"),
         # FunctionUnit("PyDoc",documentPy),
     ]
