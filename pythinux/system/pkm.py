@@ -157,7 +157,7 @@ elif "install" in args and len(args) >= 2:
             elif yesMode:
                 main(currentUser,"installd -y tmp/pkm.szip3",True)
             else:
-                main(currentUser,"installd  tmp/pkm.szip3",True)
+                main(currentUser,"installd tmp/pkm.szip3",True)
 elif args == ["info"]:
     div()
     print("pkm info [package name]")

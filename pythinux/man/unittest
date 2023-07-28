@@ -1,3 +1,5 @@
+../pythinux.py:962:17: F601 dictionary key 'currentProgram' repeated with different values
+../pythinux.py:973:17: F601 dictionary key 'currentProgram' repeated with different values
 Begin unit tests.
 [1/13] Copy Module
 [2/13] Print Current Directory
@@ -26,11 +28,11 @@ Begin unit tests.
         "name": "testgroup"
     },
     "hidden": false,
-    "password": "56f2b01bd2d40a64ab780ab95caa70f99b6b232598c56f9b383601812f079ea998d8db7d5286404e03b7788d3270b687",
+    "password": "8fa7ad3de34c5bb4ab039f61725f91d52f1b73a36c4295a124a55387d43942ce775867c7e8ca8c26e6593a90e784ec31",
     "username": "testuser"
 }
 [10/13] Loadable Programs
-['about', 'alias', 'area', 'autologin', 'basic-terminal', 'break', 'calc', 'cat', 'cls', 'cmd', 'echo', 'exit', 'group', 'help', 'idle', 'initd', 'installd', 'libimporter', 'license', 'lock', 'ls', 'man', 'md', 'pip', 'pkm', 'python', 'reinstall', 'removed', 'script', 'su', 'sudo', 'terminal', 'tty', 'tutorial', 'user', 'var', 'version', 'welcome', 'whoami']
+['about', 'alias', 'area', 'atest', 'autologin', 'basic-terminal', 'break', 'bwm', 'bwmadd', 'calc', 'cat', 'cls', 'cmd', 'echo', 'essential', 'exit', 'flapgui', 'flapgui_b3', 'ftpx', 'group', 'help', 'idle', 'initd', 'installd', 'libimporter', 'license', 'linecount', 'lock', 'ls', 'man', 'md', 'passwd', 'pip', 'pkm', 'python', 'reinstall', 'removed', 'script', 'su', 'sudo', 'terminal', 'tron', 'tty', 'tutorial', 'user', 'var', 'version', 'welcome', 'whoami', 'wowshell', 'xcount', 'xhide', 'xlock', 'xremove', 'xunlock', 'xview', 'zcalc']
 [11/13] Lint Test [unittest]
 [12/13] Lint Test [pythinux]
 [13/13] Lint Test [resetInstall]

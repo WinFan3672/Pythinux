@@ -433,6 +433,31 @@ class GroupList(Base):
         return len(self.groups)
 
 
+class CurrentProgram:
+    def __init__(self, name):
+        self._name = name
+        self._modifiable = True
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        if self._modifiable:
+            self._name = value
+        else:
+            raise AttributeError(
+                "Cannot modify name after object construction"
+            )
+
+    def __class__(self):
+        return None if self._modifiable else CurrentProgram
+
+    def lock_class(self):
+        self._modifiable = False
+
+
 class User(Base):
     """
     User class used by Pythinux.
@@ -1406,7 +1431,7 @@ if __name__ == "__main__":
         div()
         print("The Pythinux install directory has been removed.")
         print(
-            "Reinstall Pythinux from source: "
+            "Reinstall Pythinux from source:"
             "https://github.com/WinFan3672/Pythinux"
         )
         br()
