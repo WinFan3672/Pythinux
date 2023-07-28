@@ -1,10 +1,12 @@
 #!/usr/bin/python
+import time
 import os
 from pythinux import *
 import pythinux
 
 os.chdir("pythinux")
-global currentUser, currentGroup, userList
+global currentUser, currentGroup, userList, startTime
+startTime = time.time()
 currentGroup = Group("unit", True, True, True, True)
 p = hashString("unittest")
 currentUser = User(currentGroup, "test", p)
@@ -106,7 +108,8 @@ if __name__ == "__main__":
     ]
     print("Begin unit tests.")
     for unit in units:
-        print("[{}/{}] {}".format(i, len(units), unit.name))
+        print("[{}] [{}/{}] {}".format(
+            round((time.time() - startTime), 5), i, len(units), unit.name))
         unit.execute()
         i += 1
     print("All unit tests complete.")
