@@ -18,6 +18,8 @@ from classes import permissions
 from classes import shell
 from classes import login
 from PyQt5.QtWidgets import *
+import base64
+import uuid
 
 global osName, version, cdir, var
 osName = "Pythinux"
@@ -518,6 +520,7 @@ class User(Base):
         self.username = username
         self.password = hashString(password)
         self.hidden = hidden
+        self.uuid = str(uuid.uuid4())
 
     def check(self, username, password=hashString("")):
         """
@@ -575,6 +578,13 @@ class UserList(Base):
         """
         for item in self.users:
             if name == item.username:
+                return item
+        raise PythinuxError("Invalid user by name.")
+
+    def uuid(self, uuid):
+        for item in self.users:
+            print(item.uuid,uuid)
+            if uuid == item.uuid:
                 return item
         raise PythinuxError("Invalid user by name.")
 
@@ -766,7 +776,7 @@ def parseInput(user, string, shell):
     """
     Function for parsing aliases. Internal only.
     """
-    for item in aliases:
+    for item in loadAliases():
         if string == item:
             string = aliases[item]
     import re
@@ -781,6 +791,14 @@ def parseInput(user, string, shell):
 
 
 def main(user, prompt, sudoMode=False, shell="terminal", doNotExecute=False):
+    if isinstance(user, str):
+        termMode = True
+        for item in loadUserList().list():
+            if item.uuid == user:
+                user = item
+                break
+    else:
+        termMode = False
     """
     Main function. Used to execute commands.
     Args:
@@ -802,6 +820,8 @@ def main(user, prompt, sudoMode=False, shell="terminal", doNotExecute=False):
             i = load_program(prompt, user, sudoMode, shell)
             os.chdir(cdir)
             if not i:
+                print(os.getcwd())
+                print("")
                 print("Bad command or file name:", prompt)
     except Exception as e:
         e = doNothing(e)
@@ -1006,8 +1026,6 @@ def loadProgramBase(
                 "giveVars": copy(giveVars),
                 "createService": copy(createService),
                 "attachDebugger": copy(attachDebugger),
-                "Desktop": copy(desktopenv),
-                "Application": copy(desktopenv.Application),
             }
             if directory in [
                 system_directory,
@@ -1089,10 +1107,10 @@ def load_program(
             __name__,
             isolatedMode,
         )
-        if baseMode:
-            return module, module_spec
-    except Exception:
-        return
+    except Exception as e:
+        return e
+    if baseMode:
+        return module, module_spec
     if module:
         if debugMode:
             print("### Arguments:", module.args)
@@ -1256,7 +1274,7 @@ def init(user, x):
             + ' a God account, type "logoff".'
         )
         div()
-    shell.startShell()
+    shell.startShell(user)
 
 
 def saveUserList(userList):
@@ -1462,39 +1480,42 @@ def setupWizardBase(username, password, autoLogin):
     if autoLogin:
         saveAL(username)
         cls()
-        
+
 
 def setupWizard():
     app = QApplication(sys.argv)
     window = QWidget()
-    window.setWindowTitle('Setup Wizard')
-    
-    username_label = QLabel('Set a Username:')
+    window.setWindowTitle("Setup Wizard")
+
+    username_label = QLabel("Set a Username:")
     username_input = QLineEdit()
-    
-    password_label = QLabel('Set a Password:')
+
+    password_label = QLabel("Set a Password:")
     password_input = QLineEdit()
-    password_input.setEchoMode(QLineEdit.Password)  # To hide the password input
-    
-    login_button = QPushButton('Finish Setup')
-    login_button.clicked.connect(app.quit)  # Close the application when login button is clicked
-    
+    password_input.setEchoMode(
+        QLineEdit.Password
+    )  # To hide the password input
+
+    login_button = QPushButton("Finish Setup")
+    login_button.clicked.connect(
+        app.quit
+    )  # Close the application when login button is clicked
+
     checkbox = QCheckBox("Enable Automatic Login")
-    
+
     layout = QGridLayout()
-    layout.addWidget(username_label,0,0)
-    layout.addWidget(username_input,0,1)
-    layout.addWidget(password_label,1,0)
-    layout.addWidget(password_input,1,1)
-    layout.addWidget(checkbox,2,1)
-    layout.addWidget(login_button,3,1)
-    
+    layout.addWidget(username_label, 0, 0)
+    layout.addWidget(username_input, 0, 1)
+    layout.addWidget(password_label, 1, 0)
+    layout.addWidget(password_input, 1, 1)
+    layout.addWidget(checkbox, 2, 1)
+    layout.addWidget(login_button, 3, 1)
+
     window.setLayout(layout)
     window.show()
-    
+
     # Start the event loop and wait for the application to finish (when app.quit() is called)
     app.exec_()
-
     # Return the username and password provided by the user
     username = username_input.text()
     password = password_input.text()
@@ -1504,28 +1525,21 @@ def setupWizard():
     else:
         setupWizardBase(username, password, autologin)
 
+
+try:
+    os.chdir("pythinux")
+    fixDirectories()
+except Exception:
+        traceback.format_exc()
+cdir = os.getcwd()
+global userList, groupList
+if loadUserList().users == []:
+    setupWizard()
+userList = loadUserList()
+groupList = loadGroupList()
+global pdir
+global aliases
+aliases = loadAliases()
+pdir = dir()
 if __name__ == "__main__":
-    try:
-        os.chdir("pythinux")
-        fixDirectories()
-    except Exception:
-        div()
-        print("CRITICAL ERROR!")
-        div()
-        print("The Pythinux install directory has been removed.")
-        print(
-            "Reinstall Pythinux from source:"
-            "https://github.com/WinFan3672/Pythinux"
-        )
-        br()
-    cdir = os.getcwd()
-    global userList, groupList
-    if loadUserList().users == []:
-        setupWizard()
-    userList = loadUserList()
-    groupList = loadGroupList()
-    global pdir
-    global aliases
-    aliases = loadAliases()
-    pdir = dir()
     loginScreen(loadAL())

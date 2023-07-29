@@ -1564,7 +1564,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='9f7c8eea73aa074ae0c08a2c186e7c3ec85d82a898412eaf1ac504ae6c2dd5632089da6ec7245c214f719e011202047d', hidden=False)
+     |  User(group, username, password='ea7b2073f6f3eee99a0f9b49b7c49f94f8f9d191beee0dec63387ac4e3e9e47ca834ae6db3c9d1c525e29c73ace51f69', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -1579,7 +1579,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='9f7c8eea73aa074ae0c08a2c186e7c3ec85d82a898412eaf1ac504ae6c2dd5632089da6ec7245c214f719e011202047d', hidden=False)
+     |  __init__(self, group, username, password='ea7b2073f6f3eee99a0f9b49b7c49f94f8f9d191beee0dec63387ac4e3e9e47ca834ae6db3c9d1c525e29c73ace51f69', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -1594,7 +1594,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='0ecdc56e8c20c443cc256aaab2f43eeead48e4f31d124ffd8371272d061aefde0dfd735288e32eebd5bbbff2c2cc6a21')
+     |  check(self, username, password='2f5f5dfa6a96ad2f10dece8c5b6e65e907ed36fa38ff192b7f5d8fdf9edcbec922694265151db66ab2e24cf7e3e6a837')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -1659,6 +1659,8 @@ CLASSES
      |  remove(self, user)
      |  
      |  removeByName(self, name)
+     |  
+     |  uuid(self, uuid)
      |  
      |  ----------------------------------------------------------------------
      |  Data descriptors defined here:
@@ -1873,15 +1875,9 @@ FUNCTIONS
             (str) text: the text that gets logged.
             (str) log: the name of the log file. Default is "base_log".
     
-    loginScreen(username)
+    loginScreen(username=None)
     
     main(user, prompt, sudoMode=False, shell='terminal', doNotExecute=False)
-        Main function. Used to execute commands.
-        Args:
-            (User) user: the User object.
-            (str) prompt: the command that gets exexuted.
-            (bool) sudoMode: Passed to load_program().
-            (str) shell: the name of the terminal that executes the command.
     
     makeDir()
         Don't remember what this one does. Internal function. Ignore.
@@ -1976,6 +1972,12 @@ FUNCTIONS
         Unused.
     
     setupWizard()
+    
+    setupWizardBase(username, password, autoLogin)
+        Setup wizard.
+        * Sets up a user account, complete with username,
+          password, init script, etc.
+        * Sets up autologin, depending on user choice.
     
     sha256(string, salt=None)
         Performs a SHA256 og a string.

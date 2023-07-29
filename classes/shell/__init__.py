@@ -1,60 +1,88 @@
 from PyQt5.QtWidgets import *
+import os
+x = os.getcwd()
 import pythinux
+os.chdir(x)
 import sys
-class Application:
-    def __init__(self, title, width, height):
-        self.width = width
-        self.height = height
-        self.title = title
+import subprocess
+import pickle
+from PyQt5.QtCore import Qt
+import base64
 
-class BaseWindow(QMainWindow):
-    def __init__(self):
+class TerminalApp(QMainWindow):
+    def __init__(self, currentUser):
         super().__init__()
+        self.init_ui()
+        self.currentUser = currentUser
 
-    def set_content_widget(self, widget):
+    def init_ui(self):
+        self.setWindowTitle("Terminal Emulator")
+        self.setGeometry(100, 100, 800, 600)
+
         central_widget = QWidget(self)
         layout = QVBoxLayout(central_widget)
-        layout.addWidget(widget)
+
+        self.output_area = QTextEdit(self)
+        self.output_area.setReadOnly(True)
+        layout.addWidget(self.output_area)
+
+        self.input_field = QLineEdit(self)
+        self.input_field.returnPressed.connect(self.process_command)
+        layout.addWidget(self.input_field)
+
         self.setCentralWidget(central_widget)
 
-    def mousePressEvent(self, event):
-        self.offset = event.pos()
+    def process_command(self):
+        user_input = self.input_field.text()
+        self.input_field.clear()
+        self.output_area.insertPlainText(f"{self.currentUser.group.name}@{self.currentUser.username}$ {user_input}\n")
+        if user_input.lower() in ['clear', 'cls']:
+            # Clear the terminal output
+            self.output_area.clear()
+        else:
+            cmd = ["python", "-c", f"import os; os.chdir('..'); import pythinux; x = pythinux.main('{self.currentUser.uuid}','{user_input}');print(x if x else '')"]
+            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if result.returncode == 0:
+                self.output_area.insertPlainText(result.stdout.strip()+"\n")
+            else:
+                self.output_area.insertPlainText(result.stderr.strip()+"\n")
+class Application:
+    def __init__(self, title, width, height):
+        self.title = title
+        self.width = width
+        self.height = height
+def startShell(currentUser):
+    app = QApplication(sys.argv)
+    window = QMainWindow()
+    window.resize(800, 600)
+    window.setWindowTitle('Pythinux {} (Unstable Build)'.format(".".join([str(x) for x in pythinux.version])))        
 
-    def mouseMoveEvent(self, event):
-        if event.buttons() == 1:  # Left mouse button pressed
-            self.move(event.globalPos() - self.offset)
+    terminal = TerminalApp(currentUser)
+    
+    fileMenu = QMenu("File")
+    menubar = window.menuBar()  # Get the menu bar from the QMainWindow
+    menubar.addMenu(fileMenu)
 
-class WindowManager:
-    def __init__(self):
-        self.app = QApplication(sys.argv)
-        self.app.setStyle('Fusion')
-        self.windows = []
+    msg = [
+        "Welcome to Pythinux.",
+        "A terminal emulator has been loaded and you can use it to run programs.",
+        "Note that the text does not appear until the command ends.",
+        "This is a known issue, and we will fix it before release.",
+        ]
+    msg = "\n".join(msg)
+    label = QLabel(msg)
+    label.setAlignment(Qt.AlignCenter)
+    closeButton = QPushButton("Exit")
+    closeButton.clicked.connect(sys.exit)
 
-    def create_base_window(self, title, width, height):
-        application = Application(title, width, height)
-        base_window = BaseWindow()
-        base_window.setWindowTitle(application.title)
-        base_window.resize(application.width, application.height)
-        self.windows.append(base_window)
-        return base_window
+    central_widget = QWidget()
+    window.setCentralWidget(central_widget)
 
-    def add_window(self, base_window, application):
-        sub_window = QMainWindow(base_window)
-        sub_window.setWindowTitle(application.title)
-        sub_window.resize(application.width, application.height)
-        self.windows.append(sub_window)
-        sub_window.show()
+    layout = QGridLayout(central_widget)
+    layout.addWidget(label, 0, 0)
+    layout.addWidget(closeButton, 1, 0)
 
-    def on_base_window_closed(self):
-        self.app.quit()
+    window.show()
+    terminal.show()
 
-    def start(self):
-        for base_window in self.windows:
-            base_window.destroyed.connect(self.on_base_window_closed)
-            base_window.show()
-
-        sys.exit(self.app.exec_())
-def startShell():
-    manager = WindowManager()
-    base = manager.create_base_window("Pythinux {} (Unstable Pre-Release)".format(".".join([str(x) for x in pythinux.version])), 1600, 900)
-    manager.start()
+    sys.exit(app.exec_())
