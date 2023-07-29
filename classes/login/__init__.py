@@ -1,6 +1,6 @@
 import pythinux
 from PyQt5.QtWidgets import *
-from classes import shell, desktopenv
+from classes import shell
 import sys
 def loginScreen():
     app = QApplication(sys.argv)
@@ -34,3 +34,29 @@ def loginScreen():
     username = username_input.text()
     password = password_input.text()
     return username, password
+def unlockScreen():
+    app = QApplication(sys.argv)
+    window = QWidget()
+    window.setWindowTitle('Unlock Your PC')
+    
+    password_label = QLabel('Password:')
+    password_input = QLineEdit()
+    password_input.setEchoMode(QLineEdit.Password)  # To hide the password input
+    
+    login_button = QPushButton('Login')
+    login_button.clicked.connect(app.quit)  # Close the application when login button is clicked
+    
+    layout = QGridLayout()
+    layout.addWidget(password_label,0,0)
+    layout.addWidget(password_input,0,1)
+    layout.addWidget(login_button,1,1)
+    
+    window.setLayout(layout)
+    window.show()
+    
+    # Start the event loop and wait for the application to finish (when app.quit() is called)
+    app.exec_()
+
+    # Return the username and password provided by the user
+    password = password_input.text()
+    return password

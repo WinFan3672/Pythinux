@@ -15,7 +15,6 @@ import copy as cp
 from io import StringIO
 from getpass import getpass
 from classes import permissions
-from classes import desktopenv
 from classes import shell
 from classes import login
 from PyQt5.QtWidgets import *
@@ -1141,8 +1140,10 @@ def cls():
     Clears the terminal screen.
     Works for both Windows and Unix-like systems, so basically everything.
     """
+    block = False
     res = platform.uname()
-    os.system("cls" if res[0] == "Windows" else "clear")
+    if not block:
+        os.system("cls" if res[0] == "Windows" else "clear")
 
 
 def run_script(f, user):
@@ -1256,7 +1257,6 @@ def init(user, x):
         )
         div()
     shell.startShell()
-    sys.exit()
 
 
 def saveUserList(userList):
@@ -1283,7 +1283,7 @@ def loadUserList():
         return UserList()
 
 
-def loginScreen():
+def loginScreen(username):
     x = True
     """
     Login screen.
@@ -1294,14 +1294,17 @@ def loginScreen():
         Passing both the username and password bypasses the input.
     Once you enter your details, init() is called.
     """
-    username, password = login.loginScreen()
+    if username:
+        password = login.unlockScreen()
+    else:
+        username, password = login.loginScreen()
     for item in userList.list():
         if item.check(username, password):
             init(item, x)
             return
     if x:
         print("ERROR: Incorrect username/password sequence.")
-        loginScreen(username, password)
+        loginScreen(username)
 
 
 def makeDir():
@@ -1512,4 +1515,4 @@ if __name__ == "__main__":
     global aliases
     aliases = loadAliases()
     pdir = dir()
-    loginScreen()
+    loginScreen(loadAL())
