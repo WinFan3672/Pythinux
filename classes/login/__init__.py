@@ -43,7 +43,7 @@ def unlockScreen():
     password_input = QLineEdit()
     password_input.setEchoMode(QLineEdit.Password)  # To hide the password input
     
-    login_button = QPushButton('Login')
+    login_button = QPushButton('Unlock PC')
     login_button.clicked.connect(app.quit)  # Close the application when login button is clicked
     
     layout = QGridLayout()

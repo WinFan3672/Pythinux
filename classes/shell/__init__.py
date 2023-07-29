@@ -27,6 +27,7 @@ class BaseWindow(QMainWindow):
 class WindowManager:
     def __init__(self):
         self.app = QApplication(sys.argv)
+        self.app.setStyle('Fusion')
         self.windows = []
 
     def create_base_window(self, title, width, height):
@@ -56,11 +57,4 @@ class WindowManager:
 def startShell():
     manager = WindowManager()
     base = manager.create_base_window("Pythinux {} (Unstable Pre-Release)".format(".".join([str(x) for x in pythinux.version])), 1600, 900)
-    layout = QGridLayout()
-    msg = [
-        "Welcome to Pythinux."
-    ]
-    msg = "\n".join(msg)
-    label = QLabel(msg)
-    layout.addWidget(label,0,0)
     manager.start()

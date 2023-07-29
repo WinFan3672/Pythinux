@@ -24,6 +24,7 @@ osName = "Pythinux"
 version = [3, 0, 0]
 var = {}
 
+
 class MessageBox(QDialog):
     def __init__(self, title, message):
         super().__init__()
@@ -48,8 +49,7 @@ class MessageBox(QDialog):
 
         self.setLayout(layout)
 
-        
-        
+
 class PythinuxError(Exception):
     """
     Exception thrown by the kernel when an issue occurs.
@@ -1283,7 +1283,7 @@ def loadUserList():
         return UserList()
 
 
-def loginScreen(username):
+def loginScreen(username=None):
     x = True
     """
     Login screen.
@@ -1304,7 +1304,7 @@ def loginScreen(username):
             return
     if x:
         print("ERROR: Incorrect username/password sequence.")
-        loginScreen(username)
+        loginScreen()
 
 
 def makeDir():
@@ -1446,50 +1446,63 @@ def pprint(obj):
     print(pprint_dict(obj_to_dict(obj)))
 
 
-def setupWizard():
+def setupWizardBase(username, password, autoLogin):
     """
     Setup wizard.
     * Sets up a user account, complete with username,
       password, init script, etc.
     * Sets up autologin, depending on user choice.
     """
-    if os.path.isfile("../LICENSE"):
-        cls()
-        with open("../LICENSE") as f:
-            div()
-            print("Legal Licensing Information")
-            div()
-            print(f.read())
-            br()
-    cls()
-    print(f"{div2()}\nSetup Wizard\n{div2()}")
-    username = input("Enter Your Username $")
-    password = ""
-    while password == "":
-        password = getpass("Set A Password $")
-        if password == "":
-            print("Error: Cannot set blank password.")
-    if password == "":
-        password = None
     groupList = GroupList()
     g = groupList.byName("root")
     user = User(g, username, password)
     userList = UserList()
     userList = createUser(userList, user)
     saveUserList(userList)
-    cls()
-    div()
-    print(f'Created user "{username}".')
-    br()
-    cls()
-    if input("Set up autologin? [y/n] $").lower() == "y":
+    if autoLogin:
         saveAL(username)
         cls()
-    div()
-    print("Thank you for setting up Pythinux.")
-    print("For an introduction to Pythinux, run the `welcome` command.")
-    br()
+        
 
+def setupWizard():
+    app = QApplication(sys.argv)
+    window = QWidget()
+    window.setWindowTitle('Setup Wizard')
+    
+    username_label = QLabel('Set a Username:')
+    username_input = QLineEdit()
+    
+    password_label = QLabel('Set a Password:')
+    password_input = QLineEdit()
+    password_input.setEchoMode(QLineEdit.Password)  # To hide the password input
+    
+    login_button = QPushButton('Finish Setup')
+    login_button.clicked.connect(app.quit)  # Close the application when login button is clicked
+    
+    checkbox = QCheckBox("Enable Automatic Login")
+    
+    layout = QGridLayout()
+    layout.addWidget(username_label,0,0)
+    layout.addWidget(username_input,0,1)
+    layout.addWidget(password_label,1,0)
+    layout.addWidget(password_input,1,1)
+    layout.addWidget(checkbox,2,1)
+    layout.addWidget(login_button,3,1)
+    
+    window.setLayout(layout)
+    window.show()
+    
+    # Start the event loop and wait for the application to finish (when app.quit() is called)
+    app.exec_()
+
+    # Return the username and password provided by the user
+    username = username_input.text()
+    password = password_input.text()
+    autologin = checkbox.isChecked()
+    if username in [""] or password in [""]:
+        setupWizard()
+    else:
+        setupWizardBase(username, password, autologin)
 
 if __name__ == "__main__":
     try:
