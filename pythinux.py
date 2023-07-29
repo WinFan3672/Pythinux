@@ -14,6 +14,7 @@ import ast
 import copy as cp
 from io import StringIO
 from getpass import getpass
+from classes import permissions
 
 global osName, version, cdir, var
 osName = "Pythinux"

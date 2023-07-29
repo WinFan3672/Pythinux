@@ -1,6 +1,9 @@
 # Directory Listing
+* classes/
+	- permissions
+		- A permissions class that is used to define permissions for applications.
 * Community/
-	* The community pkm repository.
+	- The community pkm repository.
 * Documentation/
 	- Commands/
 		+ Help for commands.
