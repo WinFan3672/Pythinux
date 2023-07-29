@@ -1,8 +1,7 @@
 #!/usr/bin/python
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPixmap
-
 class QtError(Exception):
     def __init__(self, message):
         self.msg = message
@@ -43,10 +42,15 @@ class WindowManager:
         base_window = BaseWindow()
         base_window.setWindowTitle(application.title)
         base_window.resize(application.width, application.height)
-        # background_image = QPixmap("img/wallpaper.bmp")
-        # background_label.setPixmap(background_image)
-        # background_label.setGeometry(0, 0, self.width(), self.height())
-        # background_label.lower()
+        msg = [
+            "Welcome to Pythinux.",
+            "This is the base window.",
+            "It controls the entire OS.",
+            "Think of it as like a desktop.",
+            ]
+        layout = QGridLayout()
+        label = QLabel("\n".join(msg))
+        layout.addWidget(label, 0, 0)
         self.windows.append(base_window)
         return base_window
 

@@ -460,7 +460,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='5051853da348ee2c2c17387f985f718b161157ab9d0129ef6129adb0621046e75804a890ec38b397eab504ec08723c01', hidden=False)
+     |  User(group, username, password='75571180d5e2156d3f34a12d23baafbef3dc748347b3c68ec283a9dedaac5777937e7f3bcdbfa06ca0918c14de4d4154', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -475,7 +475,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='5051853da348ee2c2c17387f985f718b161157ab9d0129ef6129adb0621046e75804a890ec38b397eab504ec08723c01', hidden=False)
+     |  __init__(self, group, username, password='75571180d5e2156d3f34a12d23baafbef3dc748347b3c68ec283a9dedaac5777937e7f3bcdbfa06ca0918c14de4d4154', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -490,7 +490,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='68957d75acd05f0dac2b0a992988aeaa630006d65a9fe1a5b71e5e689def780563d3043befd327d8100e4120afbda186')
+     |  check(self, username, password='c40216d6feac8a5ab82f0777ff5342b21bac61d4fa1df72103d7f71c70ffe105ebbfe2e75689f7d4c36b1b51f415c06a')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -817,6 +817,33 @@ FUNCTIONS
     pprint_dict(dic)
         Takes a dictionary and returns it as a string with indentation
     
+    qDrawBorderPixmap(...)
+        qDrawBorderPixmap(painter: QPainter, target: QRect, margins: QMargins, pixmap: QPixmap)
+    
+    qDrawPlainRect(...)
+        qDrawPlainRect(p: QPainter, x: int, y: int, w: int, h: int, a5: Union[QColor, Qt.GlobalColor], lineWidth: int = 1, fill: typing.Optional[Union[QBrush, QColor, Qt.GlobalColor, QGradient]] = None)
+        qDrawPlainRect(p: QPainter, r: QRect, a2: Union[QColor, Qt.GlobalColor, QGradient], lineWidth: int = 1, fill: typing.Optional[Union[QBrush, QColor, Qt.GlobalColor, QGradient]] = None)
+    
+    qDrawShadeLine(...)
+        qDrawShadeLine(p: QPainter, x1: int, y1: int, x2: int, y2: int, pal: QPalette, sunken: bool = True, lineWidth: int = 1, midLineWidth: int = 0)
+        qDrawShadeLine(p: QPainter, p1: QPoint, p2: QPoint, pal: QPalette, sunken: bool = True, lineWidth: int = 1, midLineWidth: int = 0)
+    
+    qDrawShadePanel(...)
+        qDrawShadePanel(p: QPainter, x: int, y: int, w: int, h: int, pal: QPalette, sunken: bool = False, lineWidth: int = 1, fill: typing.Optional[Union[QBrush, QColor, Qt.GlobalColor, QGradient]] = None)
+        qDrawShadePanel(p: QPainter, r: QRect, pal: QPalette, sunken: bool = False, lineWidth: int = 1, fill: typing.Optional[Union[QBrush, QColor, Qt.GlobalColor, QGradient]] = None)
+    
+    qDrawShadeRect(...)
+        qDrawShadeRect(p: QPainter, x: int, y: int, w: int, h: int, pal: QPalette, sunken: bool = False, lineWidth: int = 1, midLineWidth: int = 0, fill: typing.Optional[Union[QBrush, QColor, Qt.GlobalColor, QGradient]] = None)
+        qDrawShadeRect(p: QPainter, r: QRect, pal: QPalette, sunken: bool = False, lineWidth: int = 1, midLineWidth: int = 0, fill: typing.Optional[Union[QBrush, QColor, Qt.GlobalColor, QGradient]] = None)
+    
+    qDrawWinButton(...)
+        qDrawWinButton(p: QPainter, x: int, y: int, w: int, h: int, pal: QPalette, sunken: bool = False, fill: typing.Optional[Union[QBrush, QColor, Qt.GlobalColor, QGradient]] = None)
+        qDrawWinButton(p: QPainter, r: QRect, pal: QPalette, sunken: bool = False, fill: typing.Optional[Union[QBrush, QColor, Qt.GlobalColor, QGradient]] = None)
+    
+    qDrawWinPanel(...)
+        qDrawWinPanel(p: QPainter, x: int, y: int, w: int, h: int, pal: QPalette, sunken: bool = False, fill: typing.Optional[Union[QBrush, QColor, Qt.GlobalColor, QGradient]] = None)
+        qDrawWinPanel(p: QPainter, r: QRect, pal: QPalette, sunken: bool = False, fill: typing.Optional[Union[QBrush, QColor, Qt.GlobalColor, QGradient]] = None)
+    
     removeUser(userlist, user)
         Removes a user from the userlist.
         Args:
@@ -824,6 +851,8 @@ FUNCTIONS
             user: a User instance.
         Returns:
             userlist: a userlist that can be passed to saveUserList().
+    
+    restart_script()
     
     run_script(f, user)
         Runs a script.
@@ -890,6 +919,8 @@ FUNCTIONS
         Returns a boolean depending on whether or not the two match.
 
 DATA
+    QWIDGETSIZE_MAX = 16777215
     osName = 'Pythinux'
+    qApp = <PyQt5.QtWidgets.QApplication object>
     var = {}
     version = [3, 0, 0]

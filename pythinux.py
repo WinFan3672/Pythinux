@@ -16,13 +16,41 @@ from io import StringIO
 from getpass import getpass
 from classes import permissions
 from classes import desktopenv
+from classes import shell
+from classes import login
+from PyQt5.QtWidgets import *
 
 global osName, version, cdir, var
 osName = "Pythinux"
 version = [3, 0, 0]
 var = {}
 
+class MessageBox(QDialog):
+    def __init__(self, title, message):
+        super().__init__()
+        self.title = title
+        self.message = message
+        self.initUI()
 
+    def initUI(self):
+        self.setWindowTitle(self.title)
+        self.setGeometry(100, 100, 300, 150)
+
+        title_label = QLabel(self.title)
+        message_label = QLabel(self.message)
+
+        ok_button = QPushButton("OK")
+        ok_button.clicked.connect(self.accept)
+
+        layout = QVBoxLayout()
+        layout.addWidget(title_label)
+        layout.addWidget(message_label)
+        layout.addWidget(ok_button)
+
+        self.setLayout(layout)
+
+        
+        
 class PythinuxError(Exception):
     """
     Exception thrown by the kernel when an issue occurs.
@@ -33,6 +61,11 @@ class PythinuxError(Exception):
 
     def __str__(self):
         return self.text
+
+
+def restart_script():
+    python = sys.executable
+    subprocess.call([python] + sys.argv)
 
 
 def loadGroupList():
@@ -1207,13 +1240,6 @@ class Fuse:
 
 def init(user, x):
     cls()
-    div()
-    print("WARNING")
-    div()
-    print("This build of pythinux is unstable.")
-    print("You downloaded a copy from the `3.0` branch.")
-    print("For stable builds and releases, see the `main` branch.")
-    br()
     """
     Init function. Runs the  'initd --init' command.
     """
@@ -1229,7 +1255,7 @@ def init(user, x):
             + ' a God account, type "logoff".'
         )
         div()
-    main(user, "initd --init")
+    shell.startShell()
     sys.exit()
 
 
@@ -1257,7 +1283,8 @@ def loadUserList():
         return UserList()
 
 
-def loginScreen(username=None, password=None):
+def loginScreen():
+    x = True
     """
     Login screen.
     Args:
@@ -1267,26 +1294,13 @@ def loginScreen(username=None, password=None):
         Passing both the username and password bypasses the input.
     Once you enter your details, init() is called.
     """
-    cls()
-    if not password:
-        div()
-        print("Unlock System" if username else "Pythinux Login Screen")
-        div()
-        x = True
-    else:
-        x = False
-    if not username:
-        username = input("Username $")
-    if not password:
-        password = getpass("Password $")
+    username, password = login.loginScreen()
     for item in userList.list():
         if item.check(username, password):
             init(item, x)
             return
     if x:
-        div()
-        print("Incorrect username/password sequence.")
-        br()
+        print("ERROR: Incorrect username/password sequence.")
         loginScreen(username, password)
 
 
@@ -1498,4 +1512,4 @@ if __name__ == "__main__":
     global aliases
     aliases = loadAliases()
     pdir = dir()
-    loginScreen(loadAL())
+    loginScreen()

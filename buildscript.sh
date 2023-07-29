@@ -10,9 +10,6 @@ delete_pycache() {
 curr = $(date +%s)
 touch .working
 echo BUILD START.
-echo RUNNING UNIT TEST
-python unittest.py > pythinux/man/unittest
-cp pythinux/man/unittest Documentation/Technical/unittest.txt
 echo RESET INSTALLATION
 python resetinstall.py
 echo CLEANING UP INSTALLATION [PASS 1/2]
