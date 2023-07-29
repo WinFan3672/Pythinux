@@ -55,34 +55,41 @@ def startShell(currentUser):
     app = QApplication(sys.argv)
     window = QMainWindow()
     window.resize(800, 600)
-    window.setWindowTitle('Pythinux {} (Unstable Build)'.format(".".join([str(x) for x in pythinux.version])))        
+    window.setWindowTitle('Pythinux {} (Unstable Build)'.format(".".join([str(x) for x in pythinux.version])))
 
-    terminal = TerminalApp(currentUser)
-    
+    # Initialize the menu bar
+    menubar = window.menuBar()
     fileMenu = QMenu("File")
-    menubar = window.menuBar()  # Get the menu bar from the QMainWindow
     menubar.addMenu(fileMenu)
 
     msg = [
         "Welcome to Pythinux.",
-        "A terminal emulator has been loaded and you can use it to run programs.",
+        "A terminal emulator is available, and you can use it to run programs.",
         "Note that the text does not appear until the command ends.",
         "This is a known issue, and we will fix it before release.",
-        ]
+    ]
     msg = "\n".join(msg)
     label = QLabel(msg)
     label.setAlignment(Qt.AlignCenter)
+    terminalButton = QPushButton("Launch Terminal Emulator")
     closeButton = QPushButton("Exit")
     closeButton.clicked.connect(sys.exit)
+    terminalButton.clicked.connect(lambda: launchTerminal(app, currentUser))  # Simplified lambda function
 
-    central_widget = QWidget()
-    window.setCentralWidget(central_widget)
+    central_widget = QWidget(window)  # Set the main window as the parent for central widget
 
     layout = QGridLayout(central_widget)
     layout.addWidget(label, 0, 0)
     layout.addWidget(closeButton, 1, 0)
 
-    window.show()
-    terminal.show()
+    window.setCentralWidget(central_widget)
 
+    terminal = TerminalApp(currentUser)
+    terminal.show()
+    
+    window.show()
     sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    # Perform necessary imports here (e.g., pythinux)
+    startShell(currentUser)  # Call the startShell function
