@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel
+from PyQt5.QtGui import QPixmap
 
 class QtError(Exception):
     def __init__(self, message):
@@ -42,6 +43,10 @@ class WindowManager:
         base_window = BaseWindow()
         base_window.setWindowTitle(application.title)
         base_window.resize(application.width, application.height)
+        # background_image = QPixmap("img/wallpaper.bmp")
+        # background_label.setPixmap(background_image)
+        # background_label.setGeometry(0, 0, self.width(), self.height())
+        # background_label.lower()
         self.windows.append(base_window)
         return base_window
 
@@ -50,9 +55,14 @@ class WindowManager:
         sub_window.setWindowTitle(application.title)
         sub_window.resize(application.width, application.height)
         self.windows.append(sub_window)
-        return sub_window
+        sub_window.show()
 
-    def run(self):
-        for window in self.windows:
-            window.show()
+    def on_base_window_closed(self):
+        self.app.quit()
+
+    def start(self):
+        for base_window in self.windows:
+            base_window.destroyed.connect(self.on_base_window_closed)
+            base_window.show()
+
         sys.exit(self.app.exec_())

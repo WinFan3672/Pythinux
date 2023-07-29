@@ -1,10 +1,10 @@
 #!/usr/bin/python
 import pythinux
-class Permission(pythinux.Fuse):
+class Permission:
     pass
-class Storage(pythinux.Base):
+class Storage:
     def __init__(self):
         self.read = Permission()
-class permissions(pythinux.Base):
+class permissions:
     def __init__(self):
         self.storage = Storage()

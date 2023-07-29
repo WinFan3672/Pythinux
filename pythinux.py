@@ -15,6 +15,7 @@ import copy as cp
 from io import StringIO
 from getpass import getpass
 from classes import permissions
+from classes import desktopenv
 
 global osName, version, cdir, var
 osName = "Pythinux"
@@ -973,6 +974,8 @@ def loadProgramBase(
                 "giveVars": copy(giveVars),
                 "createService": copy(createService),
                 "attachDebugger": copy(attachDebugger),
+                "Desktop": copy(desktopenv),
+                "Application": copy(desktopenv.Application),
             }
             if directory in [
                 system_directory,
@@ -1164,13 +1167,15 @@ def list_loadable_programs(user, sudoMode=False):
 
     return sorted(loadable_programs)
 
+
 class Fuse:
     """
-Software equivalent of a fuse.
-Calling the blow() method will set the blown attribute from false to true.
-Once this is done, the class is designed to make it impossible to change
-back to False.
+    Software equivalent of a fuse.
+    Calling the blow() method will set the blown attribute from false to true.
+    Once this is done, the class is designed to make it impossible to change
+    back to False.
     """
+
     __instance = None
 
     def __new__(cls):
@@ -1198,6 +1203,8 @@ back to False.
 
     def __str__(self):
         return str(self.blown)
+
+
 def init(user, x):
     cls()
     div()
@@ -1344,7 +1351,7 @@ def createUser(userlist, user):
     except FileExistsError:
         pass
     with open(f"home/{user.username}/init.d", "w") as f:
-        f.write("terminal")
+        f.write("desktop")
     userlist.add(user)
     return userlist
 

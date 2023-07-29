@@ -15,6 +15,7 @@ CLASSES
             User
             UserList
         CurrentProgram
+        Fuse
         LOGOFFEVENT
         rangedInt
     
@@ -149,6 +150,47 @@ CLASSES
      |  __traceback__
      |  
      |  args
+    
+    class Fuse(builtins.object)
+     |  Software equivalent of a fuse.
+     |  Calling the blow() method will set the blown attribute from false to true.
+     |  Once this is done, the class is designed to make it impossible to change
+     |  back to False.
+     |  
+     |  Methods defined here:
+     |  
+     |  __init__(self)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  __str__(self)
+     |      Return str(self).
+     |  
+     |  blow(self)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Class methods defined here:
+     |  
+     |  is_blown(fuse) from builtins.type
+     |  
+     |  ----------------------------------------------------------------------
+     |  Static methods defined here:
+     |  
+     |  __new__(cls)
+     |      Create and return a new object.  See help(type) for accurate signature.
+     |  
+     |  ----------------------------------------------------------------------
+     |  Readonly properties defined here:
+     |  
+     |  blown
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
     
     class Group(Base)
      |  Group(name, canApp=False, canAppHigh=False, canSys=False, canSysHigh=False, canSudo=False, locked=False)
@@ -418,7 +460,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='5f120a08262ec39e7aaf6273370b6ef1db6a340b5bd80208d7cfa647bcd0595ba464fae61bda5922143c591a27411a7d', hidden=False)
+     |  User(group, username, password='5051853da348ee2c2c17387f985f718b161157ab9d0129ef6129adb0621046e75804a890ec38b397eab504ec08723c01', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -433,7 +475,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='5f120a08262ec39e7aaf6273370b6ef1db6a340b5bd80208d7cfa647bcd0595ba464fae61bda5922143c591a27411a7d', hidden=False)
+     |  __init__(self, group, username, password='5051853da348ee2c2c17387f985f718b161157ab9d0129ef6129adb0621046e75804a890ec38b397eab504ec08723c01', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -448,7 +490,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='20acd5f76bdf077f56938a2be4f5bd1cb4751c64c1959561fd90f36a77f67f50bf2ef4daf2c0454cf39ca002aaeb9e0c')
+     |  check(self, username, password='68957d75acd05f0dac2b0a992988aeaa630006d65a9fe1a5b71e5e689def780563d3043befd327d8100e4120afbda186')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -691,7 +733,6 @@ FUNCTIONS
         The verifyHash function is used to authenticate hashes.
     
     init(user, x)
-        Init function. Runs the  'initd --init' command.
     
     joinIterable(string, iterable)
         Joins a string and an iterable together.
@@ -851,4 +892,4 @@ FUNCTIONS
 DATA
     osName = 'Pythinux'
     var = {}
-    version = [2, 5, 0]
+    version = [3, 0, 0]
