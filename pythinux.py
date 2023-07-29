@@ -18,7 +18,7 @@ from classes import permissions
 
 global osName, version, cdir, var
 osName = "Pythinux"
-version = [2, 5, 0]
+version = [3, 0, 0]
 var = {}
 
 
@@ -1164,12 +1164,53 @@ def list_loadable_programs(user, sudoMode=False):
 
     return sorted(loadable_programs)
 
+class Fuse:
+    """
+Software equivalent of a fuse.
+Calling the blow() method will set the blown attribute from false to true.
+Once this is done, the class is designed to make it impossible to change
+back to False.
+    """
+    __instance = None
 
+    def __new__(cls):
+        if cls.__instance is None:
+            cls.__instance = super().__new__(cls)
+            cls.__instance.__initialized = False
+        return cls.__instance
+
+    def __init__(self):
+        if self.__initialized:
+            return
+        self.__initialized = True
+        self.__blown = False
+
+    def blow(self):
+        self.__blown = True
+
+    @property
+    def blown(self):
+        return self.__blown
+
+    @classmethod
+    def is_blown(cls, fuse):
+        return fuse.blown
+
+    def __str__(self):
+        return str(self.blown)
 def init(user, x):
+    cls()
+    div()
+    print("WARNING")
+    div()
+    print("This build of pythinux is unstable.")
+    print("You downloaded a copy from the `3.0` branch.")
+    print("For stable builds and releases, see the `main` branch.")
+    br()
     """
     Init function. Runs the  'initd --init' command.
     """
-    main(user, "cls")
+    cls()
     if user.god() and x:
         div()
         print("God Warning")
