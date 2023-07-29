@@ -7,7 +7,7 @@ delete_pyc() {
 delete_pycache() {
     find . -type d -name "__pycache__" -exec rm -rf {} +
 }
-
+curr = $(date +%s)
 touch .working
 echo BUILD START.
 echo RUNNING UNIT TEST

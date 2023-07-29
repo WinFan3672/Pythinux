@@ -267,6 +267,8 @@ CLASSES
     class PythinuxError(builtins.Exception)
      |  PythinuxError(text)
      |  
+     |  Exception thrown by the kernel when an issue occurs.
+     |  
      |  Method resolution order:
      |      PythinuxError
      |      builtins.Exception
@@ -416,7 +418,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='34430e2a5b04d89edc898b62686ce6e8eba4fd571d0df1a553480bce7d0447a0d7dc4e5c8826b48a0c44fda1ad88a4b8', hidden=False)
+     |  User(group, username, password='5f120a08262ec39e7aaf6273370b6ef1db6a340b5bd80208d7cfa647bcd0595ba464fae61bda5922143c591a27411a7d', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -431,7 +433,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='34430e2a5b04d89edc898b62686ce6e8eba4fd571d0df1a553480bce7d0447a0d7dc4e5c8826b48a0c44fda1ad88a4b8', hidden=False)
+     |  __init__(self, group, username, password='5f120a08262ec39e7aaf6273370b6ef1db6a340b5bd80208d7cfa647bcd0595ba464fae61bda5922143c591a27411a7d', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -446,7 +448,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='ba5baec01eddd39e0ef85fc4d19d2daee31ba7d8212f4b9ae55c976b4193d1a9400c0cf699e2f297711b5419f8e2518b')
+     |  check(self, username, password='20acd5f76bdf077f56938a2be4f5bd1cb4751c64c1959561fd90f36a77f67f50bf2ef4daf2c0454cf39ca002aaeb9e0c')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string

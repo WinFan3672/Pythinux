@@ -23,8 +23,9 @@ var = {}
 
 class PythinuxError(Exception):
     """
-Exception thrown by the kernel when an issue occurs.
+    Exception thrown by the kernel when an issue occurs.
     """
+
     def __init__(self, text):
         self.text = str(text)
 
