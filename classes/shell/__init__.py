@@ -12,6 +12,28 @@ import base64
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+class WindowManager:
+    def __init__(self):
+        self.windows = []
+        self.app = QApplication([])
+
+    def add_window(self, window):
+        if isinstance(window, QMainWindow):
+            self.windows.append(window)
+            window.show()
+        else:
+            raise ValueError("Invalid window type. Only QMainWindow is supported.")
+
+    def remove_window(self, window):
+        if window in self.windows:
+            self.windows.remove(window)
+            window.close()
+        else:
+            raise ValueError("Window not found in the window manager.")
+
+    def run(self):
+        # Start the application event loop to manage windows
+        self.app.exec_()
 class TerminalApp(QMainWindow):
     def __init__(self, currentUser):
         super().__init__()
@@ -50,14 +72,29 @@ class TerminalApp(QMainWindow):
             if result.returncode == 0:
                 self.output_area.insertPlainText(result.stdout.strip()+"\n")
             else:
-                self.output_area.insertPlainText(result.stderr.strip()+"\n")                
+                self.output_area.insertPlainText(result.stderr.strip()+"\n")
+class ProgramLoader(QMainWindow):
+    def __init__(self, manager):
+        super().__init__()
+        self.init_ui()
+        self.manager = manager
+    def init_ui(self):
+        self.setWindowTitle("Program Loader")
+        self.setGeometry(100, 100, 400, 600)
+
+        central_widget = QWidget(self)
+        layout = QVBoxLayout(central_widget)
+
+        self.setCentralWidget(central_widget)
+    def closeEvent(self, event):
+        event.ignore()
 class Application:
     def __init__(self, title, width, height):
         self.title = title
         self.width = width
         self.height = height
 def startShell(currentUser):
-    app = QApplication(sys.argv)
+    manager = WindowManager()
     window = QMainWindow()
     window.resize(800, 600)
     window.setWindowTitle('Pythinux {} (Unstable Build)'.format(".".join([str(x) for x in pythinux.version])))
@@ -95,12 +132,16 @@ def startShell(currentUser):
     layout.addWidget(closeButton, 1, 0)
 
     window.setCentralWidget(central_widget)
-
-    terminal = TerminalApp(currentUser)
-    terminal.show()
     
-    window.show()
-    sys.exit(app.exec_())
+    terminal = TerminalApp(currentUser)
+    
+    program_loader = ProgramLoader(manager)
+    
+    manager.add_window(terminal)
+    manager.add_window(window)
+    manager.add_window(program_loader)
+    
+    manager.run()
 
 if __name__ == "__main__":
     # Perform necessary imports here (e.g., pythinux)
