@@ -822,8 +822,6 @@ def main(user, prompt, sudoMode=False, shell="terminal", doNotExecute=False):
             i = load_program(prompt, user, sudoMode, shell)
             os.chdir(cdir)
             if not i:
-                print(os.getcwd())
-                print("")
                 print("Bad command or file name:", prompt)
     except Exception as e:
         e = doNothing(e)
