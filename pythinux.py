@@ -863,7 +863,32 @@ def exposeObjects(module, objects):
     for object_name, obj in objects.items():
         setattr(module, object_name, obj)
 
+def sudoPrompt():
+    app = QApplication(sys.argv)
+    window = QWidget()
+    window.setWindowTitle('Authentication Required')
+    
+    password_label = QLabel('Password:')
+    password_input = QLineEdit()
+    password_input.setEchoMode(QLineEdit.Password)  # To hide the password input
+    
+    login_button = QPushButton('Unlock PC')
+    login_button.clicked.connect(app.quit)  # Close the application when login button is clicked
+    
+    layout = QGridLayout()
+    layout.addWidget(password_label,0,0)
+    layout.addWidget(password_input,0,1)
+    layout.addWidget(login_button,1,1)
+    
+    window.setLayout(layout)
+    window.show()
+    
+    # Start the event loop and wait for the application to finish (when app.quit() is called)
+    app.exec_()
 
+    # Return the username and password provided by the user
+    password = password_input.text()
+    return password
 def sudo(user, maxAttempts=10, incorrectAttempts=0):
     """
     Password authentication.
@@ -874,7 +899,7 @@ def sudo(user, maxAttempts=10, incorrectAttempts=0):
     """
     if incorrectAttempts >= maxAttempts:
         return False
-    p = getpass(f"[sudo] password for {user.username}: ")
+    p = sudoPrompt()
     if verifyHash(p, user.password):
         return True
     else:

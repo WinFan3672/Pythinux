@@ -9,6 +9,9 @@ import pickle
 from PyQt5.QtCore import Qt
 import base64
 
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 class TerminalApp(QMainWindow):
     def __init__(self, currentUser):
         super().__init__()
@@ -47,7 +50,7 @@ class TerminalApp(QMainWindow):
             if result.returncode == 0:
                 self.output_area.insertPlainText(result.stdout.strip()+"\n")
             else:
-                self.output_area.insertPlainText(result.stderr.strip()+"\n")
+                self.output_area.insertPlainText(result.stderr.strip()+"\n")                
 class Application:
     def __init__(self, title, width, height):
         self.title = title

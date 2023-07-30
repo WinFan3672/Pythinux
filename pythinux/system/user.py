@@ -43,7 +43,13 @@ elif args == ["info"]:
     div()
 elif "info" in args and len(args) == 2:
     u = userList.byName(args[1])
-    pprint(u)
+    div()
+    print("Username: {}".format(u.username))
+    print("Password: {}".format(u.password))
+    print("Group: {}".format(u.group.name))
+    print("Hidden: {}".format("Yes" if u.hidden else "No"))
+    print("Unique User ID: {}".format(u.uuid))
+    div()
 else:
     div()
     print("user [args]")
