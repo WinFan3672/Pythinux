@@ -1137,7 +1137,7 @@ def load_program(
             isolatedMode,
         )
     except Exception as e:
-        return e
+        return
     if baseMode:
         return module, module_spec
     if module:
