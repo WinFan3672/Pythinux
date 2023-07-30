@@ -190,7 +190,7 @@ if arguments:
         upMode=True
     else:
         upMode=False
-    installd(" ".join(arguments),yesMode,depMode,upMode)
+    installd(" ".join(arguments),True,depMode,upMode)
 else:
     div()
     print("installd <path/to/installer.szip3>")

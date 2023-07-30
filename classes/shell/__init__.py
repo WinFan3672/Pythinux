@@ -39,6 +39,8 @@ class TerminalApp(QMainWindow):
         if user_input.lower() in ['clear', 'cls']:
             # Clear the terminal output
             self.output_area.clear()
+        elif user_input.lower() in ["exit","quit"]:
+            self.close()
         else:
             cmd = ["python", "-c", f"import os; os.chdir('..'); import pythinux; x = pythinux.main('{self.currentUser.uuid}','{user_input}');print(x if x else '')"]
             result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)

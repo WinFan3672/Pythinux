@@ -597,6 +597,8 @@ class UserList(Base):
             if item.username == name:
                 self.users.remove(item)
                 did = True
+        if did:
+            saveUserList(self)
         return did
 
     def list(self):
@@ -1155,10 +1157,11 @@ def loadAL():
 
 def cls():
     """
-    Clears the terminal screen.
-    Works for both Windows and Unix-like systems, so basically everything.
+    Old function. Used to clear the terminal.
+    Now that the terminal is no longer used (just emulated),
+    it is blocked from running.
     """
-    block = False
+    block = True
     res = platform.uname()
     if not block:
         os.system("cls" if res[0] == "Windows" else "clear")
