@@ -1260,11 +1260,23 @@ class Fuse:
         return str(self.blown)
 
 
-def init(user):
+def init(user, x):
     cls()
     """
     Init function. Runs the  'initd --init' command.
     """
+    cls()
+    if user.god() and x:
+        div()
+        print("God Warning")
+        div()
+        print("You have logged in as a God account.")
+        print("Do not use a God account unless you HAVE to.")
+        print(
+            "If you are unaware of the security risks of using"
+            + ' a God account, type "logoff".'
+        )
+        div()
     shell.startShell(user)
 
 
@@ -1293,6 +1305,7 @@ def loadUserList():
 
 
 def loginScreen(username=None):
+    x = True
     """
     Login screen.
     Args:
@@ -1303,16 +1316,16 @@ def loginScreen(username=None):
     Once you enter your details, init() is called.
     """
     if username:
-        unlockMode=True
         password = login.unlockScreen()
     else:
-        unlockMode=False
         username, password = login.loginScreen()
     for item in userList.list():
         if item.check(username, password):
-            init(item)
+            init(item, x)
             return
-    loginScreen(username if unlockMode else None)
+    if x:
+        print("ERROR: Incorrect username/password sequence.")
+        loginScreen()
 
 
 def makeDir():
