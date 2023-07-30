@@ -225,6 +225,11 @@ CLASSES
      |      dictionary for instance variables (if defined)
      |  
      |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |  
+     |  __slotnames__ = []
+     |  
+     |  ----------------------------------------------------------------------
      |  Methods inherited from Base:
      |  
      |  __iter__(self)
@@ -278,6 +283,11 @@ CLASSES
      |  
      |  __dict__
      |      dictionary for instance variables (if defined)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |  
+     |  __slotnames__ = []
      |  
      |  ----------------------------------------------------------------------
      |  Methods inherited from Base:
@@ -1564,7 +1574,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='ea7b2073f6f3eee99a0f9b49b7c49f94f8f9d191beee0dec63387ac4e3e9e47ca834ae6db3c9d1c525e29c73ace51f69', hidden=False)
+     |  User(group, username, password='81479120fd01aa012fc37e130fde1281c03941a958522ffa9da0155039bfcc77bb94fd5c39bfff80ebd234f10ec66fba', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -1579,7 +1589,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='ea7b2073f6f3eee99a0f9b49b7c49f94f8f9d191beee0dec63387ac4e3e9e47ca834ae6db3c9d1c525e29c73ace51f69', hidden=False)
+     |  __init__(self, group, username, password='81479120fd01aa012fc37e130fde1281c03941a958522ffa9da0155039bfcc77bb94fd5c39bfff80ebd234f10ec66fba', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -1594,7 +1604,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='2f5f5dfa6a96ad2f10dece8c5b6e65e907ed36fa38ff192b7f5d8fdf9edcbec922694265151db66ab2e24cf7e3e6a837')
+     |  check(self, username, password='b78a71796d07590a92b500c1091df365307317212d68338df64106cfe938a079672f4831d514dc7ce8cabd6df7f3b1c5')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -1764,8 +1774,9 @@ FUNCTIONS
         Pythinux install directory.
     
     cls()
-        Clears the terminal screen.
-        Works for both Windows and Unix-like systems, so basically everything.
+        Old function. Used to clear the terminal.
+        Now that the terminal is no longer used (just emulated),
+        it is blocked from running.
     
     copy(obj)
         See python's copy.deepcopy(). It's the same thing.
@@ -1838,7 +1849,7 @@ FUNCTIONS
             required to verify the hash.
         The verifyHash function is used to authenticate hashes.
     
-    init(user, x)
+    init(user)
     
     joinIterable(string, iterable)
         Joins a string and an iterable together.
@@ -1876,6 +1887,13 @@ FUNCTIONS
             (str) log: the name of the log file. Default is "base_log".
     
     loginScreen(username=None)
+        Login screen.
+        Args:
+            (optional) (str) username: the username passed to the login screen.
+            Passing this will launch the Unlock Screen screen.
+            (optional) (str) password: the password passed to the login screen.
+            Passing both the username and password bypasses the input.
+        Once you enter your details, init() is called.
     
     main(user, prompt, sudoMode=False, shell='terminal', doNotExecute=False)
     
@@ -2015,7 +2033,12 @@ FUNCTIONS
 
 DATA
     QWIDGETSIZE_MAX = 16777215
+    aliases = {}
+    cdir = '/home/winfan3672/Documents/GitHub/Pythinux/pythinux'
+    groupList = <pythinux.GroupList object>
     osName = 'Pythinux'
+    pdir = ['Base', 'CompileOS', 'CurrentProgram', 'FileError', 'Fuse', 'G...
     qApp = <PyQt5.QtWidgets.QApplication object>
+    userList = <pythinux.UserList object>
     var = {}
     version = [3, 0, 0]

@@ -583,7 +583,7 @@ class UserList(Base):
 
     def uuid(self, uuid):
         for item in self.users:
-            print(item.uuid,uuid)
+            print(item.uuid, uuid)
             if uuid == item.uuid:
                 return item
         raise PythinuxError("Invalid user by name.")
@@ -1303,10 +1303,10 @@ def loginScreen(username=None):
     Once you enter your details, init() is called.
     """
     if username:
-        unlockMode=True
+        unlockMode = True
         password = login.unlockScreen()
     else:
-        unlockMode=False
+        unlockMode = False
         username, password = login.loginScreen()
     for item in userList.list():
         if item.check(username, password):
@@ -1520,10 +1520,10 @@ try:
     os.chdir("pythinux")
     fixDirectories()
 except Exception:
-        traceback.format_exc()
+    traceback.format_exc()
 cdir = os.getcwd()
 global userList, groupList
-if loadUserList().users == []:
+if __name__ == "__main__" and loadUserList().users == []:
     setupWizard()
 userList = loadUserList()
 groupList = loadGroupList()
