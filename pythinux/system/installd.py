@@ -24,10 +24,10 @@ def installd(path,yesMode=False,depMode=False,upgradeMode=False):
         with open("program.szip3","rb") as f:
             with zipfile.ZipFile(f,"r") as zf:
                 with zf.open("program.name") as f:
-                    program_name = f.read()
+                    name = f.read().decode("utf-8")
                 try:
                     with zf.open("requirements.txt") as f:
-                        deps = f.read().split("\n")
+                        deps = f.read().decode("utf-8").split("\n")
                         os.chdir("..")
                         deps, originalDeps = filterDeps(deps)
                         os.chdir("tmp")
@@ -37,7 +37,6 @@ def installd(path,yesMode=False,depMode=False,upgradeMode=False):
                     info = f.read().decode("utf-8").split("|")
                     for item in info:
                         item.strip()
-                    raise Exception
                     for item in info:
                         item.strip()
                 if "manuals.zip" in zf.namelist():
@@ -50,26 +49,26 @@ def installd(path,yesMode=False,depMode=False,upgradeMode=False):
                     zf.extract("library.zip")
                 else:
                     libMode = False
-        if "program.py" in zf.namelist():
-            with zf.open("program.py","rb") as f:
-                program = f.read()
-        else:
-            program = None
-        if "rscript.xx" in zf.namelist():
-            with zf.open("rscript.xx") as f:
-                rscript = f.read()
-        else:
-            rscript = False
-        if "setup.py" in zf.namelist():
-            setupMode=True
-            with zf.open("setup.py","r") as f:
-                setupCode=f.read()
-        else:
-            setupMode=False
-        if "SYSTEM" in zf.namelist():
-            system=True
-        else:
-            system=False
+                if "program.py" in zf.namelist():
+                    with zf.open("program.py") as f:
+                        program = f.read()
+                else:
+                    program = None
+                if "rscript.xx" in zf.namelist():
+                    with zf.open("rscript.xx") as f:
+                        rscript = f.read().decode("utf-8")
+                else:
+                    rscript = False
+                if "setup.py" in zf.namelist():
+                    setupMode=True
+                    with zf.open("setup.py","r") as f:
+                        setupCode=f.read().decode("utf-8")
+                else:
+                    setupMode=False
+                if "SYSTEM" in zf.namelist():
+                    system=True
+                else:
+                    system=False
         name = name.replace(" ","")
         name=name.replace("\n","")
         if not yesMode:

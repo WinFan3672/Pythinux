@@ -14,6 +14,7 @@ import ast
 import copy as cp
 from io import StringIO
 from getpass import getpass
+import classes
 from classes import permissions
 from classes import shell
 from classes import login
@@ -908,6 +909,8 @@ def sudo(user, maxAttempts=10, incorrectAttempts=0):
 
 
 def splitString(string):
+    if not isinstance(string,str):
+        return string
     """
     Used by main() for turning a string into a list of arguments.
     """
@@ -1054,7 +1057,7 @@ def loadProgramBase(
                 "giveVars": copy(giveVars),
                 "createService": copy(createService),
                 "attachDebugger": copy(attachDebugger),
-                "desktopShell": copy(shell),
+                "desktopShell": copy(classes.shell),
             }
             if directory in [
                 system_directory,
@@ -1122,11 +1125,6 @@ def load_program(
     __name__=None,
     isolatedMode=False,
 ):
-    if debugMode:
-        print(
-            "### Load Arguments:",
-            [program_name_with_args, user, sudoMode, shell, __name__],
-        )
     try:
         module, module_spec = loadProgramBase(
             program_name_with_args,
@@ -1136,13 +1134,11 @@ def load_program(
             __name__,
             isolatedMode,
         )
-    except Exception as e:
+    except:
         return
     if baseMode:
         return module, module_spec
     if module:
-        if debugMode:
-            print("### Arguments:", module.args)
         module_spec.loader.exec_module(module)
         return module
 
