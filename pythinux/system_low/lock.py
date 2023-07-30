@@ -1,1 +1,0 @@
-loginScreen(currentUser.username) 

@@ -868,6 +868,7 @@ def sudoPrompt():
     window = QWidget()
     window.setWindowTitle('Authentication Required')
     
+    label = QLabel("A program requires higher level access to run. Please authenticate yourself.")
     password_label = QLabel('Password:')
     password_input = QLineEdit()
     password_input.setEchoMode(QLineEdit.Password)  # To hide the password input
@@ -876,9 +877,10 @@ def sudoPrompt():
     login_button.clicked.connect(app.quit)  # Close the application when login button is clicked
     
     layout = QGridLayout()
-    layout.addWidget(password_label,0,0)
-    layout.addWidget(password_input,0,1)
-    layout.addWidget(login_button,1,1)
+    layout.addWidget(label,0,1)
+    layout.addWidget(password_label,1,0)
+    layout.addWidget(password_input,1,1)
+    layout.addWidget(login_button,2,1)
     
     window.setLayout(layout)
     window.show()
