@@ -22,55 +22,51 @@ def installd(path,yesMode=False,depMode=False,upgradeMode=False):
         with open("program.szip3","wb") as f:
             f.write(x)
         with open("program.szip3","rb") as f:
-            with zipfile.ZipFile(f,"r") as zip:
-                zip.extractall()
-        os.remove("program.szip3")
-        if os.path.isfile("program.name"):
-            with open("program.name") as f:
-                name = f.read()
-        else:
-            raise InstallerError("No program.name file provided")
-        if os.path.isfile("requirements.txt"):
-            with open("requirements.txt") as f:
-                deps = f.read().split()
-                os.chdir("..")
-                deps, originalDeps = filterDeps(deps)
-                os.chdir("tmp")
-        else:
-            deps = []
-            originalDeps = []
-        if os.path.isfile("program.info"):
-            with open("program.info") as f:
-                info = f.read().split("|")
-                for item in info:
-                    item.strip()
-        else:
-            raise InstallerError("No program.info file provided")
-        if os.path.isfile("manuals.zip"):
-            manualsMode=True
-        else:
-            manualsMode=False
-        if os.path.isfile("library.zip"):
-            libMode=True
-        else:
-            libMode=False
-        if os.path.isfile("program.py"):
-            with open("program.py","rb") as f:
+            with zipfile.ZipFile(f,"r") as zf:
+                with zf.open("program.name") as f:
+                    program_name = f.read()
+                try:
+                    with zf.open("requirements.txt") as f:
+                        deps = f.read().split("\n")
+                        os.chdir("..")
+                        deps, originalDeps = filterDeps(deps)
+                        os.chdir("tmp")
+                except:
+                    deps, originalDeps = [], []
+                with zf.open("program.info") as f:
+                    info = f.read().decode("utf-8").split("|")
+                    for item in info:
+                        item.strip()
+                    raise Exception
+                    for item in info:
+                        item.strip()
+                if "manuals.zip" in zf.namelist():
+                    manualsMode = True
+                    zf.extract("manuals.zip")
+                else:
+                    manualsMode = False
+                if "library.zip" in zf.namelist():
+                    libMode = True
+                    zf.extract("library.zip")
+                else:
+                    libMode = False
+        if "program.py" in zf.namelist():
+            with zf.open("program.py","rb") as f:
                 program = f.read()
         else:
             program = None
-        if os.path.isfile("rscript.xx"):
-            with open("rscript.xx") as f:
+        if "rscript.xx" in zf.namelist():
+            with zf.open("rscript.xx") as f:
                 rscript = f.read()
         else:
             rscript = False
-        if os.path.isfile("setup.py"):
+        if "setup.py" in zf.namelist():
             setupMode=True
-            with open("setup.py","r") as f:
+            with zf.open("setup.py","r") as f:
                 setupCode=f.read()
         else:
             setupMode=False
-        if os.path.isfile("SYSTEM"):
+        if "SYSTEM" in zf.namelist():
             system=True
         else:
             system=False

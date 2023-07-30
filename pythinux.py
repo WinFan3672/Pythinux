@@ -97,6 +97,7 @@ def fixDirectories():
         "app_high",
         "config",
         "home",
+        "icon",
         "lib",
         "log",
         "rscript",
@@ -1053,6 +1054,7 @@ def loadProgramBase(
                 "giveVars": copy(giveVars),
                 "createService": copy(createService),
                 "attachDebugger": copy(attachDebugger),
+                "desktopShell": copy(shell),
             }
             if directory in [
                 system_directory,

@@ -78,6 +78,8 @@ class ProgramLoader(QMainWindow):
         super().__init__()
         self.init_ui()
         self.manager = manager
+        self.icon = QIcon("../img/progmgr.svg")
+        self.setWindowIcon(self.icon)
     def init_ui(self):
         self.setWindowTitle("Program Loader")
         self.setGeometry(100, 100, 400, 600)
@@ -96,6 +98,8 @@ class Application:
 def startShell(currentUser):
     manager = WindowManager()
     window = QMainWindow()
+    icon = QIcon("../img/main.svg")
+    window.setWindowIcon(icon)
     window.resize(800, 600)
     window.setWindowTitle('Pythinux {} (Unstable Build)'.format(".".join([str(x) for x in pythinux.version])))
 
