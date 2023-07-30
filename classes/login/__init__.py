@@ -15,7 +15,10 @@ def loginScreen():
     password_input.setEchoMode(QLineEdit.Password)  # To hide the password input
     
     login_button = QPushButton('Login')
-    login_button.clicked.connect(app.quit)  # Close the application when login button is clicked
+    login_button.clicked.connect(app.quit)
+    
+    quitButton = QPushButton('Exit')
+    quitButton.clicked.connect(sys.exit)
     
     layout = QGridLayout()
     layout.addWidget(username_label,0,0)
@@ -23,6 +26,7 @@ def loginScreen():
     layout.addWidget(password_label,1,0)
     layout.addWidget(password_input,1,1)
     layout.addWidget(login_button,2,1)
+    layout.addWidget(quitButton,2,0)
     
     window.setLayout(layout)
     window.show()
@@ -46,10 +50,14 @@ def unlockScreen():
     login_button = QPushButton('Unlock PC')
     login_button.clicked.connect(app.quit)  # Close the application when login button is clicked
     
+    quitButton = QPushButton('Exit')
+    quitButton.clicked.connect(sys.exit)
+    
     layout = QGridLayout()
     layout.addWidget(password_label,0,0)
     layout.addWidget(password_input,0,1)
     layout.addWidget(login_button,1,1)
+    layout.addWidget(quitButton,1,0)
     
     window.setLayout(layout)
     window.show()

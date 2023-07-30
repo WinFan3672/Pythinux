@@ -65,7 +65,14 @@ def startShell(currentUser):
     # Initialize the menu bar
     menubar = window.menuBar()
     fileMenu = QMenu("File")
+    winMenu = QMenu("Window")
+    helpMenu = QMenu("Help")
     menubar.addMenu(fileMenu)
+    menubar.addMenu(winMenu)
+    menubar.addMenu(helpMenu)
+    quit_action = QAction("Exit", window)
+    quit_action.triggered.connect(sys.exit)
+    fileMenu.addAction(quit_action)
 
     msg = [
         "Welcome to Pythinux.",
