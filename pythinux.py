@@ -1523,8 +1523,9 @@ except Exception:
         traceback.format_exc()
 cdir = os.getcwd()
 global userList, groupList
-if loadUserList().users == []:
-    setupWizard()
+if __name__ == "__main__":
+    if loadUserList().users == []:
+        SETUPWIZARD()
 userList = loadUserList()
 groupList = loadGroupList()
 global pdir
