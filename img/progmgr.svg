@@ -1,5 +1,75 @@
-<svg version="1.1" width="36" height="36"  viewBox="0 0 36 36" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <title>application-line</title>
-    <rect x="5" y="7" width="2" height="2" class="clr-i-outline clr-i-outline-path-1"></rect><rect x="9" y="7" width="2" height="2" class="clr-i-outline clr-i-outline-path-2"></rect><rect x="13" y="7" width="2" height="2" class="clr-i-outline clr-i-outline-path-3"></rect><path d="M32,4H4A2,2,0,0,0,2,6V30a2,2,0,0,0,2,2H32a2,2,0,0,0,2-2V6A2,2,0,0,0,32,4ZM4,6H32v4.2H4ZM4,30V11.8H32V30Z" class="clr-i-outline clr-i-outline-path-4"></path>
-    <rect x="0" y="0" width="36" height="36" fill-opacity="0"/>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   version="1.1"
+   width="36"
+   height="36"
+   viewBox="0 0 36 36"
+   preserveAspectRatio="xMidYMid meet"
+   id="svg265"
+   sodipodi:docname="progmgr.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs269" />
+  <sodipodi:namedview
+     id="namedview267"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="22.305556"
+     inkscape:cx="16.296389"
+     inkscape:cy="18"
+     inkscape:window-width="1920"
+     inkscape:window-height="1048"
+     inkscape:window-x="0"
+     inkscape:window-y="32"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg265" />
+  <title
+     id="title253">application-line</title>
+  <rect
+     x="5"
+     y="7"
+     width="2"
+     height="2"
+     class="clr-i-outline clr-i-outline-path-1"
+     id="rect255"
+     style="fill:#ffffff" />
+  <rect
+     x="9"
+     y="7"
+     width="2"
+     height="2"
+     class="clr-i-outline clr-i-outline-path-2"
+     id="rect257"
+     style="fill:#ffffff" />
+  <rect
+     x="13"
+     y="7"
+     width="2"
+     height="2"
+     class="clr-i-outline clr-i-outline-path-3"
+     id="rect259"
+     style="fill:#ffffff" />
+  <path
+     d="M32,4H4A2,2,0,0,0,2,6V30a2,2,0,0,0,2,2H32a2,2,0,0,0,2-2V6A2,2,0,0,0,32,4ZM4,6H32v4.2H4ZM4,30V11.8H32V30Z"
+     class="clr-i-outline clr-i-outline-path-4"
+     id="path261"
+     style="fill:#ffffff" />
+  <rect
+     x="0"
+     y="0"
+     width="36"
+     height="36"
+     fill-opacity="0"
+     id="rect263"
+     style="fill:#ffffff" />
 </svg>

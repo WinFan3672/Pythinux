@@ -15,11 +15,9 @@ import copy as cp
 from io import StringIO
 from getpass import getpass
 import classes
-from classes import permissions
 from classes import shell
 from classes import login
 from PyQt5.QtWidgets import *
-import base64
 import uuid
 
 global osName, version, cdir, var
@@ -585,7 +583,7 @@ class UserList(Base):
 
     def uuid(self, uuid):
         for item in self.users:
-            print(item.uuid,uuid)
+            print(item.uuid, uuid)
             if uuid == item.uuid:
                 return item
         raise PythinuxError("Invalid user by name.")
@@ -863,34 +861,43 @@ def exposeObjects(module, objects):
     for object_name, obj in objects.items():
         setattr(module, object_name, obj)
 
+
 def sudoPrompt():
     app = QApplication(sys.argv)
     window = QWidget()
-    window.setWindowTitle('Authentication Required')
-    
-    label = QLabel("A program requires higher level access to run. Please authenticate yourself.")
-    password_label = QLabel('Password:')
+    window.setWindowTitle("Authentication Required")
+
+    label = QLabel(
+        "A program requires higher level access to run. Please authenticate yourself."
+    )
+    password_label = QLabel("Password:")
     password_input = QLineEdit()
-    password_input.setEchoMode(QLineEdit.Password)  # To hide the password input
-    
-    login_button = QPushButton('Unlock PC')
-    login_button.clicked.connect(app.quit)  # Close the application when login button is clicked
-    
+    password_input.setEchoMode(
+        QLineEdit.Password
+    )  # To hide the password input
+
+    login_button = QPushButton("Unlock PC")
+    login_button.clicked.connect(
+        app.quit
+    )  # Close the application when login button is clicked
+
     layout = QGridLayout()
-    layout.addWidget(label,0,1)
-    layout.addWidget(password_label,1,0)
-    layout.addWidget(password_input,1,1)
-    layout.addWidget(login_button,2,1)
-    
+    layout.addWidget(label, 0, 1)
+    layout.addWidget(password_label, 1, 0)
+    layout.addWidget(password_input, 1, 1)
+    layout.addWidget(login_button, 2, 1)
+
     window.setLayout(layout)
     window.show()
-    
+
     # Start the event loop and wait for the application to finish (when app.quit() is called)
     app.exec_()
 
     # Return the username and password provided by the user
     password = password_input.text()
     return password
+
+
 def sudo(user, maxAttempts=10, incorrectAttempts=0):
     """
     Password authentication.
@@ -909,7 +916,7 @@ def sudo(user, maxAttempts=10, incorrectAttempts=0):
 
 
 def splitString(string):
-    if not isinstance(string,str):
+    if not isinstance(string, str):
         return string
     """
     Used by main() for turning a string into a list of arguments.
@@ -1326,10 +1333,10 @@ def loginScreen(username=None):
     Once you enter your details, init() is called.
     """
     if username:
-        unlockMode=True
+        unlockMode = True
         password = login.unlockScreen()
     else:
-        unlockMode=False
+        unlockMode = False
         username, password = login.loginScreen()
     for item in userList.list():
         if item.check(username, password):
@@ -1543,11 +1550,12 @@ try:
     os.chdir("pythinux")
     fixDirectories()
 except Exception:
-        traceback.format_exc()
+    traceback.format_exc()
 cdir = os.getcwd()
 global userList, groupList
-if loadUserList().users == []:
-    setupWizard()
+if __name__ == "__main__":
+    if loadUserList().users == []:
+        setupWizard()
 userList = loadUserList()
 groupList = loadGroupList()
 global pdir
