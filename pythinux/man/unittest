@@ -1,14 +1,14 @@
 Begin unit tests.
-[0.00169] [1/12] Copy Module
-[0.00174] [2/12] Print Current Directory
+[0.00117] [1/12] Copy Module
+[0.0012] [2/12] Print Current Directory
 /home/winfan3672/Documents/GitHub/Pythinux/pythinux
-[0.00177] [3/12] Create Module
-[0.00178] [4/12] Run Pydoc
-[0.10695] [5/12] Create User
-[0.10712] [6/12] Load user list
-[0.10722] [7/12] Load group list
-[0.10751] [8/12] Convert Object to Dictionary
-[0.10765] [9/12] pprint
+[0.00122] [3/12] Create Module
+[0.00122] [4/12] Run Pydoc
+[0.30642] [5/12] Create User
+[0.30707] [6/12] Load user list
+[0.30905] [7/12] Load group list
+[0.30965] [8/12] Convert Object to Dictionary
+[0.31003] [9/12] pprint
 {
     "@itemType": "User",
     "USERTYPE": "<function 'USERTYPE'>",
@@ -26,11 +26,11 @@ Begin unit tests.
         "name": "testgroup"
     },
     "hidden": false,
-    "password": "b9f06f9a92cade8741b3cd064ab2fc222e38ffb4070f56fcbf5e40ac3196c91eb00bd126c914bd66b0a7451a0cf30637",
+    "password": "96c3dcde762e76292c242640c59cf8efa0284b14977a1feeadd1c0326a32b17ccb06d970557babe6387f8886971b87ff",
     "username": "testuser"
 }
-[0.1102] [10/12] Loadable Programs
-['about', 'alias', 'area', 'autologin', 'basic-terminal', 'break', 'calc', 'cat', 'cls', 'cmd', 'echo', 'exit', 'group', 'help', 'idle', 'initd', 'installd', 'libimporter', 'license', 'lock', 'ls', 'man', 'md', 'pip', 'pkm', 'python', 'reinstall', 'removed', 'script', 'su', 'sudo', 'terminal', 'tty', 'tutorial', 'user', 'var', 'version', 'welcome', 'whoami']
-[0.11045] [11/12] Lint Test [unittest]
-[0.42356] [12/12] Lint Test [resetInstall]
+[0.31509] [10/12] Loadable Programs
+['about', 'alias', 'area', 'autologin', 'basic-terminal', 'break', 'bwm', 'bwmadd', 'calc', 'cat', 'cls', 'cmd', 'desktop', 'echo', 'essential', 'exit', 'flapgui', 'ftpx', 'group', 'help', 'idle', 'initd', 'installd', 'libimporter', 'license', 'linecount', 'listlib', 'listlib_high', 'lock', 'ls', 'man', 'md', 'passwd', 'pip', 'pkm', 'python', 'reinstall', 'removed', 'script', 'su', 'sudo', 'terminal', 'tty', 'tutorial', 'user', 'var', 'version', 'welcome', 'whoami', 'wowshell', 'xcount', 'xhide', 'xlock', 'xremove', 'xunlock', 'xview', 'zcalc']
+[0.31548] [11/12] Lint Test [unittest]
+[1.02275] [12/12] Lint Test [resetInstall]
 All unit tests complete.

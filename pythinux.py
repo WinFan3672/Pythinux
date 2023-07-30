@@ -14,11 +14,42 @@ import ast
 import copy as cp
 from io import StringIO
 from getpass import getpass
+from classes import permissions
+from classes import shell
+from classes import login
+from PyQt5.QtWidgets import *
+import base64
+import uuid
 
 global osName, version, cdir, var
 osName = "Pythinux"
-version = [2, 5, 0]
+version = [3, 0, 0]
 var = {}
+
+
+class MessageBox(QDialog):
+    def __init__(self, title, message):
+        super().__init__()
+        self.title = title
+        self.message = message
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle(self.title)
+        self.setGeometry(100, 100, 300, 150)
+
+        title_label = QLabel(self.title)
+        message_label = QLabel(self.message)
+
+        ok_button = QPushButton("OK")
+        ok_button.clicked.connect(self.accept)
+
+        layout = QVBoxLayout()
+        layout.addWidget(title_label)
+        layout.addWidget(message_label)
+        layout.addWidget(ok_button)
+
+        self.setLayout(layout)
 
 
 class PythinuxError(Exception):
@@ -31,6 +62,11 @@ class PythinuxError(Exception):
 
     def __str__(self):
         return self.text
+
+
+def restart_script():
+    python = sys.executable
+    subprocess.call([python] + sys.argv)
 
 
 def loadGroupList():
@@ -484,6 +520,7 @@ class User(Base):
         self.username = username
         self.password = hashString(password)
         self.hidden = hidden
+        self.uuid = str(uuid.uuid4())
 
     def check(self, username, password=hashString("")):
         """
@@ -544,6 +581,13 @@ class UserList(Base):
                 return item
         raise PythinuxError("Invalid user by name.")
 
+    def uuid(self, uuid):
+        for item in self.users:
+            print(item.uuid,uuid)
+            if uuid == item.uuid:
+                return item
+        raise PythinuxError("Invalid user by name.")
+
     def remove(self, user):
         self.users.remove(user)
 
@@ -553,6 +597,8 @@ class UserList(Base):
             if item.username == name:
                 self.users.remove(item)
                 did = True
+        if did:
+            saveUserList(self)
         return did
 
     def list(self):
@@ -732,7 +778,7 @@ def parseInput(user, string, shell):
     """
     Function for parsing aliases. Internal only.
     """
-    for item in aliases:
+    for item in loadAliases():
         if string == item:
             string = aliases[item]
     import re
@@ -747,6 +793,14 @@ def parseInput(user, string, shell):
 
 
 def main(user, prompt, sudoMode=False, shell="terminal", doNotExecute=False):
+    if isinstance(user, str):
+        termMode = True
+        for item in loadUserList().list():
+            if item.uuid == user:
+                user = item
+                break
+    else:
+        termMode = False
     """
     Main function. Used to execute commands.
     Args:
@@ -768,6 +822,8 @@ def main(user, prompt, sudoMode=False, shell="terminal", doNotExecute=False):
             i = load_program(prompt, user, sudoMode, shell)
             os.chdir(cdir)
             if not i:
+                print(os.getcwd())
+                print("")
                 print("Bad command or file name:", prompt)
     except Exception as e:
         e = doNothing(e)
@@ -1053,10 +1109,10 @@ def load_program(
             __name__,
             isolatedMode,
         )
-        if baseMode:
-            return module, module_spec
-    except Exception:
-        return
+    except Exception as e:
+        return e
+    if baseMode:
+        return module, module_spec
     if module:
         if debugMode:
             print("### Arguments:", module.args)
@@ -1101,11 +1157,14 @@ def loadAL():
 
 def cls():
     """
-    Clears the terminal screen.
-    Works for both Windows and Unix-like systems, so basically everything.
+    Old function. Used to clear the terminal.
+    Now that the terminal is no longer used (just emulated),
+    it is blocked from running.
     """
+    block = True
     res = platform.uname()
-    os.system("cls" if res[0] == "Windows" else "clear")
+    if not block:
+        os.system("cls" if res[0] == "Windows" else "clear")
 
 
 def run_script(f, user):
@@ -1164,11 +1223,49 @@ def list_loadable_programs(user, sudoMode=False):
     return sorted(loadable_programs)
 
 
+class Fuse:
+    """
+    Software equivalent of a fuse.
+    Calling the blow() method will set the blown attribute from false to true.
+    Once this is done, the class is designed to make it impossible to change
+    back to False.
+    """
+
+    __instance = None
+
+    def __new__(cls):
+        if cls.__instance is None:
+            cls.__instance = super().__new__(cls)
+            cls.__instance.__initialized = False
+        return cls.__instance
+
+    def __init__(self):
+        if self.__initialized:
+            return
+        self.__initialized = True
+        self.__blown = False
+
+    def blow(self):
+        self.__blown = True
+
+    @property
+    def blown(self):
+        return self.__blown
+
+    @classmethod
+    def is_blown(cls, fuse):
+        return fuse.blown
+
+    def __str__(self):
+        return str(self.blown)
+
+
 def init(user, x):
+    cls()
     """
     Init function. Runs the  'initd --init' command.
     """
-    main(user, "cls")
+    cls()
     if user.god() and x:
         div()
         print("God Warning")
@@ -1180,8 +1277,7 @@ def init(user, x):
             + ' a God account, type "logoff".'
         )
         div()
-    main(user, "initd --init")
-    sys.exit()
+    shell.startShell(user)
 
 
 def saveUserList(userList):
@@ -1208,7 +1304,8 @@ def loadUserList():
         return UserList()
 
 
-def loginScreen(username=None, password=None):
+def loginScreen(username=None):
+    x = True
     """
     Login screen.
     Args:
@@ -1218,27 +1315,17 @@ def loginScreen(username=None, password=None):
         Passing both the username and password bypasses the input.
     Once you enter your details, init() is called.
     """
-    cls()
-    if not password:
-        div()
-        print("Unlock System" if username else "Pythinux Login Screen")
-        div()
-        x = True
+    if username:
+        password = login.unlockScreen()
     else:
-        x = False
-    if not username:
-        username = input("Username $")
-    if not password:
-        password = getpass("Password $")
+        username, password = login.loginScreen()
     for item in userList.list():
         if item.check(username, password):
             init(item, x)
             return
     if x:
-        div()
-        print("Incorrect username/password sequence.")
-        br()
-        loginScreen(username, password)
+        print("ERROR: Incorrect username/password sequence.")
+        loginScreen()
 
 
 def makeDir():
@@ -1302,7 +1389,7 @@ def createUser(userlist, user):
     except FileExistsError:
         pass
     with open(f"home/{user.username}/init.d", "w") as f:
-        f.write("terminal")
+        f.write("desktop")
     userlist.add(user)
     return userlist
 
@@ -1380,73 +1467,82 @@ def pprint(obj):
     print(pprint_dict(obj_to_dict(obj)))
 
 
-def setupWizard():
+def setupWizardBase(username, password, autoLogin):
     """
     Setup wizard.
     * Sets up a user account, complete with username,
       password, init script, etc.
     * Sets up autologin, depending on user choice.
     """
-    if os.path.isfile("../LICENSE"):
-        cls()
-        with open("../LICENSE") as f:
-            div()
-            print("Legal Licensing Information")
-            div()
-            print(f.read())
-            br()
-    cls()
-    print(f"{div2()}\nSetup Wizard\n{div2()}")
-    username = input("Enter Your Username $")
-    password = ""
-    while password == "":
-        password = getpass("Set A Password $")
-        if password == "":
-            print("Error: Cannot set blank password.")
-    if password == "":
-        password = None
     groupList = GroupList()
     g = groupList.byName("root")
     user = User(g, username, password)
     userList = UserList()
     userList = createUser(userList, user)
     saveUserList(userList)
-    cls()
-    div()
-    print(f'Created user "{username}".')
-    br()
-    cls()
-    if input("Set up autologin? [y/n] $").lower() == "y":
+    if autoLogin:
         saveAL(username)
         cls()
-    div()
-    print("Thank you for setting up Pythinux.")
-    print("For an introduction to Pythinux, run the `welcome` command.")
-    br()
 
 
-if __name__ == "__main__":
-    try:
-        os.chdir("pythinux")
-        fixDirectories()
-    except Exception:
-        div()
-        print("CRITICAL ERROR!")
-        div()
-        print("The Pythinux install directory has been removed.")
-        print(
-            "Reinstall Pythinux from source:"
-            "https://github.com/WinFan3672/Pythinux"
-        )
-        br()
-    cdir = os.getcwd()
-    global userList, groupList
-    if loadUserList().users == []:
+def setupWizard():
+    app = QApplication(sys.argv)
+    window = QWidget()
+    window.setWindowTitle("Setup Wizard")
+
+    username_label = QLabel("Set a Username:")
+    username_input = QLineEdit()
+
+    password_label = QLabel("Set a Password:")
+    password_input = QLineEdit()
+    password_input.setEchoMode(
+        QLineEdit.Password
+    )  # To hide the password input
+
+    login_button = QPushButton("Finish Setup")
+    login_button.clicked.connect(
+        app.quit
+    )  # Close the application when login button is clicked
+
+    checkbox = QCheckBox("Enable Automatic Login")
+
+    layout = QGridLayout()
+    layout.addWidget(username_label, 0, 0)
+    layout.addWidget(username_input, 0, 1)
+    layout.addWidget(password_label, 1, 0)
+    layout.addWidget(password_input, 1, 1)
+    layout.addWidget(checkbox, 2, 1)
+    layout.addWidget(login_button, 3, 1)
+
+    window.setLayout(layout)
+    window.show()
+
+    # Start the event loop and wait for the application to finish (when app.quit() is called)
+    app.exec_()
+    # Return the username and password provided by the user
+    username = username_input.text()
+    password = password_input.text()
+    autologin = checkbox.isChecked()
+    if username in [""] or password in [""]:
         setupWizard()
-    userList = loadUserList()
-    groupList = loadGroupList()
-    global pdir
-    global aliases
-    aliases = loadAliases()
-    pdir = dir()
+    else:
+        setupWizardBase(username, password, autologin)
+
+
+try:
+    os.chdir("pythinux")
+    fixDirectories()
+except Exception:
+        traceback.format_exc()
+cdir = os.getcwd()
+global userList, groupList
+if loadUserList().users == []:
+    setupWizard()
+userList = loadUserList()
+groupList = loadGroupList()
+global pdir
+global aliases
+aliases = loadAliases()
+pdir = dir()
+if __name__ == "__main__":
     loginScreen(loadAL())
