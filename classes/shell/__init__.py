@@ -8,10 +8,32 @@ import subprocess
 import pickle
 from PyQt5.QtCore import Qt
 import base64
+import toml
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+def getIconList():
+    l = [
+            {
+                "name":"Terminal Emulator",
+                "link":"terminal",
+                "icon":False,
+            }
+        ]
+    files = [x for x in os.listdir("icon") if x.endswith(".entry")]
+    for f in files:
+        with open("icon/{}".format(f)) as f:
+            x = toml.loads(f.read())
+            try:
+                z = x["Desktop Entry"]
+                _ = z["name"]
+                _ = z["link"]
+                _ = z["icon"]
+                l.append(z)
+            except:
+                pass
+    return l
 class WindowManager:
     def __init__(self, user):
         self.windows = []
@@ -99,9 +121,9 @@ class ProgramLoader(QMainWindow):
 
         self.setCentralWidget(self.central_widget)
     def load_icons(self):
-        for item in ["terminal"]:
-            button = QPushButton(item)
-            button.clicked.connect(lambda:loadProgram(item,self.user, self.manager))
+        for item in getIconList():
+            button = QPushButton(item["name"])
+            button.clicked.connect(lambda:loadProgram(item["link"],self.user, self.manager))
             self.layout.addWidget(button)
     def closeEvent(self, event):
         event.ignore()
@@ -133,8 +155,9 @@ def startShell(currentUser):
         "Welcome to Pythinux.",
         "A program loader has launched.",
         "Use it to open programs, such as the built-in terminal emulator.",
+        getIconList(),
     ]
-    msg = "\n".join(msg)
+    msg = "\n".join([str(x) for x in msg])
     label = QLabel(msg)
     label.setAlignment(Qt.AlignCenter)
     closeButton = QPushButton("Exit")

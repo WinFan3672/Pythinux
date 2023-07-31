@@ -57,6 +57,14 @@ def installd(path,yesMode=False,depMode=False,upgradeMode=False):
                 if "rscript.xx" in zf.namelist():
                     with zf.open("rscript.xx") as f:
                         rscript = f.read().decode("utf-8")
+                if "desktop.entry" in zf.namelist():
+                    with zf.open("desktop.entry") as f:
+                        with open("icon/{}.entry".format(name),"wb") as g:
+                            g.write(f.read())
+                if "icon.svg" in zf.namelist():
+                    with zf.open("icon.svg") as f:
+                        with open("icon/{}.svg".format(name),"wb") as g:
+                            g.write(f.read())
                 else:
                     rscript = False
                 if "setup.py" in zf.namelist():
