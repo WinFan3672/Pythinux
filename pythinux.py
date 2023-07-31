@@ -785,6 +785,8 @@ def parseInput(user, string, shell):
 
 
 def main(user, prompt, sudoMode=False, shell="terminal", doNotExecute=False):
+    print(os.getcwd())
+    print(os.listdir("system_low"))
     if isinstance(user, str):
         termMode = True
         for item in loadUserList().list():
@@ -1124,17 +1126,14 @@ def load_program(
     __name__=None,
     isolatedMode=False,
 ):
-    try:
-        module, module_spec = loadProgramBase(
-            program_name_with_args,
-            user,
-            sudoMode,
-            shell,
-            __name__,
-            isolatedMode,
-        )
-    except:
-        return
+    module, module_spec = loadProgramBase(
+        program_name_with_args,
+        user,
+        sudoMode,
+        shell,
+        __name__,
+        isolatedMode,
+    )
     if baseMode:
         return module, module_spec
     if module:

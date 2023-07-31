@@ -1,8 +1,11 @@
 from PyQt5.QtWidgets import *
 import os
+import time
+
 x = os.getcwd()
 import pythinux
 os.chdir(x)
+
 import sys
 import subprocess
 import pickle
@@ -18,8 +21,8 @@ def getIconList():
             {
                 "name":"Terminal Emulator",
                 "link":"terminal",
-                "icon":False,
-            }
+                "icon":"terminal",
+            },
         ]
     files = [x for x in os.listdir("icon") if x.endswith(".entry")]
     for f in files:
@@ -100,9 +103,12 @@ class TerminalApp(QMainWindow):
             self.output_area.setTextCursor(self.cursor)
             self.output_area.insertPlainText(result.stdout.strip()+"\n")
 def loadProgram(item, currentUser, manager):
-    i = pythinux.load_program(item, currentUser)
-    i = i.application
-    manager.add_window(i)
+    try:
+        i = pythinux.load_program(item, currentUser)
+        i = i.application
+        manager.add_window(i)
+    except Exception as e:
+        return e
 class ProgramLoader(QMainWindow):
     def __init__(self, user, manager):
         super().__init__()
@@ -112,19 +118,61 @@ class ProgramLoader(QMainWindow):
         self.setWindowIcon(self.icon)
         self.init_ui()
         self.load_icons()
+        
     def init_ui(self):
         self.setWindowTitle("Program Loader")
-        self.setGeometry(100, 100, 400, 600)
-
+        
+        self.menubar = self.menuBar()
+        self.fileMenu = QMenu("File")
+        self.menubar.addMenu(self.fileMenu)
+        self.refresh_action = QAction("Refresh", self)
+        self.refresh_action.setShortcut("F5")
+        self.refresh_action.triggered.connect(self.refresh)
+        self.fileMenu.addAction(self.refresh_action)
+        
         self.central_widget = QWidget(self)
-        self.layout = QVBoxLayout(self.central_widget)
+        self.layout = QGridLayout(self.central_widget)
 
         self.setCentralWidget(self.central_widget)
     def load_icons(self):
+        icons = []
         for item in getIconList():
-            button = QPushButton(item["name"])
-            button.clicked.connect(lambda:loadProgram(item["link"],self.user, self.manager))
-            self.layout.addWidget(button)
+            if item["icon"]:
+                if isinstance(item["icon"],str):
+                    icon = QIcon("../img/{}.svg".format(item["icon"]))
+                else:
+                    icon = QIcon("icon/{}.svg".format(item["name"]))
+            else:
+                icon = QIcon("../img/default.svg")
+            action = QAction("Load", self)
+            action.triggered.connect(lambda _, link=item["link"]: loadProgram(link, self.user, self.manager))
+            icons.append((icon, action, item))
+
+        x, y = 0, 0
+        for icon, action, item in icons:
+            button = QToolButton()
+            button.setIcon(icon)
+            button.setIconSize(QSize(64, 64))
+            button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+            button.setText(item["name"])
+            button.clicked.connect(action.triggered)
+            self.layout.addWidget(button, x, y)
+            y += 1
+            if y >= 5:
+                x += 1
+                y = 0
+    def clear_layout(self):
+        while self.layout.count():
+            item = self.layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+            else:
+                clear_layout(item.layout())
+    def refresh(self):
+        self.clear_layout()
+        print("Did Refresh")
+        self.load_icons()
     def closeEvent(self, event):
         event.ignore()
 class Application:
@@ -155,7 +203,6 @@ def startShell(currentUser):
         "Welcome to Pythinux.",
         "A program loader has launched.",
         "Use it to open programs, such as the built-in terminal emulator.",
-        getIconList(),
     ]
     msg = "\n".join([str(x) for x in msg])
     label = QLabel(msg)
