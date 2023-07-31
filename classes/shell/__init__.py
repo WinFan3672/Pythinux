@@ -16,6 +16,7 @@ import toml
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+import qdarktheme
 def getIconList():
     l = [
             {
@@ -30,9 +31,7 @@ def getIconList():
             x = toml.loads(f.read())
             try:
                 z = x["Desktop Entry"]
-                _ = z["name"]
-                _ = z["link"]
-                _ = z["icon"]
+                _, _, _ = z["name"], z["link"], z["icon"]
                 l.append(z)
             except:
                 pass
@@ -41,6 +40,7 @@ class WindowManager:
     def __init__(self, user):
         self.windows = []
         self.app = QApplication([])
+        qdarktheme.setup_theme()
         self.user = user
 
     def add_window(self, window):

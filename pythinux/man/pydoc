@@ -1574,7 +1574,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='6fb4f5d969a3acb570364f2188c858e3e5b60a81a8888d1dbe6f0007a223462e2300ef16ab6c7508e952c1af2226f302', hidden=False)
+     |  User(group, username, password='883f2d0704898efbabc16f92eaf02c87252bd74ee6634aefa03fba4735ab81c969c20f052a89d7e7cae97a42d8dba722', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -1589,7 +1589,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='6fb4f5d969a3acb570364f2188c858e3e5b60a81a8888d1dbe6f0007a223462e2300ef16ab6c7508e952c1af2226f302', hidden=False)
+     |  __init__(self, group, username, password='883f2d0704898efbabc16f92eaf02c87252bd74ee6634aefa03fba4735ab81c969c20f052a89d7e7cae97a42d8dba722', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -1604,7 +1604,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='418165da3ff1855fef9a2e67a76385c684ef6aff3b13661ce4ff9bad79ecf9ff6ef4afeab6802ab1a26b8ece02a81fc2')
+     |  check(self, username, password='1f5247dc92af98398180df302601153491bcb9c49e7c01a20bdad6d13aa41ecf5627bed15f7040bed188d09a412ba292')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -1990,6 +1990,8 @@ FUNCTIONS
         Unused.
     
     setupWizard()
+        Setup wizard.
+        Uses setupWizardBase() as a backend.
     
     setupWizardBase(username, password, autoLogin)
         Setup wizard.

@@ -788,11 +788,7 @@ def main(user, prompt, sudoMode=False, shell="terminal", doNotExecute=False):
     print(os.getcwd())
     print(os.listdir("system_low"))
     if isinstance(user, str):
-        termMode = True
-        for item in loadUserList().list():
-            if item.uuid == user:
-                user = item
-                break
+        user = userList.uuid(user)
     else:
         termMode = False
     """
@@ -1494,14 +1490,18 @@ def setupWizardBase(username, password, autoLogin):
 
 
 def setupWizard():
+    """
+    Setup wizard.
+    Uses setupWizardBase() as a backend.
+    """
     app = QApplication(sys.argv)
     window = QWidget()
     window.setWindowTitle("Setup Wizard")
 
-    username_label = QLabel("Set a Username:")
+    username_label = QLabel("Set a Username (Required):")
     username_input = QLineEdit()
 
-    password_label = QLabel("Set a Password:")
+    password_label = QLabel("Set a Password (Required):")
     password_input = QLineEdit()
     password_input.setEchoMode(
         QLineEdit.Password
@@ -1513,6 +1513,9 @@ def setupWizard():
     )  # Close the application when login button is clicked
 
     checkbox = QCheckBox("Enable Automatic Login")
+    checkbox.setToolTip(
+        "Automatic login means you do not have to enter your username when logging in."
+    )
 
     layout = QGridLayout()
     layout.addWidget(username_label, 0, 0)

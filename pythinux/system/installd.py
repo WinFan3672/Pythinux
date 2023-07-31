@@ -79,18 +79,13 @@ def installd(path,yesMode=False,depMode=False,upgradeMode=False):
                     system=False
         name = name.replace(" ","")
         name=name.replace("\n","")
-        if not yesMode:
-            cls()
-            div()
-            print("Install Program?")
-            div()
-            print(f"Name: {info[0]}")
-            print(f"Version: {info[1]}")
-            print(f"Release Date: {info[2]}")
-            print(f"Author: {info[3]}")
-            print("Dependencies: {}".format("; ".join(deps) if deps else "None"))
-            div()
-            ch = input("[y/n] $").lower()
+        div()
+        print(f"Name: {info[0]}")
+        print(f"Version: {info[1]}")
+        print(f"Release Date: {info[2]}")
+        print(f"Author: {info[3]}")
+        print("Dependencies: {}".format("; ".join(deps) if deps else "None"))
+        div()
         else:
             ch = "y"
         if ch != "y":
@@ -100,7 +95,7 @@ def installd(path,yesMode=False,depMode=False,upgradeMode=False):
             if upgradeMode:
                 return info
             dd = "|".join(originalDeps)
-            cmd = "pkm register '{}' '{}' '{}' {} '{}' '{}'".format(name,info[1],dd if originalDeps else [],1 if program else 0,info[0],info[2])
+            cmd = "pkm register '{}' '{}' '{}' {} '{}' '{}' '{}'".format(name,info[1],dd if originalDeps else [],1 if program else 0,info[0],info[2],info[3])
             load_program(cmd,currentUser,shell="installd")
             no = 1
             for item in deps:

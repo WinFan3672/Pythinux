@@ -173,6 +173,7 @@ elif "info" in args and len(args) == 2:
     depended = "; ".join(depended) if depended else "Nothing"
     div()
     print("Name: {}".format(pkg["humanName"]))
+    print("Author: {}".format(pkg["author"]))
     print("Version: {}".format(".".join(pkg["version"])))
     print("Release Date: {}".format(pkg["releaseDate"]))
     print("Dependencies: {}".format("; ".join(pkgDeps) if pkgDeps else "None"))
@@ -292,7 +293,7 @@ elif args == ["upgrade"]:
     else:
         print("ERROR: No packages to upgrade.")
         print("Your system is fully up-to-date.")
-elif "register" in args and len(args) == 7:
+elif "register" in args and len(args) == 8:
     if getTerm() == "installd":
         name = args[1]
         version = args[2]
@@ -301,6 +302,7 @@ elif "register" in args and len(args) == 7:
         hasBinary = bool(int(args[4]))
         humanName = args[5]
         releaseDate = args[6]
+        author = args[7]
         if deps == "[]":
             deps = []
         else:
@@ -312,6 +314,7 @@ elif "register" in args and len(args) == 7:
             "binary":hasBinary,
             "humanName":humanName,
             "releaseDate":releaseDate,
+            "author":author,
             }
         registerPkgInf(c)
     else:
