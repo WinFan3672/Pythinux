@@ -51,12 +51,12 @@ def saveGroupList(groupList):
         raise PythinuxError("Invalid grouplist to save.")
 
 
-def fixDirectories():
+def fixDirectories(returnMode=False):
     """
     Reconstructs the blank directories if they do not exist,
     because git doesn't count directories as files.
     """
-    for item in [
+    l = [
         "app",
         "app_high",
         "config",
@@ -65,7 +65,10 @@ def fixDirectories():
         "log",
         "rscript",
         "tmp",
-    ]:
+    ]
+    if returnMode:
+        return l
+    for item in l:
         if not os.path.isdir(item):
             os.mkdir(item)
 
@@ -141,17 +144,7 @@ def CompileOS():
     Clears your installation of Pythinux.
     """
     # clear directories
-    dirs = [
-        "app",
-        "app_high",
-        "config",
-        "home",
-        "lib",
-        "log",
-        "rscript",
-        "tmp",
-    ]
-    for item in dirs:
+    for item in fixDirectories(True):
         if os.path.isdir(item):
             shutil.rmtree(item)
             os.mkdir(item)
@@ -1234,11 +1227,10 @@ def loginScreen(username=None, password=None):
         if item.check(username, password):
             init(item, x)
             return
-    if x:
-        div()
-        print("Incorrect username/password sequence.")
-        br()
-        loginScreen(username, password)
+    div()
+    print("Incorrect username/password sequence.")
+    br()
+    loginScreen()
 
 
 def makeDir():

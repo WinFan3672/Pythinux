@@ -418,7 +418,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='5f120a08262ec39e7aaf6273370b6ef1db6a340b5bd80208d7cfa647bcd0595ba464fae61bda5922143c591a27411a7d', hidden=False)
+     |  User(group, username, password='b7d4db6b82b3d87b5086137324e12fe928c2b89d3a794ef292939aa1ce188f79e2bc2877750c8c1ca24a7681802aea45', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -433,7 +433,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='5f120a08262ec39e7aaf6273370b6ef1db6a340b5bd80208d7cfa647bcd0595ba464fae61bda5922143c591a27411a7d', hidden=False)
+     |  __init__(self, group, username, password='b7d4db6b82b3d87b5086137324e12fe928c2b89d3a794ef292939aa1ce188f79e2bc2877750c8c1ca24a7681802aea45', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -448,7 +448,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='20acd5f76bdf077f56938a2be4f5bd1cb4751c64c1959561fd90f36a77f67f50bf2ef4daf2c0454cf39ca002aaeb9e0c')
+     |  check(self, username, password='9a6703804db672a21acf5234bd923da810a6a0876b89fda341f92488224c36fcdf97d037edbe2c37f4b9cb0eaf818d2c')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -662,7 +662,7 @@ FUNCTIONS
         The dictionary is in the format {name:object}.
         Returns the module with the objects exposed.
     
-    fixDirectories()
+    fixDirectories(returnMode=False)
         Reconstructs the blank directories if they do not exist,
         because git doesn't count directories as files.
     
