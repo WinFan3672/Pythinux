@@ -1,1 +1,1 @@
-application = desktopShell.HelpTopicApp()
+application = desktopShell.HelpTopicsApp()

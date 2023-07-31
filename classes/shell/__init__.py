@@ -12,11 +12,13 @@ import pickle
 from PyQt5.QtCore import Qt
 import base64
 import toml
+import traceback
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import qdarktheme
+import markdown
 def getIconList():
     l = [
             {
@@ -112,14 +114,16 @@ def loadProgram(item, currentUser, manager):
         i = pythinux.load_program(item, currentUser)
         i = i.application
         manager.add_window(i)
-    except Exception as e:
-        return e
+    except:
+        print(traceback.format_exc())
 class HelpTopicsApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUI()
 
     def initUI(self):
+        icon = QIcon("../img/guihelp.svg")
+        self.setWindowIcon(icon)
         self.setWindowTitle('Pythinux {}: Help Topics'.format(".".join([str(x) for x in pythinux.version])))
         self.setGeometry(100, 100, 800, 600)
 
@@ -137,11 +141,17 @@ class HelpTopicsApp(QMainWindow):
             self.tree_view.setModel(self.model)
             self.tree_view.setRootIndex(root_index)
 
+            # Hide the unnecessary size, type, and date fields from the header
+            header = self.tree_view.header()
+            header.setSectionHidden(1, True)  # Size column
+            header.setSectionHidden(2, True)  # Type column
+            header.setSectionHidden(3, True)  # Date column
+
             # Create a QTextBrowser widget to display the help topics content
             self.text_browser = QTextBrowser()
 
-            # Create a layout to arrange the tree view and text browser side by side
-            layout = QVBoxLayout()
+            # Create a layout to arrange the tree view and text browser vertically
+            layout = QHBoxLayout()
             layout.addWidget(self.tree_view)
             layout.addWidget(self.text_browser)
 
@@ -170,7 +180,8 @@ class HelpTopicsApp(QMainWindow):
                 # Read the content of the selected help topic file and display it in the QTextBrowser
                 with open(path, 'r', encoding='utf-8') as file:
                     content = file.read()
-                    self.text_browser.setPlainText(content)
+                    html_content = markdown.markdown(content)
+                    self.text_browser.setHtml(html_content)
 class ProgramLoader(QMainWindow):
     def __init__(self, user, manager):
         super().__init__()
@@ -257,14 +268,19 @@ def startShell(currentUser):
     menubar.addMenu(fileMenu)
     menubar.addMenu(winMenu)
     menubar.addMenu(helpMenu)
+    helpTopicsAction = QAction("Help Topics",window)
+    helpTopicsAction.triggered.connect(lambda:loadProgram("guihelp",currentUser,manager))
     quit_action = QAction("Exit", window)
     quit_action.triggered.connect(sys.exit)
     fileMenu.addAction(quit_action)
 
     msg = [
         "Welcome to Pythinux.",
-        "A program loader has launched.",
-        "Use it to open programs, such as the built-in terminal emulator.",
+        "This is the central window.",
+        "If this window closes, everything does.",
+        "A program manager has also launched.",
+        "It allows you to launch programs.",
+        "For help, go to Help > Help Topics."
     ]
     msg = "\n".join([str(x) for x in msg])
     label = QLabel(msg)
