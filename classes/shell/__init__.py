@@ -104,7 +104,10 @@ class TerminalApp(QMainWindow):
         elif user_input.lower() in ["exit","quit"]:
             self.close()
         else:
-            cmd = ["python", "-c", f"import os; os.chdir('..'); import pythinux; x = pythinux.main('{self.currentUser.uuid}','{user_input}');print(x if x else '')"]
+            u = pythinux.serialiseToDict(self.currentUser)
+            u = pickle.dumps(u)
+            u = base64.b64encode(u).decode("ascii")
+            cmd = ["python", "-c", f"import os; os.chdir('..'); import pythinux; x = pythinux.main('{u}','{user_input}');print(x if x else '')"]
             result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             self.cursor.movePosition(self.cursor.End)
             self.output_area.setTextCursor(self.cursor)
@@ -122,10 +125,10 @@ class HelpTopicsApp(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        icon = QIcon("../img/guihelp.svg")
-        self.setWindowIcon(icon)
-        self.setWindowTitle('Pythinux {}: Help Topics'.format(".".join([str(x) for x in pythinux.version])))
+        self.setWindowTitle('Help Topics')
         self.setGeometry(100, 100, 800, 600)
+        self.icon = QIcon("../img/guihelp.svg")
+        self.setWindowIcon(self.icon)
 
         # Create a QFileSystemModel to populate the tree view
         self.model = QFileSystemModel()
@@ -162,6 +165,10 @@ class HelpTopicsApp(QMainWindow):
 
             # Connect the item selection signal to show_help_content method
             self.tree_view.selectionModel().selectionChanged.connect(self.show_help_content)
+
+            # Set custom icons for directories and files
+            self.tree_view.setItemDelegate(MyItemDelegate())
+
         else:
             print(f"Invalid root index: {help_topics_folder}")
 
@@ -182,6 +189,15 @@ class HelpTopicsApp(QMainWindow):
                     content = file.read()
                     html_content = markdown.markdown(content)
                     self.text_browser.setHtml(html_content)
+
+
+class MyItemDelegate(QStyledItemDelegate):
+    def initStyleOption(self, option, index):
+        super().initStyleOption(option, index)
+        if index.model().isDir(index):
+            option.icon = QIcon('../img/folder.svg')  # Replace with your custom folder icon path
+        else:
+            option.icon = QIcon('../img/file.svg')  # Replace with your custom file icon path
 class ProgramLoader(QMainWindow):
     def __init__(self, user, manager):
         super().__init__()

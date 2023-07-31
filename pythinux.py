@@ -13,12 +13,15 @@ import threading
 import ast
 import copy as cp
 from io import StringIO
-from getpass import getpass
 import classes
+from getpass import getpass
+from classes import permissions
 from classes import shell
 from classes import login
 from PyQt5.QtWidgets import *
+import base64
 import uuid
+import types
 
 global osName, version, cdir, var
 osName = "Pythinux"
@@ -179,6 +182,7 @@ def CompileOS():
     """
     Clears your installation of Pythinux.
     """
+    # clear directories
     for item in fixDirectories(True):
         if os.path.isdir(item):
             shutil.rmtree(item)
@@ -575,7 +579,7 @@ class UserList(Base):
 
     def uuid(self, uuid):
         for item in self.users:
-            print(item.uuid, uuid)
+            print(item.uuid,uuid)
             if uuid == item.uuid:
                 return item
         raise PythinuxError("Invalid user by name.")
@@ -785,12 +789,10 @@ def parseInput(user, string, shell):
 
 
 def main(user, prompt, sudoMode=False, shell="terminal", doNotExecute=False):
-    print(os.getcwd())
-    print(os.listdir("system_low"))
     if isinstance(user, str):
-        user = userList.uuid(user)
-    else:
-        termMode = False
+        user = base64.b64decode(user)
+        user = pickle.loads(user)
+        user = deserialiseFromDict(user)
     """
     Main function. Used to execute commands.
     Args:
@@ -851,43 +853,34 @@ def exposeObjects(module, objects):
     for object_name, obj in objects.items():
         setattr(module, object_name, obj)
 
-
 def sudoPrompt():
     app = QApplication(sys.argv)
     window = QWidget()
-    window.setWindowTitle("Authentication Required")
-
-    label = QLabel(
-        "A program requires higher level access to run. Please authenticate yourself."
-    )
-    password_label = QLabel("Password:")
+    window.setWindowTitle('Authentication Required')
+    
+    label = QLabel("A program requires higher level access to run. Please authenticate yourself.")
+    password_label = QLabel('Password:')
     password_input = QLineEdit()
-    password_input.setEchoMode(
-        QLineEdit.Password
-    )  # To hide the password input
-
-    login_button = QPushButton("Unlock PC")
-    login_button.clicked.connect(
-        app.quit
-    )  # Close the application when login button is clicked
-
+    password_input.setEchoMode(QLineEdit.Password)  # To hide the password input
+    
+    login_button = QPushButton('Unlock PC')
+    login_button.clicked.connect(app.quit)  # Close the application when login button is clicked
+    
     layout = QGridLayout()
-    layout.addWidget(label, 0, 1)
-    layout.addWidget(password_label, 1, 0)
-    layout.addWidget(password_input, 1, 1)
-    layout.addWidget(login_button, 2, 1)
-
+    layout.addWidget(label,0,1)
+    layout.addWidget(password_label,1,0)
+    layout.addWidget(password_input,1,1)
+    layout.addWidget(login_button,2,1)
+    
     window.setLayout(layout)
     window.show()
-
+    
     # Start the event loop and wait for the application to finish (when app.quit() is called)
     app.exec_()
 
     # Return the username and password provided by the user
     password = password_input.text()
     return password
-
-
 def sudo(user, maxAttempts=10, incorrectAttempts=0):
     """
     Password authentication.
@@ -906,8 +899,6 @@ def sudo(user, maxAttempts=10, incorrectAttempts=0):
 
 
 def splitString(string):
-    if not isinstance(string, str):
-        return string
     """
     Used by main() for turning a string into a list of arguments.
     """
@@ -1122,17 +1113,27 @@ def load_program(
     __name__=None,
     isolatedMode=False,
 ):
-    module, module_spec = loadProgramBase(
-        program_name_with_args,
-        user,
-        sudoMode,
-        shell,
-        __name__,
-        isolatedMode,
-    )
+    if debugMode:
+        print(
+            "### Load Arguments:",
+            [program_name_with_args, user, sudoMode, shell, __name__],
+        )
+    try:
+        module, module_spec = loadProgramBase(
+            program_name_with_args,
+            user,
+            sudoMode,
+            shell,
+            __name__,
+            isolatedMode,
+        )
+    except Exception as e:
+        return
     if baseMode:
         return module, module_spec
     if module:
+        if debugMode:
+            print("### Arguments:", module.args)
         module_spec.loader.exec_module(module)
         return module
 
@@ -1320,10 +1321,10 @@ def loginScreen(username=None):
     Once you enter your details, init() is called.
     """
     if username:
-        unlockMode = True
+        unlockMode=True
         password = login.unlockScreen()
     else:
-        unlockMode = False
+        unlockMode=False
         username, password = login.loginScreen()
     for item in userList.list():
         if item.check(username, password):
@@ -1454,6 +1455,42 @@ def obj_to_dict(obj, addItemType=True):
         obj_dict[attr] = obj_to_dict(value)
     return obj_dict
 
+def serialiseToDict(obj):
+    """
+    Custom JSON serializer for handling class instances and methods.
+    """
+    if isinstance(obj, types.FunctionType):
+        return {
+            "@itemType": "function",
+            "code": obj.__code__.co_code.hex()
+        }
+    elif isinstance(obj, object) and hasattr(obj, "__dict__"):
+        return {
+            "@itemType": "class",
+            "__module__": obj.__module__,
+            "__class__": obj.__class__.__name__,
+            **obj.__dict__
+        }
+    return obj
+
+def deserialiseFromDict(dct):
+    """
+    Custom JSON deserializer for handling class instances and methods.
+    """
+    if "@itemType" in dct:
+        item_type = dct.pop("@itemType")
+        if item_type == "function":
+            method_code = bytes.fromhex(dct["code"])
+            return types.FunctionType(code=method_code, globals=globals())
+        elif item_type == "class":
+            module_name = dct["__module__"]
+            class_name = dct["__class__"]
+            module = __import__(module_name)
+            cls = getattr(module, class_name)
+            instance = cls.__new__(cls)
+            instance.__dict__.update(dct)
+            return instance
+    return dct
 
 def pprint_dict(dic):
     """
@@ -1490,18 +1527,14 @@ def setupWizardBase(username, password, autoLogin):
 
 
 def setupWizard():
-    """
-    Setup wizard.
-    Uses setupWizardBase() as a backend.
-    """
     app = QApplication(sys.argv)
     window = QWidget()
     window.setWindowTitle("Setup Wizard")
 
-    username_label = QLabel("Set a Username (Required):")
+    username_label = QLabel("Set a Username:")
     username_input = QLineEdit()
 
-    password_label = QLabel("Set a Password (Required):")
+    password_label = QLabel("Set a Password:")
     password_input = QLineEdit()
     password_input.setEchoMode(
         QLineEdit.Password
@@ -1513,9 +1546,6 @@ def setupWizard():
     )  # Close the application when login button is clicked
 
     checkbox = QCheckBox("Enable Automatic Login")
-    checkbox.setToolTip(
-        "Automatic login means you do not have to enter your username when logging in."
-    )
 
     layout = QGridLayout()
     layout.addWidget(username_label, 0, 0)
@@ -1544,12 +1574,11 @@ try:
     os.chdir("pythinux")
     fixDirectories()
 except Exception:
-    traceback.format_exc()
+        traceback.format_exc()
 cdir = os.getcwd()
 global userList, groupList
-if __name__ == "__main__":
-    if loadUserList().users == []:
-        setupWizard()
+if loadUserList().users == []:
+    setupWizard()
 userList = loadUserList()
 groupList = loadGroupList()
 global pdir
