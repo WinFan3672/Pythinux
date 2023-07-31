@@ -24,6 +24,11 @@ def getIconList():
                 "link":"terminal",
                 "icon":"terminal",
             },
+            {
+                "name":"Help Topics",
+                "link":"guihelp",
+                "icon":"guihelp",
+            },
         ]
     files = [x for x in os.listdir("icon") if x.endswith(".entry")]
     for f in files:
@@ -109,6 +114,63 @@ def loadProgram(item, currentUser, manager):
         manager.add_window(i)
     except Exception as e:
         return e
+class HelpTopicsApp(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle('Pythinux {}: Help Topics'.format(".".join([str(x) for x in pythinux.version])))
+        self.setGeometry(100, 100, 800, 600)
+
+        # Create a QFileSystemModel to populate the tree view
+        self.model = QFileSystemModel()
+        self.model.setRootPath('')  # Set an initial path
+        self.model.setFilter(QDir.NoDotAndDotDot | QDir.AllDirs | QDir.Files)
+
+        # Specify the path to the help topics folder
+        help_topics_folder = '../helptopics'
+        root_index = self.model.index(help_topics_folder)
+        if root_index.isValid():
+            self.model.setRootPath(self.model.filePath(root_index))
+            self.tree_view = QTreeView(self)
+            self.tree_view.setModel(self.model)
+            self.tree_view.setRootIndex(root_index)
+
+            # Create a QTextBrowser widget to display the help topics content
+            self.text_browser = QTextBrowser()
+
+            # Create a layout to arrange the tree view and text browser side by side
+            layout = QVBoxLayout()
+            layout.addWidget(self.tree_view)
+            layout.addWidget(self.text_browser)
+
+            # Create a central widget and set the layout
+            central_widget = QWidget()
+            central_widget.setLayout(layout)
+            self.setCentralWidget(central_widget)
+
+            # Connect the item selection signal to show_help_content method
+            self.tree_view.selectionModel().selectionChanged.connect(self.show_help_content)
+        else:
+            print(f"Invalid root index: {help_topics_folder}")
+
+    def show_help_content(self, selected, deselected):
+        # Get the path of the selected item
+        indexes = selected.indexes()
+        if indexes:
+            index = indexes[0]
+            path = self.model.filePath(index)
+
+            # Check if the selected item is a file
+            if self.model.isDir(index):
+                # Clear the QTextBrowser if a directory is selected
+                self.text_browser.setPlainText('')
+            else:
+                # Read the content of the selected help topic file and display it in the QTextBrowser
+                with open(path, 'r', encoding='utf-8') as file:
+                    content = file.read()
+                    self.text_browser.setPlainText(content)
 class ProgramLoader(QMainWindow):
     def __init__(self, user, manager):
         super().__init__()
