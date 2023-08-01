@@ -97,7 +97,7 @@ class TerminalApp(QMainWindow):
         self.input_field.clear()
         self.cursor.movePosition(self.cursor.End)
         self.output_area.setTextCursor(self.cursor)
-        self.output_area.insertPlainText(f"{self.currentUser.group.name}@{self.currentUser.username}$ {user_input}\n")
+        self.output_area.insertPlainText(f"{self.currentUser.group.name}@{self.currentUser.username} ${user_input}\n")
         if user_input.lower() in ['clear', 'cls']:
             # Clear the terminal output
             self.output_area.clear()

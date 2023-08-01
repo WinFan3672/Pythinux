@@ -25,7 +25,7 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:zoom="24.388889"
      inkscape:cx="17.979499"
-     inkscape:cy="18"
+     inkscape:cy="18.020501"
      inkscape:window-width="1920"
      inkscape:window-height="1048"
      inkscape:window-x="0"
@@ -38,7 +38,7 @@
      class="clr-i-outline clr-i-outline-path-1"
      d="M30,9H16.42L14.11,5.82A2,2,0,0,0,12.49,5H6A2,2,0,0,0,4,7V29a2,2,0,0,0,2,2H30a2,2,0,0,0,2-2V11A2,2,0,0,0,30,9Zm0,20H6V13h7.31a2,2,0,0,0,2-2H6V7h6.49l2.61,3.59a1,1,0,0,0,.81.41H30Z"
      id="path1"
-     style="fill:#f9f9f9" />
+     style="fill:#ffcc00" />
   <rect
      x="0"
      y="0"
@@ -46,5 +46,5 @@
      height="36"
      fill-opacity="0"
      id="rect1"
-     style="fill:#f9f9f9" />
+     style="fill:#ffcc00" />
 </svg>
