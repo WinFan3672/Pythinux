@@ -1574,7 +1574,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='883f2d0704898efbabc16f92eaf02c87252bd74ee6634aefa03fba4735ab81c969c20f052a89d7e7cae97a42d8dba722', hidden=False)
+     |  User(group, username, password='7aa1a9dbdfe2a561c013db299695ca05c4b353ff691c31b77565320f979ece796b97dd07c8938ef32cfeb87ca524f55d', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -1589,7 +1589,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='883f2d0704898efbabc16f92eaf02c87252bd74ee6634aefa03fba4735ab81c969c20f052a89d7e7cae97a42d8dba722', hidden=False)
+     |  __init__(self, group, username, password='7aa1a9dbdfe2a561c013db299695ca05c4b353ff691c31b77565320f979ece796b97dd07c8938ef32cfeb87ca524f55d', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -1604,7 +1604,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='1f5247dc92af98398180df302601153491bcb9c49e7c01a20bdad6d13aa41ecf5627bed15f7040bed188d09a412ba292')
+     |  check(self, username, password='b68b89be28423d8938f7ac0c72ed3698fb1286bf3e9751203b94ffa97c208a3e79b5980dfc571f9880ecb623f83af108')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -1669,8 +1669,6 @@ CLASSES
      |  remove(self, user)
      |  
      |  removeByName(self, name)
-     |  
-     |  uuid(self, uuid)
      |  
      |  ----------------------------------------------------------------------
      |  Data descriptors defined here:
@@ -1797,6 +1795,9 @@ FUNCTIONS
             user: a User instance.
         Returns:
             userlist: a userlist that can be passed to saveUserList().
+    
+    deserialiseFromDict(dct)
+        Custom JSON deserializer for handling class instances and methods.
     
     div()
         Prints 20 hyphen/dash symbols.
@@ -1986,12 +1987,13 @@ FUNCTIONS
         Saves a userlist to the file system.
         userlist: a userlist (returned by loadUserlist()).
     
+    serialiseToDict(obj)
+        Custom JSON serializer for handling class instances and methods.
+    
     setVars(var)
         Unused.
     
     setupWizard()
-        Setup wizard.
-        Uses setupWizardBase() as a backend.
     
     setupWizardBase(username, password, autoLogin)
         Setup wizard.
@@ -2011,6 +2013,7 @@ FUNCTIONS
         function: a callable object.
     
     splitString(string)
+        Used by main() for turning a string into a list of arguments.
     
     startService(thread, name)
         Starts a service.

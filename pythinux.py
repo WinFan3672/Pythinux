@@ -20,7 +20,6 @@ from classes import shell
 from classes import login
 from PyQt5.QtWidgets import *
 import base64
-import uuid
 import types
 
 global osName, version, cdir, var
@@ -516,7 +515,6 @@ class User(Base):
         self.username = username
         self.password = hashString(password)
         self.hidden = hidden
-        self.uuid = str(uuid.uuid4())
 
     def check(self, username, password=hashString("")):
         """
@@ -574,13 +572,6 @@ class UserList(Base):
         """
         for item in self.users:
             if name == item.username:
-                return item
-        raise PythinuxError("Invalid user by name.")
-
-    def uuid(self, uuid):
-        for item in self.users:
-            print(item.uuid,uuid)
-            if uuid == item.uuid:
                 return item
         raise PythinuxError("Invalid user by name.")
 
@@ -853,34 +844,43 @@ def exposeObjects(module, objects):
     for object_name, obj in objects.items():
         setattr(module, object_name, obj)
 
+
 def sudoPrompt():
     app = QApplication(sys.argv)
     window = QWidget()
-    window.setWindowTitle('Authentication Required')
-    
-    label = QLabel("A program requires higher level access to run. Please authenticate yourself.")
-    password_label = QLabel('Password:')
+    window.setWindowTitle("Authentication Required")
+
+    label = QLabel(
+        "A program requires higher level access to run. Please authenticate yourself."
+    )
+    password_label = QLabel("Password:")
     password_input = QLineEdit()
-    password_input.setEchoMode(QLineEdit.Password)  # To hide the password input
-    
-    login_button = QPushButton('Unlock PC')
-    login_button.clicked.connect(app.quit)  # Close the application when login button is clicked
-    
+    password_input.setEchoMode(
+        QLineEdit.Password
+    )  # To hide the password input
+
+    login_button = QPushButton("Unlock PC")
+    login_button.clicked.connect(
+        app.quit
+    )  # Close the application when login button is clicked
+
     layout = QGridLayout()
-    layout.addWidget(label,0,1)
-    layout.addWidget(password_label,1,0)
-    layout.addWidget(password_input,1,1)
-    layout.addWidget(login_button,2,1)
-    
+    layout.addWidget(label, 0, 1)
+    layout.addWidget(password_label, 1, 0)
+    layout.addWidget(password_input, 1, 1)
+    layout.addWidget(login_button, 2, 1)
+
     window.setLayout(layout)
     window.show()
-    
+
     # Start the event loop and wait for the application to finish (when app.quit() is called)
     app.exec_()
 
     # Return the username and password provided by the user
     password = password_input.text()
     return password
+
+
 def sudo(user, maxAttempts=10, incorrectAttempts=0):
     """
     Password authentication.
@@ -1321,10 +1321,10 @@ def loginScreen(username=None):
     Once you enter your details, init() is called.
     """
     if username:
-        unlockMode=True
+        unlockMode = True
         password = login.unlockScreen()
     else:
-        unlockMode=False
+        unlockMode = False
         username, password = login.loginScreen()
     for item in userList.list():
         if item.check(username, password):
@@ -1455,23 +1455,22 @@ def obj_to_dict(obj, addItemType=True):
         obj_dict[attr] = obj_to_dict(value)
     return obj_dict
 
+
 def serialiseToDict(obj):
     """
     Custom JSON serializer for handling class instances and methods.
     """
     if isinstance(obj, types.FunctionType):
-        return {
-            "@itemType": "function",
-            "code": obj.__code__.co_code.hex()
-        }
+        return {"@itemType": "function", "code": obj.__code__.co_code.hex()}
     elif isinstance(obj, object) and hasattr(obj, "__dict__"):
         return {
             "@itemType": "class",
             "__module__": obj.__module__,
             "__class__": obj.__class__.__name__,
-            **obj.__dict__
+            **obj.__dict__,
         }
     return obj
+
 
 def deserialiseFromDict(dct):
     """
@@ -1491,6 +1490,7 @@ def deserialiseFromDict(dct):
             instance.__dict__.update(dct)
             return instance
     return dct
+
 
 def pprint_dict(dic):
     """
@@ -1543,7 +1543,7 @@ def setupWizard():
     login_button = QPushButton("Finish Setup")
     login_button.clicked.connect(
         app.quit
-    )  # Close the application when login button is clicked
+    )
 
     checkbox = QCheckBox("Enable Automatic Login")
 
@@ -1574,7 +1574,7 @@ try:
     os.chdir("pythinux")
     fixDirectories()
 except Exception:
-        traceback.format_exc()
+    traceback.format_exc()
 cdir = os.getcwd()
 global userList, groupList
 if loadUserList().users == []:
