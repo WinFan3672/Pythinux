@@ -18,6 +18,7 @@ from getpass import getpass
 from classes import permissions
 from classes import shell
 from classes import login
+from classes import settings
 from PyQt5.QtWidgets import *
 import base64
 import types
@@ -78,6 +79,11 @@ def loadGroupList():
         g = GroupList()
         saveGroupList(g)
         return g
+
+
+def sortDictionary(dictionary):
+    sorted_dict = {k: v for k, v in sorted(dictionary.items())}
+    return sorted_dict
 
 
 def saveGroupList(groupList):
@@ -398,6 +404,7 @@ class Group(Base):
         canSysHigh=False,
         canSudo=False,
         locked=False,
+        builtin=False,
     ):
         """
         Defines nanme and permissions of the Group.
@@ -418,6 +425,7 @@ class Group(Base):
         self.canSysHigh = canSysHigh
         self.canSudo = canSudo
         self.locked = locked
+        self.builtin = builtin
 
 
 class GroupList(Base):
@@ -427,10 +435,18 @@ class GroupList(Base):
 
     def __init__(self):
         self.groups = [
-            Group("guest"),
-            Group("user", True, canSudo=True, locked=True),
-            Group("root", True, True, True, canSudo=True, locked=True),
-            Group("god", True, True, True, True, True),
+            Group("guest", builtin=True),
+            Group("user", True, canSudo=True, locked=True, builtin=True),
+            Group(
+                "root",
+                True,
+                True,
+                True,
+                canSudo=True,
+                locked=True,
+                builtin=True,
+            ),
+            Group("god", True, True, True, True, True, True),
         ]
 
     def add(self, group):
@@ -845,6 +861,10 @@ def exposeObjects(module, objects):
         setattr(module, object_name, obj)
 
 
+def load_library(name, user, *args, **kwargs):
+    return silent(lambda: load_program(name, user, *args, **kwargs))
+
+
 def sudoPrompt():
     app = QApplication(sys.argv)
     window = QWidget()
@@ -1046,6 +1066,9 @@ def loadProgramBase(
                 "createService": copy(createService),
                 "attachDebugger": copy(attachDebugger),
                 "desktopShell": copy(classes.shell),
+                "classes": copy(classes),
+                "settingsApp": copy(settings),
+                "load_library": copy(load_library),
             }
             if directory in [
                 system_directory,

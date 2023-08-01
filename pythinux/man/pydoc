@@ -195,7 +195,7 @@ CLASSES
      |      list of weak references to the object (if defined)
     
     class Group(Base)
-     |  Group(name, canApp=False, canAppHigh=False, canSys=False, canSysHigh=False, canSudo=False, locked=False)
+     |  Group(name, canApp=False, canAppHigh=False, canSys=False, canSysHigh=False, canSudo=False, locked=False, builtin=False)
      |  
      |  User groups with custom permissions.
      |  
@@ -206,7 +206,7 @@ CLASSES
      |  
      |  Methods defined here:
      |  
-     |  __init__(self, name, canApp=False, canAppHigh=False, canSys=False, canSysHigh=False, canSudo=False, locked=False)
+     |  __init__(self, name, canApp=False, canAppHigh=False, canSys=False, canSysHigh=False, canSudo=False, locked=False, builtin=False)
      |      Defines nanme and permissions of the Group.
      |      name: name of group. Set to all-lowercase.
      |      canApp: Boolean. Defines whether or not the user can access apps.
@@ -1574,7 +1574,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='890e1fc5e693856c25b1ae4af47c3fc317bcab2df333703493f56ceabd3b38d3efd9ac8fbf9a97f5281cbf134a2c3060', hidden=False)
+     |  User(group, username, password='62506e216b06b7be14b909db13f4c5c0d7e890a890d9e8cb24b9ace3d18955320b3acdb661d3ffa21ba83bce9a0bf235', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -1589,7 +1589,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='890e1fc5e693856c25b1ae4af47c3fc317bcab2df333703493f56ceabd3b38d3efd9ac8fbf9a97f5281cbf134a2c3060', hidden=False)
+     |  __init__(self, group, username, password='62506e216b06b7be14b909db13f4c5c0d7e890a890d9e8cb24b9ace3d18955320b3acdb661d3ffa21ba83bce9a0bf235', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -1604,7 +1604,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='148a63f32da73c6e1c5c7068fce8624eb727a695db6842b7105d1044d07c28667b72c81f6b385470e980bf5d29ad03f3')
+     |  check(self, username, password='4c210c314de050689b050c3fd3e93b27b0c4b17b34c727f8dc00bd8dd4b3020ea89f521a11fdfcd33f15ad574cc6fec1')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -1889,6 +1889,8 @@ FUNCTIONS
         Handles loading the userlist from the file system.
         Returns the userlist when called.
     
+    load_library(name, user, *args, **kwargs)
+    
     load_program(program_name_with_args, user, sudoMode=False, shell='terminal', debugMode=False, baseMode=False, __name__=None, isolatedMode=False)
     
     logEvent(text, log='base_log')
@@ -2021,6 +2023,8 @@ FUNCTIONS
         Runs some code without outputting anything to the terminal
         Args:
         function: a callable object.
+    
+    sortDictionary(dictionary)
     
     splitString(string)
         Used by main() for turning a string into a list of arguments.

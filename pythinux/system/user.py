@@ -48,7 +48,6 @@ elif "info" in args and len(args) == 2:
     print("Password: {}".format(u.password))
     print("Group: {}".format(u.group.name))
     print("Hidden: {}".format("Yes" if u.hidden else "No"))
-    print("Unique User ID: {}".format(u.uuid))
     div()
 else:
     div()

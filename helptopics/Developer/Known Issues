@@ -1,0 +1,3 @@
+# Known Issues
+* Terminal does not show text while the command is running.
+* GUI programs cannot access the current window manager, and can only create a new one.

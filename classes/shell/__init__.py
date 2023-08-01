@@ -19,19 +19,31 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import qdarktheme
 import markdown
-def getIconList():
+def getIconList(currentUser):
     l = [
             {
                 "name":"Terminal Emulator",
                 "link":"terminal",
                 "icon":"terminal",
+                "elevate":False,
             },
             {
                 "name":"Help Topics",
                 "link":"guihelp",
                 "icon":"guihelp",
+                "elevate":False,
+            },
+            {
+                "name":"Settings",
+                "link":"settings",
+                "icon":"settings",
+                "elevate":True,
             },
         ]
+    z = []
+    for item in l:
+        if item["link"] in pythinux.list_loadable_programs(currentUser):
+            z.append(item)
     files = [x for x in os.listdir("icon") if x.endswith(".entry")]
     for f in files:
         with open("icon/{}".format(f)) as f:
@@ -42,7 +54,7 @@ def getIconList():
                 l.append(z)
             except:
                 pass
-    return l
+    return sorted(l, key=lambda x: x['name'])
 class WindowManager:
     def __init__(self, user):
         self.windows = []
@@ -112,7 +124,7 @@ class TerminalApp(QMainWindow):
             self.cursor.movePosition(self.cursor.End)
             self.output_area.setTextCursor(self.cursor)
             self.output_area.insertPlainText(result.stdout.strip()+"\n")
-def loadProgram(item, currentUser, manager):
+def loadProgram(item, currentUser, manager, needAdmin):
     try:
         i = pythinux.load_program(item, currentUser)
         i = i.application
@@ -198,6 +210,12 @@ class MyItemDelegate(QStyledItemDelegate):
             option.icon = QIcon('../img/folder.svg')  # Replace with your custom folder icon path
         else:
             option.icon = QIcon('../img/file.svg')  # Replace with your custom file icon path
+def check_button_exists(layout):
+    for i in range(layout.count()):
+        widget = layout.itemAt(i).widget()
+        if isinstance(widget, QPushButton) and widget.text() == "Exit":
+            return True
+    return False
 class ProgramLoader(QMainWindow):
     def __init__(self, user, manager):
         super().__init__()
@@ -220,12 +238,15 @@ class ProgramLoader(QMainWindow):
         self.fileMenu.addAction(self.refresh_action)
         
         self.central_widget = QWidget(self)
-        self.layout = QGridLayout(self.central_widget)
+        self.frame = QFrame()
+        self.baseLayout = QVBoxLayout(self.central_widget)
+        self.baseLayout.addWidget(self.frame)
+        self.layout = QGridLayout(self.frame)
 
         self.setCentralWidget(self.central_widget)
     def load_icons(self):
         icons = []
-        for item in getIconList():
+        for item in getIconList(self.user):
             if item["icon"]:
                 if isinstance(item["icon"],str):
                     icon = QIcon("../img/{}.svg".format(item["icon"]))
@@ -234,7 +255,7 @@ class ProgramLoader(QMainWindow):
             else:
                 icon = QIcon("../img/default.svg")
             action = QAction("Load", self)
-            action.triggered.connect(lambda _, link=item["link"]: loadProgram(link, self.user, self.manager))
+            action.triggered.connect(lambda _, link=item["link"]: loadProgram(link, self.user, self.manager, item["elevate"]))
             icons.append((icon, action, item))
 
         x, y = 0, 0
@@ -250,6 +271,10 @@ class ProgramLoader(QMainWindow):
             if y >= 5:
                 x += 1
                 y = 0
+        if not check_button_exists(self.baseLayout):
+            self.button = QPushButton("Exit")
+            self.button.clicked.connect(sys.exit)
+            self.baseLayout.addWidget(self.button)
     def clear_layout(self):
         while self.layout.count():
             item = self.layout.takeAt(0)
@@ -263,7 +288,7 @@ class ProgramLoader(QMainWindow):
         print("Did Refresh")
         self.load_icons()
     def closeEvent(self, event):
-        event.ignore()
+        sys.exit()
 class Application:
     def __init__(self, title, width, height):
         self.title = title
@@ -271,54 +296,11 @@ class Application:
         self.height = height
 def startShell(currentUser):
     manager = WindowManager(currentUser)
-    window = QMainWindow()
-    icon = QIcon("../img/main.svg")
-    window.setWindowIcon(icon)
-    window.resize(800, 600)
-    window.setWindowTitle('Pythinux {} (Unstable Build)'.format(".".join([str(x) for x in pythinux.version])))
-
-    menubar = window.menuBar()
-    fileMenu = QMenu("File")
-    # winMenu = QMenu("Window")
-    helpMenu = QMenu("Help")
-    menubar.addMenu(fileMenu)
-    # menubar.addMenu(winMenu)
-    menubar.addMenu(helpMenu)
-    helpTopicsAction = QAction("Help Topics",window)
-    helpTopicsAction.triggered.connect(lambda:loadProgram("guihelp",currentUser,manager))
-    helpTopicsAction.setShortcut("F1")
-    helpMenu.addAction(helpTopicsAction)
-    quit_action = QAction("Exit", window)
-    quit_action.triggered.connect(sys.exit)
-    fileMenu.addAction(quit_action)
-
-    msg = [
-        "Welcome to Pythinux.",
-        "This is the central window.",
-        "If this window closes, everything does.",
-        "A program manager has also launched.",
-        "It allows you to launch programs.",
-        "For help, go to Help > Help Topics."
-    ]
-    msg = "\n".join([str(x) for x in msg])
-    label = QLabel(msg)
-    label.setAlignment(Qt.AlignCenter)
-    closeButton = QPushButton("Exit")
-    closeButton.clicked.connect(sys.exit)
-
-    central_widget = QWidget(window)  # Set the main window as the parent for central widget
-
-    layout = QGridLayout(central_widget)
-    layout.addWidget(label, 0, 0)
-    layout.addWidget(closeButton, 1, 0)
-
-    window.setCentralWidget(central_widget)
     
     # terminal = TerminalApp(currentUser)
     program_loader = ProgramLoader(currentUser, manager)
     
     # manager.add_window(terminal)
-    manager.add_window(window)
     manager.add_window(program_loader)
     
     manager.run()
