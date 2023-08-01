@@ -1541,9 +1541,7 @@ def setupWizard():
     )  # To hide the password input
 
     login_button = QPushButton("Finish Setup")
-    login_button.clicked.connect(
-        app.quit
-    )
+    login_button.clicked.connect(app.quit)
 
     checkbox = QCheckBox("Enable Automatic Login")
 

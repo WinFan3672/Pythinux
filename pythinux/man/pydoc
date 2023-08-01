@@ -1574,7 +1574,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='7aa1a9dbdfe2a561c013db299695ca05c4b353ff691c31b77565320f979ece796b97dd07c8938ef32cfeb87ca524f55d', hidden=False)
+     |  User(group, username, password='890e1fc5e693856c25b1ae4af47c3fc317bcab2df333703493f56ceabd3b38d3efd9ac8fbf9a97f5281cbf134a2c3060', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -1589,7 +1589,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='7aa1a9dbdfe2a561c013db299695ca05c4b353ff691c31b77565320f979ece796b97dd07c8938ef32cfeb87ca524f55d', hidden=False)
+     |  __init__(self, group, username, password='890e1fc5e693856c25b1ae4af47c3fc317bcab2df333703493f56ceabd3b38d3efd9ac8fbf9a97f5281cbf134a2c3060', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -1604,7 +1604,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='b68b89be28423d8938f7ac0c72ed3698fb1286bf3e9751203b94ffa97c208a3e79b5980dfc571f9880ecb623f83af108')
+     |  check(self, username, password='148a63f32da73c6e1c5c7068fce8624eb727a695db6842b7105d1044d07c28667b72c81f6b385470e980bf5d29ad03f3')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -1622,6 +1622,11 @@ CLASSES
      |  
      |  __dict__
      |      dictionary for instance variables (if defined)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |  
+     |  __slotnames__ = []
      |  
      |  ----------------------------------------------------------------------
      |  Methods inherited from Base:
@@ -1675,6 +1680,11 @@ CLASSES
      |  
      |  __dict__
      |      dictionary for instance variables (if defined)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |  
+     |  __slotnames__ = []
      |  
      |  ----------------------------------------------------------------------
      |  Methods inherited from Base:
