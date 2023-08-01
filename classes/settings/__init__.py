@@ -10,7 +10,27 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import qdarktheme
 import pickle
+import copy
 
+class DataBundle:
+    def add(self,name,value):
+        setattr(self,name,value)
+class Preferences(DataBundle):
+    def __init__(self):
+        super().__init__()
+        self.add("accentColour","Default")
+def loadPreferences():
+    try:
+        with open("config/system/shell.cfg","rb") as f:
+            return pickle.load(f)
+    except:
+        p = Preferences()
+        return savePreferences(p)
+def savePreferences(p):
+    if isinstance(p,Preferences):
+        with open("config/system/shell.cfg","wb") as f:
+            f.write(p)
+    return p
 def clearLayout(layout):
     while layout.count():
         item = layout.takeAt(0)
@@ -44,36 +64,141 @@ class GroupSettings(QWidget):
 
         self.groupList = QVBoxLayout(self.groupListBase)
         self.groupConfig = QVBoxLayout(self.groupConfigBase)
+
         i = 1
         for item in pythinux.loadGroupList().list():
             group = QGroupBox("Group: {}".format(item.name))
             lay = QVBoxLayout(group)
             if item.builtin:
-                    view_button = QPushButton("View Permissions")
+                view_button = QPushButton("View Permissions")
             else:
                 view_button = QPushButton("Edit Permissions")
+            data = pythinux.DataBundle()
+            data.add("name", item.name)
+            data.add("edit", not item.builtin)
+
+            # Fix lambda expressions to capture data correctly
+            view_button.clicked.connect(lambda _, data=data: self.edit_group(data))
             remove_button = QPushButton("Remove Group")
+            remove_button.clicked.connect(lambda _, name=item.name: self.remove_group(name))
+
             if item.locked:
                 remove_button.setEnabled(False)
-            
+
             lay.addWidget(view_button)
             lay.addWidget(remove_button)
-            self.groupList.addWidget(group)  # Fixed the layout setup here
+            self.groupList.addWidget(group)
             i += 1
-        self.groupList.addStretch()
+        self.groupList.addStretch()        
     def refresh(self):
         clearLayout(self.layout)
         self.load_groups()
         self.load_settings()
     def load_settings(self):
-        self.newgroup = QGroupBox("Create Group")
+        self.newGroupBase = QGroupBox("Create Group")
+        
+        self.groupNameLabel = QLabel("Group name:")
+        self.groupName = QLineEdit()
+        self.canApp = QCheckBox("Run Installed Apps")
+        self.canAppHigh = QCheckBox("Run Elevated Installed Apps")
+        self.canSys = QCheckBox("Run Elevated System Programs")
+        self.canSysHigh = QCheckBox("Run God-Level System Programs")
+        self.canSudo = QCheckBox("Use `sudo`")
+        self.newButton = QPushButton("Create Group")
+        self.newButton.clicked.connect(self.create_group)
+        
+        self.newGroup = QVBoxLayout(self.newGroupBase)
+        
+        self.newGroup.addWidget(self.groupNameLabel)
+        self.newGroup.addWidget(self.groupName)
+        self.newGroup.addWidget(self.canApp)
+        self.newGroup.addWidget(self.canAppHigh)
+        self.newGroup.addWidget(self.canSys)
+        self.newGroup.addWidget(self.canSysHigh)
+        self.newGroup.addWidget(self.canSudo)
+        self.newGroup.addWidget(self.newButton)
         
         self.refresh_button = QPushButton("Refresh")
         self.refresh_button.clicked.connect(self.refresh)
         
-        self.groupConfig.addWidget(self.newgroup)
+        self.groupConfig.addWidget(self.newGroupBase)
         self.groupConfig.addStretch()
         self.groupConfig.addWidget(self.refresh_button)
+        
+        self.layout.setStretchFactor(self.groupList, 1)
+        self.layout.setStretchFactor(self.groupConfig, 1)
+    def edit_group(self, data):
+        class EditGroup(QDialog):
+            def __init__(self, data):
+                super().__init__()
+                self.canEdit = data.edit
+                self.group = pythinux.loadGroupList().byName(data.name)
+                self.init_ui()
+            def init_ui(self):
+                self.setWindowTitle("Edit Group Permissions For {}".format(self.group.name))
+                self.setGeometry(200, 200, 300, 200)
+                self.layout = QVBoxLayout(self)
+                
+                self.canApp = QCheckBox("Run Installed Apps")
+                self.canAppHigh = QCheckBox("Run Elevated Installed Apps")
+                self.canSys = QCheckBox("Run Elevated System Programs")
+                self.canSysHigh = QCheckBox("Run God-Level System Programs")
+                self.canSudo = QCheckBox("Use `sudo`")
+                
+                self.canApp.setChecked(self.group.canApp)
+                self.canAppHigh.setChecked(self.group.canAppHigh)
+                self.canSys.setChecked(self.group.canSys)
+                self.canSysHigh.setChecked(self.group.canSysHigh)
+                self.canSudo.setChecked(self.group.canSudo)
+                
+                self.canApp.setEnabled(self.canEdit)
+                self.canAppHigh.setEnabled(self.canEdit)
+                self.canSys.setEnabled(self.canEdit)
+                self.canSysHigh.setEnabled(self.canEdit)
+                self.canSudo.setEnabled(self.canEdit)
+                
+                self.button = QPushButton("Done")
+                self.button.clicked.connect(self.close)
+                
+                self.layout.addWidget(self.canApp)
+                self.layout.addWidget(self.canAppHigh)
+                self.layout.addWidget(self.canSys)
+                self.layout.addWidget(self.canSysHigh)
+                self.layout.addWidget(self.canSudo)
+                self.layout.addWidget(self.button)
+                
+        root = EditGroup(data)
+        root.show()
+        root.exec_()
+        
+        root.group.canApp = root.canApp.isChecked()
+        root.group.canAppHigh = root.canAppHigh.isChecked()
+        root.group.canSys = root.canSys.isChecked()
+        root.group.canSysHigh = root.canSysHigh.isChecked()
+        root.group.canSudo = root.canSudo.isChecked()
+        
+        groupList = pythinux.loadGroupList()
+        groupList.add(root.group)
+        pythinux.saveGroupList(groupList)
+        
+        
+    def create_group(self):
+        if self.groupName.text():
+            cmd = "group add '{}' {} {} {} {} {}".format(
+                self.groupName.text(),
+                int(self.canApp.isChecked()),
+                int(self.canAppHigh.isChecked()),
+                int(self.canSys.isChecked()),
+                int(self.canSysHigh.isChecked()),
+                int(self.canSudo.isChecked()),
+                )
+            pythinux.main(self.base.currentUser,cmd)
+        else:
+            print("A group name is requried.")
+        self.refresh()
+    def remove_group(self, name):
+        pythinux.main(self.base.currentUser,"group remove '{}'".format(name))
+        self.refresh()
         
 class UserSettings(QWidget):
     def __init__(self, base):

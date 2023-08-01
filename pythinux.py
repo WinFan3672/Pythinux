@@ -103,6 +103,7 @@ def fixDirectories(returnMode=False):
         "app",
         "app_high",
         "config",
+        "config/system",
         "home",
         "icon",
         "lib",
@@ -326,7 +327,7 @@ class Base:
 
     def __str__(self):
         """
-        Printing an object will return the object passed
+        Printing an object will return thne object passed
         through pprint_dict(obj_to_dict()).
         """
         return pprint_dict(obj_to_dict(self))
@@ -345,6 +346,11 @@ class Base:
         return len(dir(self))
 
 
+class DataBundle(Base):
+    def add(self,name,value):
+        setattr(self,name,value)
+        
+        
 class SudoError(Exception):
     """
     Generic exception for issues with sudo priveleges.
@@ -427,7 +433,6 @@ class Group(Base):
         self.locked = locked
         self.builtin = builtin
 
-
 class GroupList(Base):
     """
     GroupList class for use in saveGroupList()/loadGroupList().
@@ -446,9 +451,8 @@ class GroupList(Base):
                 locked=True,
                 builtin=True,
             ),
-            Group("god", True, True, True, True, True, True),
+            Group("god", True, True, True, True, True, builtin=True),
         ]
-
     def add(self, group):
         """
         Adds a group to the GroupList.
@@ -456,6 +460,9 @@ class GroupList(Base):
         * group: a Group instance.
         """
         if isinstance(group, Group):
+            for item in self.groups:
+                if item.name == group.name:
+                    self.groups.remove(item)
             self.groups.append(group)
         else:
             raise PythinuxError("Cannot add a non-Group object a GroupList.")
@@ -1069,6 +1076,7 @@ def loadProgramBase(
                 "classes": copy(classes),
                 "settingsApp": copy(settings),
                 "load_library": copy(load_library),
+                "DataBundle":copy(DataBundle),
             }
             if directory in [
                 system_directory,

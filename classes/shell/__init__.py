@@ -227,7 +227,7 @@ class ProgramLoader(QMainWindow):
         self.load_icons()
         
     def init_ui(self):
-        self.setWindowTitle("Program Loader")
+        self.setWindowTitle("Program Manager")
         
         self.menubar = self.menuBar()
         self.fileMenu = QMenu("File")
