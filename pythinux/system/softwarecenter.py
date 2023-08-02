@@ -7,40 +7,152 @@ pkm = pythinux.load_library("pkm",currentUser)
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-class Upgrade(QDialog):
+
+class Manage(QDialog):
     def __init__(self):
         super().__init__()
-        self.layoutBase = QVBoxLayout()  # Define layoutBase
-        self.layout = QVBoxLayout(self.layoutBase)
-        self.setLayout(self.layoutBase)
-        self.init_upgrades()  # Call init_upgrades before init_ui
+        self.base = QVBoxLayout(self)
+        self.setLayout(self.base)
+        self.didInit = False
+        
+        self.init_ui()
+        self.init_list()
+    def init_ui(self):
+        self.layout = QVBoxLayout()
+        self.frame=QFrame()
+        self.frame.setLayout(self.layout)
+        self.base.addWidget(self.frame)
+        self.splitter = QSplitter(Qt.Horizontal)  # Create a horizontal splitter
+
+        self.listBase = QGroupBox("Program List")
+        self.listLayout = QVBoxLayout(self.listBase)
+
+        self.configBase = QGroupBox("Configuration")
+
+        self.splitter.addWidget(self.listBase)
+        self.splitter.addWidget(self.configBase)
+
+        self.splitter.setSizes([1, 1])  # Equal sizes for both widgets
+        self.layout.addWidget(self.splitter)
+        
+        self.refreshButton = QPushButton("Refresh")
+        self.refreshButton.clicked.connect(self.refresh)
+        self.layout.addWidget(self.refreshButton)
+        
+        self.didInit = True
+
+    def init_list(self):
+        self.combo = QComboBox()
+        
+        for item in pkm.list_app():
+            self.combo.addItem(item)
+            
+        self.selectLabel = QLabel("Select Program")
+        self.infoButton = QPushButton("View Program Info")
+        self.removeButton = QPushButton("Remove Program")
+        
+        self.listLayout.addWidget(self.selectLabel)
+        self.listLayout.addWidget(self.combo)
+        self.listLayout.addWidget(self.infoButton)
+        self.listLayout.addWidget(self.removeButton)
+        
+        self.listLayout.addStretch()
+    def clear_layout(self):
+        while self.base.count():
+            item = self.base.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+    def refresh(self):
+        self.clear_layout()
+        self.init_ui()
+        self.init_list()
+class UpdatingScreen(QSplashScreen):
+    def __init__(self):
+        super().__init__()
+
+        self.setFixedSize(400, 300)
+
+        layout = QVBoxLayout()
+        loading = QLabel("Updates are being installed.\nThis may take a while.")
+        layout.addWidget(loading, alignment=Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignLeft)
+
+        self.setLayout(layout)
+        self.centerOnScreen()
+
+    def centerOnScreen(self):
+        screen = QDesktopWidget().screenGeometry()
+        x = (screen.width() - self.width()) // 2
+        y = (screen.height() - self.height()) // 2
+        self.move(x, y)
+class SplashScreen(QSplashScreen):
+    def __init__(self):
+        super().__init__()
+
+        self.setFixedSize(400, 300)
+
+        layout = QVBoxLayout()
+        loading = QLabel("Loading...")
+        layout.addWidget(loading, alignment=Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignLeft)
+
+        self.setLayout(layout)
+
+        pixmap = QPixmap("../img/splash/softwarecenter.png")
+        self.setPixmap(pixmap)
+
+        self.centerOnScreen()
+
+    def centerOnScreen(self):
+        screen = QDesktopWidget().screenGeometry()
+        x = (screen.width() - self.width()) // 2
+        y = (screen.height() - self.height()) // 2
+        self.move(x, y)
+
+class Update(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+        self.init_upgrades()
+        self.init_ui()
 
     def init_ui(self):
-        self.groupbox = QGroupBox()
-        self.scrollArea = QScrollArea(self.groupbox)
-        self.upgradeLayout = QVBoxLayout(self.scrollArea)
-
         self.refreshButton = QPushButton("Reload")
         self.refreshButton.clicked.connect(self.refresh)
         self.loadLabel = QLabel()
-
-        self.layout.addWidget(self.groupbox)
+        if self.upgrades:
+            if len(self.upgrades) == 1:
+                label = QLabel("1 update is ready to be installed.")
+            else:
+                label = QLabel("{} updates are ready to be installed.".format(len(self.upgrades)))
+            button = QPushButton("Install Updates")
+            button.clicked.connect(self.upgrade)
+            self.layout.addWidget(label)
+            self.layout.addWidget(button)
+        else:
+            label = QLabel("No updates to install.")
+            self.layout.addWidget(label)
         self.layout.addStretch()
         self.layout.addWidget(self.refreshButton)
-
-        print(self.upgrades)
-
+    def clear_layout(self):
+        while self.layout.count():
+            item = self.layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+    def upgrade(self):
+        cmd = "pkm upgrade"
+        s = UpdatingScreen()
+        s.show()
+        main(currentUser,"pkm upgrade")
+        s.close()
+        self.refresh()
     def init_upgrades(self):
-        print(1)
         apps = pkm.list_app()
-        print(2)
         infs = pkm.loadPackageInfs()
-        print(3)
-        dbs = pkm.give_dbs(True)
-        print(4)
+        dbs = pkm.give_dbs(True,True)
         self.upgrades = []
         for item in apps:
-            print(item)
             if dbs[item]["version"] > infs[item]["version"]:
                 self.upgrades.append(item)
 
@@ -48,23 +160,9 @@ class Upgrade(QDialog):
         QCoreApplication.processEvents()
 
     def refresh(self):
-        classes.settings.clearLayout(self.layout)  # Make sure you complete this line with the necessary code
+        self.clear_layout()
         self.init_upgrades()
         self.init_ui()
-class Upgrade(QDialog):
-    def __init__(self):
-        super().__init__()
-        self.layout = QVBoxLayout(self)
-        self.init_ui()
-    def init_ui(self):
-        self.group = QGroupBox("Install Updates")
-        self.layout.addWidget(self.group)
-        self.layout.addStretch()
-        self.refreshButton = QPushButton("Reload Page")
-        self.refreshButton.clicked.connect(self.refresh)
-        self.layout.addWidget(self.refreshButton)
-    def refresh(self):
-        pass
 class Databases(QDialog):
     def __init__(self):
         super().__init__()
@@ -126,12 +224,6 @@ class Databases(QDialog):
     def refresh(self):
         classes.settings.clearLayout(self.layout)
         self.init_ui()
-class Home(QDialog):
-    def __init__(self):
-        super().__init__()
-        self.layout = QVBoxLayout(self)
-        self.label = QLabel("Welcome to Software Centre.",alignment = Qt.AlignCenter)
-        self.layout.addWidget(self.label)
 class Tab:
     def __init__(self, name, tab):
         self.name = name
@@ -144,14 +236,15 @@ class SoftwareCenter(QMainWindow):
         self.setWindowIcon(self.icon)
         self.user = currentUser
         self.setWindowTitle("Software Centre")
+        self.setFixedSize(800, 600)
         self.setGeometry(100, 100, 800, 600)
         self.init_tabs()
         self.init_ui()
 
     def init_tabs(self):
         self.tab_items = [
-            Tab("Home", Home),
-            Tab("Upgrade",Upgrade),
+            Tab("Updates",Update),
+            Tab("Manage",Manage),
             Tab("Databases",Databases),
         ]
 
@@ -162,5 +255,8 @@ class SoftwareCenter(QMainWindow):
         self.setCentralWidget(self.tabs)
         for item in self.tab_items:
             tabClass = item.tab()
-            self.tabs.addTab(tabClass, item.name)
+            self.tabs.addTab(tabClass, item.name)    
+splash = SplashScreen()
+splash.show()
 application = SoftwareCenter(currentUser)
+splash.finish(application)

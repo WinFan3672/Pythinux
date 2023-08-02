@@ -124,9 +124,6 @@ class GroupSettings(QWidget):
         self.groupConfig.addWidget(self.newGroupBase)
         self.groupConfig.addStretch()
         self.groupConfig.addWidget(self.refresh_button)
-        
-        self.layout.setStretchFactor(self.groupList, 1)
-        self.layout.setStretchFactor(self.groupConfig, 1)
     def edit_group(self, data):
         class EditGroup(QDialog):
             def __init__(self, data):

@@ -45,6 +45,12 @@ def getIconList(currentUser):
                 "icon":"softwarecenter",
                 "elevate":True,
             },
+            {
+                "name":"Binary Tally",
+                "link":"binc",
+                "icon":"binary-tally",
+                "elevate":False,
+            },
         ]
     z = []
     for item in l:
@@ -177,6 +183,60 @@ class TerminalApp(QMainWindow):
 
     def enable_input(self):
         self.input_field.setEnabled(True)
+class OtherCommandThread(QThread):
+    output_signal = pyqtSignal(str)
+
+    def __init__(self, cmd):
+        super().__init__()
+        self.cmd = cmd
+
+    def run(self):
+        import subprocess
+        result = subprocess.run(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        output = result.stdout + result.stderr
+        self.output_signal.emit(output)
+
+class ShowTerminal(QDialog):
+    def __init__(self, command):
+        super().__init__()
+        self.command = command
+        self.thread = None  # Initialize thread to None
+        self.init_ui()
+
+    def init_ui(self):
+        self.setWindowTitle("Show Terminal")
+        self.setGeometry(100, 100, 800, 600)
+
+        layout = QVBoxLayout(self)
+
+        self.output_area = QTextEdit(self)
+        self.output_area.setReadOnly(True)
+        layout.addWidget(self.output_area)
+
+    def start_execution(self):
+        if self.thread is not None and self.thread.isRunning():
+            return  # Don't start a new thread if one is already running
+
+        cmd = [
+            "python", "-c",
+            f"import os; os.chdir('..'); import pythinux; x = pythinux.main('','{self.command}');print(x if x else '')"
+        ]
+        self.thread = OtherCommandThread(cmd)
+        self.thread.output_signal.connect(self.update_output)
+        self.thread.finished.connect(self.command_finished)
+        self.thread.start()
+
+    def command_finished(self):
+        self.thread.quit()  # Quit the thread
+        self.thread.wait()  # Wait for the thread to finish
+        self.accept()  # Close the dialog
+
+    def update_output(self, output):
+        cursor = self.output_area.textCursor()
+        cursor.movePosition(cursor.End)
+        self.output_area.setTextCursor(cursor)
+        self.output_area.insertPlainText(output + "\n")
+   
 def loadProgram(item, currentUser, manager, needAdmin):
     try:
         i = pythinux.load_program(item, currentUser)
