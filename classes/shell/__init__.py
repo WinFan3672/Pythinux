@@ -39,6 +39,12 @@ def getIconList(currentUser):
                 "icon":"settings",
                 "elevate":True,
             },
+            {
+                "name":"Software Centre",
+                "link":"softwarecenter",
+                "icon":"softwarecenter",
+                "elevate":True,
+            },
         ]
     z = []
     for item in l:
@@ -59,7 +65,15 @@ class WindowManager:
     def __init__(self, user):
         self.windows = []
         self.app = QApplication([])
-        qdarktheme.setup_theme()
+        mode = "dark"
+        color = "#D84727"
+        qdarktheme.setup_theme(
+            custom_colors={
+                "[dark]": {
+                    "primary": color,
+                }
+            }
+        )
         self.user = user
 
     def add_window(self, window):

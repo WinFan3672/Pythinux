@@ -1,7 +1,10 @@
 lst = sorted(list_loadable_programs(currentUser) + ['logoff'])
 exclusions = desktopShell.getIconList(currentUser)
 for item in exclusions:
-    lst.remove(item["link"])
+    try:
+        lst.remove(item["link"])
+    except:
+        pass
 div()
 print("Program List")
 div()
