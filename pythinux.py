@@ -1077,6 +1077,8 @@ def loadProgramBase(
                 "settingsApp": copy(settings),
                 "load_library": copy(load_library),
                 "DataBundle":copy(DataBundle),
+                "serialiseToDict":copy(serialiseToDict),
+                "deserialiseFromDict":copy(deserialiseFromDict),
             }
             if directory in [
                 system_directory,

@@ -114,7 +114,9 @@ def give_dbs(online=False,silent=False,fileName="config/db.pkm"):
     if not silent:
         print("Successfully updated database.")
     return db
-if args == ["version"] or args == ["-v"]:
+if args == ["silent"]:
+    pass
+elif args == ["version"] or args == ["-v"]:
     div()
     print("PKM {}".format(".".join([str(x) for x in VERSION])))
     div()

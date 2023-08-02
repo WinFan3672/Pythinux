@@ -92,6 +92,23 @@ class WindowManager:
 
     def run(self):
         self.app.exec_()
+class CommandThread(QThread):
+    output_signal = pyqtSignal(str)
+
+    def __init__(self, cmd):
+        super().__init__()
+        self.cmd = cmd
+
+    def run(self):
+        process = subprocess.Popen(
+            self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
+        while process.poll() is None:
+            output = process.stdout.readline().strip()
+            if output:
+                self.output_signal.emit(output)
+        self.output_signal.emit("")  # Signal completion
+
 class TerminalApp(QMainWindow):
     def __init__(self, currentUser):
         super().__init__()
@@ -117,27 +134,49 @@ class TerminalApp(QMainWindow):
         layout.addWidget(self.input_field)
 
         self.setCentralWidget(central_widget)
+        self.thread = None  # To keep track of the running thread
 
     def process_command(self):
+        if self.thread is not None and self.thread.isRunning():
+            return  # Don't start a new command while one is already running
+
         user_input = self.input_field.text()
         self.input_field.clear()
         self.cursor.movePosition(self.cursor.End)
         self.output_area.setTextCursor(self.cursor)
         self.output_area.insertPlainText(f"{self.currentUser.group.name}@{self.currentUser.username} ${user_input}\n")
+        
         if user_input.lower() in ['clear', 'cls']:
             # Clear the terminal output
             self.output_area.clear()
-        elif user_input.lower() in ["exit","quit"]:
+        elif user_input.lower() in ["exit", "quit"]:
             self.close()
         else:
             u = pythinux.serialiseToDict(self.currentUser)
             u = pickle.dumps(u)
             u = base64.b64encode(u).decode("ascii")
-            cmd = ["python", "-c", f"import os; os.chdir('..'); import pythinux; x = pythinux.main('{u}','{user_input}');print(x if x else '')"]
-            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            self.cursor.movePosition(self.cursor.End)
-            self.output_area.setTextCursor(self.cursor)
-            self.output_area.insertPlainText(result.stdout.strip()+"\n")
+            cmd = [
+                "python", "-c",
+                f"import os; os.chdir('..'); import pythinux; x = pythinux.main('{u}','{user_input}');print(x if x else '')"
+            ]
+            
+            self.thread = CommandThread(cmd)
+            self.thread.output_signal.connect(self.update_output)
+            self.thread.finished.connect(self.command_finished)
+            self.input_field.setEnabled(False)  # Disable input while command is running
+            self.thread.start()
+
+    def command_finished(self):
+        self.input_field.setEnabled(True)  # Enable input after the command finishes
+        self.input_field.setFocus()  # Move focus back to the input field
+
+    def update_output(self, output):
+        self.cursor.movePosition(self.cursor.End)
+        self.output_area.setTextCursor(self.cursor)
+        self.output_area.insertPlainText(output + "\n")
+
+    def enable_input(self):
+        self.input_field.setEnabled(True)
 def loadProgram(item, currentUser, manager, needAdmin):
     try:
         i = pythinux.load_program(item, currentUser)

@@ -10,6 +10,50 @@ from PyQt5.QtGui import *
 class Upgrade(QDialog):
     def __init__(self):
         super().__init__()
+        self.layoutBase = QVBoxLayout()  # Define layoutBase
+        self.layout = QVBoxLayout(self.layoutBase)
+        self.setLayout(self.layoutBase)
+        self.init_upgrades()  # Call init_upgrades before init_ui
+
+    def init_ui(self):
+        self.groupbox = QGroupBox()
+        self.scrollArea = QScrollArea(self.groupbox)
+        self.upgradeLayout = QVBoxLayout(self.scrollArea)
+
+        self.refreshButton = QPushButton("Reload")
+        self.refreshButton.clicked.connect(self.refresh)
+        self.loadLabel = QLabel()
+
+        self.layout.addWidget(self.groupbox)
+        self.layout.addStretch()
+        self.layout.addWidget(self.refreshButton)
+
+        print(self.upgrades)
+
+    def init_upgrades(self):
+        print(1)
+        apps = pkm.list_app()
+        print(2)
+        infs = pkm.loadPackageInfs()
+        print(3)
+        dbs = pkm.give_dbs(True)
+        print(4)
+        self.upgrades = []
+        for item in apps:
+            print(item)
+            if dbs[item]["version"] > infs[item]["version"]:
+                self.upgrades.append(item)
+
+        # Process pending events to ensure UI updates before continuing
+        QCoreApplication.processEvents()
+
+    def refresh(self):
+        classes.settings.clearLayout(self.layout)  # Make sure you complete this line with the necessary code
+        self.init_upgrades()
+        self.init_ui()
+class Upgrade(QDialog):
+    def __init__(self):
+        super().__init__()
         self.layout = QVBoxLayout(self)
         self.init_ui()
     def init_ui(self):
@@ -20,8 +64,7 @@ class Upgrade(QDialog):
         self.refreshButton.clicked.connect(self.refresh)
         self.layout.addWidget(self.refreshButton)
     def refresh(self):
-        classes.settings.clearLayout(self.layout)
-        self.init_ui()
+        pass
 class Databases(QDialog):
     def __init__(self):
         super().__init__()
