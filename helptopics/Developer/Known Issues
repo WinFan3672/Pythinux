@@ -5,3 +5,4 @@
     - This is an architectural issue that would need an OS rewrite to fix. Because it's not major, I won't fix it.
 * Incrementing the Binary Tally while locking integer overflow causes overflow anyway. 
     - I HAVE NO IDEA WHAT CAUSES THIS ISSUE.
+* The `ssh` command is broken. Of course it is.
