@@ -1,3 +1,7 @@
 # Known Issues
 * Terminal does not show text while the command is running.
+    - This issue has been somewhat resolved.
 * GUI programs cannot access the current window manager, and can only create a new one.
+    - This is an architectural issue that would need an OS rewrite to fix. Because it's not major, I won't fix it.
+* Incrementing the Binary Tally while locking integer overflow causes overflow anyway. 
+    - I HAVE NO IDEA WHAT CAUSES THIS ISSUE.

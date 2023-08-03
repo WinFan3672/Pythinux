@@ -69,10 +69,7 @@ def save_db(db):
     with open("config/pkm3.cfg","wb") as f:
         pickle.dump(db,f)
 def list_app():
-    z = []
-    pkgs = loadPackageInfs()
-    for pkg in pkgs:
-        z.append(pkg)
+    return loadPackageInfs().keys()
     return sorted(z)
 def update_db():
     DB = {

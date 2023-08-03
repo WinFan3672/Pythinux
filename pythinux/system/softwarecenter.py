@@ -17,6 +17,7 @@ class Manage(QDialog):
         
         self.init_ui()
         self.init_list()
+        self.init_config()
     def init_ui(self):
         self.layout = QVBoxLayout()
         self.frame=QFrame()
@@ -40,16 +41,52 @@ class Manage(QDialog):
         self.layout.addWidget(self.refreshButton)
         
         self.didInit = True
-
+    def remove(self):
+        pkg = self.combo.currentText()
+        deps = pkm.findDeps(pkg)
+        if deps:
+            msg = "This package cannot be removed due to certain programs requiring it.\n"
+            msg += "Remove those programs first.\n"
+            msg += "The programs are:\n{}".format("; ".join(deps))
+            m = MessageBox("Error",msg)
+        else:
+            cmd = "pkm remove '{}'".format(pkg)
+            main(currentUser, cmd)
+        self.refresh()
+    def view_info(self):
+        pkginf = pkm.loadPackageInfs()
+        pkgName = self.combo.currentText()
+        pkgDeps = pkm.findDeps(pkgName)
+        pkgDeps = ";".join(pkgDeps) if pkgDeps else "Nothing"
+        pkg = pkginf[pkgName]
+        
+        msg = "Name: {}\n".format(pkg["humanName"])
+        msg += "Author: {}\n".format(pkg["author"])
+        msg += "Version: {}\n".format(".".join(pkg["version"]))
+        msg += "Release Date: {}\n".format(pkg["releaseDate"])
+        msg += "Dependencies: {}\n".format("; ".join(pkg["deps"]) if pkg["deps"] else "None")
+        msg += "Required By: {}\n".format(pkgDeps)
+        msg += "Package Type: {}\n".format('Binary' if bool(pkg["binary"]) else 'Library')
+        
+        m = MessageBox("Package Info",msg)
+    def configOptions(self):
+        if self.checkClear.isChecked():
+            cmd = "pkm clear"
+            main(currentUser,cmd)
+        self.refresh()
     def init_list(self):
         self.combo = QComboBox()
         
         for item in pkm.list_app():
             self.combo.addItem(item)
-            
+        enabled = bool(pkm.list_app())
         self.selectLabel = QLabel("Select Program")
         self.infoButton = QPushButton("View Program Info")
         self.removeButton = QPushButton("Remove Program")
+        self.removeButton.clicked.connect(self.remove)
+        self.infoButton.clicked.connect(self.view_info)
+        self.infoButton.setEnabled(enabled)
+        self.removeButton.setEnabled(enabled)
         
         self.listLayout.addWidget(self.selectLabel)
         self.listLayout.addWidget(self.combo)
@@ -57,6 +94,17 @@ class Manage(QDialog):
         self.listLayout.addWidget(self.removeButton)
         
         self.listLayout.addStretch()
+    def init_config(self):
+        self.configLayout = QVBoxLayout()
+        self.configBase.setLayout(self.configLayout)
+        
+        self.checkClear = QCheckBox("Remove all programs")
+        self.confirmButton = QPushButton("Confirm")
+        self.confirmButton.clicked.connect(self.configOptions)
+        
+        self.configLayout.addWidget(self.checkClear)
+        self.configLayout.addWidget(self.confirmButton)
+        self.configLayout.addStretch()
     def clear_layout(self):
         while self.base.count():
             item = self.base.takeAt(0)
@@ -67,6 +115,7 @@ class Manage(QDialog):
         self.clear_layout()
         self.init_ui()
         self.init_list()
+        self.init_config()
 class UpdatingScreen(QSplashScreen):
     def __init__(self):
         super().__init__()
@@ -166,28 +215,33 @@ class Update(QDialog):
 class Databases(QDialog):
     def __init__(self):
         super().__init__()
-        self.layout = QHBoxLayout(self)
+        self.layout = QVBoxLayout(self)
         self.init_ui()
-    def init_ui(self):
-        self.dbListBase= QGroupBox("Databases")
-        self.frame = QFrame()
-        self.configBatch = QVBoxLayout()
-        self.frame.setLayout(self.configBatch)
-        self.configBase = QGroupBox("Create Database")
         
+    def init_ui(self):
+        self.splitter = QSplitter(Qt.Horizontal)
+        
+        self.dbListBase = QGroupBox("Databases")
+        self.configBatch = QVBoxLayout()
+        self.configBase = QGroupBox("Create Database")
         
         self.dbList = QVBoxLayout(self.dbListBase)
         self.config = QVBoxLayout(self.configBase)
         
-        self.layout.addWidget(self.dbListBase)
-        self.configBatch.addWidget(self.configBase)
-        self.layout.addWidget(self.frame)
+        self.splitter.addWidget(self.dbListBase)
+        self.splitter.addWidget(self.configBase)
+        
+        self.layout.addWidget(self.splitter)
+        
+        self.frame = QFrame()
+        self.configBatch = QVBoxLayout()
+        self.frame.setLayout(self.configBatch)
         
         for item in pkm.update_db():
             box = QGroupBox(item)
             lay = QVBoxLayout(box)
             button = QPushButton("Remove")
-            button.clicked.connect(lambda _,item=item: self.remove(item))
+            button.clicked.connect(lambda _, item=item: self.remove(item))
             lay.addWidget(button)
             self.dbList.addWidget(box)
         self.dbList.addStretch()
@@ -204,16 +258,19 @@ class Databases(QDialog):
         self.config.addWidget(self.urlLabel)
         self.config.addWidget(self.urlInput)
         self.config.addWidget(self.button)
+        self.config.addStretch()
         
         self.configBatch.addStretch()
         self.refreshButton = QPushButton("Refresh")
         self.refreshButton.clicked.connect(self.refresh)
         self.configBatch.addWidget(self.refreshButton)
+        
     def remove(self, item):
         db = pkm.update_db()
         db.pop(item)
         pkm.save_db(db)
         self.refresh()
+        
     def add_database(self):
         name, url = self.nameInput.text(), self.urlInput.text()
         if name and url:
@@ -221,9 +278,12 @@ class Databases(QDialog):
             db[name] = url
             pkm.save_db(db)
         self.refresh()
+        
     def refresh(self):
-        classes.settings.clearLayout(self.layout)
+        self.layout.removeWidget(self.splitter)
+        sip.delete(self.splitter)  # Delete the splitter to clear its memory
         self.init_ui()
+
 class Tab:
     def __init__(self, name, tab):
         self.name = name

@@ -30,8 +30,8 @@ var = {}
 
 
 class MessageBox(QDialog):
-    def __init__(self, title, message):
-        super().__init__()
+    def __init__(self, title, message, parent=None):
+        super().__init__(parent)
         self.title = title
         self.message = message
         self.initUI()
@@ -40,18 +40,18 @@ class MessageBox(QDialog):
         self.setWindowTitle(self.title)
         self.setGeometry(100, 100, 300, 150)
 
-        title_label = QLabel(self.title)
         message_label = QLabel(self.message)
 
         ok_button = QPushButton("OK")
         ok_button.clicked.connect(self.accept)
 
         layout = QVBoxLayout()
-        layout.addWidget(title_label)
         layout.addWidget(message_label)
         layout.addWidget(ok_button)
 
         self.setLayout(layout)
+
+        self.exec_()
 
 
 class PythinuxError(Exception):
@@ -319,7 +319,7 @@ def doCalc(text):
 class Base:
     """
     Base class used by all classes.
-    This class is used as a base for other classes exclusively,
+    This class is used as afbase for other classes exclusively,
     and is not called directly.
     """
 
@@ -1079,6 +1079,7 @@ def loadProgramBase(
                 "DataBundle":copy(DataBundle),
                 "serialiseToDict":copy(serialiseToDict),
                 "deserialiseFromDict":copy(deserialiseFromDict),
+                "MessageBox":copy(MessageBox),
             }
             if directory in [
                 system_directory,
@@ -1206,13 +1207,11 @@ def loadAL():
         return
 
 
-def cls():
+def cls(block=True):
     """
-    Old function. Used to clear the terminal.
-    Now that the terminal is no longer used (just emulated),
-    it is blocked from running.
+    This function is only used by the cls command, 
+    and is unused in the GUI.
     """
-    block = True
     res = platform.uname()
     if not block:
         os.system("cls" if res[0] == "Windows" else "clear")
@@ -1316,7 +1315,15 @@ def init(user):
     """
     Init function. Runs the  'initd --init' command.
     """
-    shell.startShell(user)
+    with open("home/{}/init.d".format(user.username)) as f:
+        g = [x.strip() for x in f.readlines()]
+    for i in g:
+        if i == "desktop":
+            shell.startShell(user)
+        elif i == "terminal":
+            terminal(user)
+        else:
+            main(user,i)
 
 
 def saveUserList(userList):
@@ -1558,6 +1565,14 @@ def setupWizardBase(username, password, autoLogin):
         saveAL(username)
         cls()
 
+def terminal(currentUser):
+    while True:
+        ch = input("{}@{} $".format(currentUser.group.name, currentUser.username))
+        if ch in ["quit","exit"]:
+            sys.exit()
+        else:
+            main(currentUser,ch,shell="terminal_tty")
+
 
 def setupWizard():
     app = QApplication(sys.argv)
@@ -1577,6 +1592,10 @@ def setupWizard():
     login_button.clicked.connect(app.quit)
 
     checkbox = QCheckBox("Enable Automatic Login")
+    
+    combobox = QComboBox()
+    combobox.addItem("Graphical User Interface")
+    combobox.addItem("Command-Line Only")
 
     layout = QGridLayout()
     layout.addWidget(username_label, 0, 0)
@@ -1584,7 +1603,8 @@ def setupWizard():
     layout.addWidget(password_label, 1, 0)
     layout.addWidget(password_input, 1, 1)
     layout.addWidget(checkbox, 2, 1)
-    layout.addWidget(login_button, 3, 1)
+    layout.addWidget(combobox,3,1)
+    layout.addWidget(login_button, 4, 1)
 
     window.setLayout(layout)
     window.show()
