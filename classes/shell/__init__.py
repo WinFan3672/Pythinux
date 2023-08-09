@@ -51,6 +51,18 @@ def getIconList(currentUser):
                 "icon":"binary-tally",
                 "elevate":False,
             },
+            {
+                "name":"Web Browser",
+                "link":"webbrowser",
+                "icon":"browser",
+                "elevate":False,
+            },
+            {
+                "name":"Blackjack",
+                "link":"blackjack",
+                "icon":"crown",
+                "elevate":False,
+            },
         ]
     z = []
     for item in l:
