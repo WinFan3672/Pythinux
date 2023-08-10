@@ -13,6 +13,7 @@ class Application(QMainWindow):
         super().__init__()
         self.base = QVBoxLayout()
         self.init_ui()
+        self.setWindowTitle("Currencies")
     def init_ui(self):
         self.c = CurrencyRates()
         self.central = QWidget()
@@ -35,7 +36,7 @@ class Application(QMainWindow):
             self.toBox.addItem(item)
             
         self.fromBox.setCurrentText("USD")
-        self.toBox.setCurrentText("JPY")
+        self.toBox.setCurrentText("GBP")
         
         self.button = QPushButton("Convert")
         self.button.clicked.connect(self.convert)

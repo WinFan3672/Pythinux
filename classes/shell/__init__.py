@@ -70,7 +70,7 @@ def getIconList(currentUser):
                 "elevate":False,
             },
             {
-                "name":"Currency Converter",
+                "name":"Currencies",
                 "link":"currencies",
                 "icon":"coinbag",
                 "elevate":False,

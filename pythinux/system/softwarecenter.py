@@ -141,7 +141,8 @@ class SplashScreen(QSplashScreen):
         self.setFixedSize(400, 300)
 
         layout = QVBoxLayout()
-        loading = QLabel("Loading...")
+        loading = QLabel("Loading Software Centre...")
+        loading.setStyleSheet('background-color: #000000; color: white;')
         layout.addWidget(loading, alignment=Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignLeft)
 
         self.setLayout(layout)
