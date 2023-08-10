@@ -15,3 +15,5 @@ urllib.request
 *.kate-swp
 classes/shell/os
 pkm.db.cfg
+os
+time
