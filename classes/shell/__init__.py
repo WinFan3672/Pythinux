@@ -66,7 +66,7 @@ def getIconList(currentUser):
             {
                 "name":"Calculator",
                 "link":"calculator",
-                "icon":"grid",
+                "icon":"calculator",
                 "elevate":False,
             },
             {
