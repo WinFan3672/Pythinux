@@ -63,6 +63,18 @@ def getIconList(currentUser):
                 "icon":"crown",
                 "elevate":False,
             },
+            {
+                "name":"Calculator",
+                "link":"calculator",
+                "icon":"grid",
+                "elevate":False,
+            },
+            {
+                "name":"Currency Converter",
+                "link":"currencies",
+                "icon":False,
+                "elevate":False,
+            },
         ]
     z = []
     for item in l:

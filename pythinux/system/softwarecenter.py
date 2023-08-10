@@ -264,7 +264,13 @@ class Databases(QDialog):
         self.refreshButton = QPushButton("Refresh")
         self.refreshButton.clicked.connect(self.refresh)
         self.configBatch.addWidget(self.refreshButton)
-        
+    def clear_layout(self):
+        while self.layout.count():
+            item = self.layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+    
     def remove(self, item):
         db = pkm.update_db()
         db.pop(item)
@@ -280,8 +286,7 @@ class Databases(QDialog):
         self.refresh()
         
     def refresh(self):
-        self.layout.removeWidget(self.splitter)
-        sip.delete(self.splitter)  # Delete the splitter to clear its memory
+        self.clear_layout()
         self.init_ui()
 
 class Tab:
