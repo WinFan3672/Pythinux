@@ -1,10 +1,13 @@
 import sys
 import requests
 import markdown
+import pickle
+import toml
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 
 global http_status_codes
 http_status_codes = {
@@ -70,26 +73,38 @@ http_status_codes = {
     511: "Network Authentication Required"
 }
 
-
+def clearLayout(layout):
+    while layout.count():
+        widget = layout.takeAt(0)
+        if widget:
+            widget.widget().deleteLater()
 class WebBrowser(QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.history = []  # List to store navigation history
         self.current_index = -1  # Index of the currently displayed page in the history
+        self.baseLayout = QVBoxLayout()
+        self.http_status_codes = http_status_codes
         
         self.init_ui()
 
     def init_ui(self):
         self.setGeometry(100, 100, 800, 600)
 
-        layout = QVBoxLayout()
+        
+        self.toolbar = QToolBar()
+        self.bookmarks = QToolBar()
+        
+        self.baseLayout.addWidget(self.toolbar)
+        self.baseLayout.addWidget(self.bookmarks)
 
         address_bar_container = QWidget()
         address_bar_layout = QHBoxLayout()
-        
-        self.http_status_codes = http_status_codes
-        
+
+        self.icon = QIcon("../img/browser.svg")
+        self.setWindowIcon(self.icon)
+
         self.url_input = QLineEdit()
         self.url_input.setPlaceholderText("Enter URL and press Enter")
         self.url_input.returnPressed.connect(self.load_url)
@@ -100,19 +115,17 @@ class WebBrowser(QMainWindow):
         address_bar_layout.addWidget(self.go_button)
 
         address_bar_container.setLayout(address_bar_layout)
-        layout.addWidget(address_bar_container)
+        self.baseLayout.addWidget(address_bar_container)
 
         self.text_browser = QTextBrowser()
         self.text_browser.setOpenExternalLinks(False)
         self.text_browser.anchorClicked.connect(self.handle_link_click)
-        layout.addWidget(self.text_browser)
+        self.baseLayout.addWidget(self.text_browser)
+
 
         container = QWidget()
-        container.setLayout(layout)
+        container.setLayout(self.baseLayout)
         self.setCentralWidget(container)
-
-        self.toolbar = QToolBar()
-        self.addToolBar(self.toolbar)
 
         back_action = QAction("Back", self)
         back_action.triggered.connect(self.browser_back)
@@ -125,12 +138,63 @@ class WebBrowser(QMainWindow):
         refresh_action = QAction("Refresh", self)
         refresh_action.triggered.connect(self.browser_refresh)
         self.toolbar.addAction(refresh_action)
+        
+        bookmark_action = QAction("Bookmark", self)
+        bookmark_action.triggered.connect(self.bookmark_page)
+        self.toolbar.addAction(bookmark_action)
 
         self.url_input.setText("about:home")
         self.load_url()
 
         self.text_browser.viewport().installEventFilter(self)
         self.text_browser.setTextInteractionFlags(Qt.LinksAccessibleByMouse | Qt.LinksAccessibleByKeyboard)
+        
+        self.loadSettings()
+        
+        b = self.load_bookmarks()
+        for item in b:
+            action = QAction(item, self)
+            funct = lambda _, bookmark=b[item]: self.loadPage(bookmark)
+            action.triggered.connect(funct)
+            self.bookmarks.addAction(action)
+    def reload(self):
+        clearLayout(self.baseLayout)
+        self.init_ui()
+    def load_bookmarks(self):
+        return self.settings["bookmarks"]
+    def bookmark_page(self):
+        url = self.url_input.text()
+        b = self.load_bookmarks()
+        b[url] = url
+        self.save_bookmarks(b)
+        self.reload()
+    def save_bookmarks(self, bookmarks):
+        self.settings["bookmarks"] = bookmarks
+        self.saveSettings()
+    def loadPage(self, url):
+        self.url_input.setText(url)
+        self.load_url()
+    def loadSettings(self):
+        Default = {
+            "init": {
+                "useragent":"",
+                "bookmarksbar":True,
+                },
+            "bookmarks":{
+                "Home":"about:home",
+                "info.cern.ch":"info.cern.ch",
+                },
+            }
+        try:
+            with open("config/system/webbrowser.toml") as f:
+                g = pickle.load(f)
+                self.settings = toml.loads(g)
+        except:
+            self.settings = Default
+        self.saveSettings()
+    def saveSettings(self):
+        with open("config/system/webbrowser.toml","w") as f:
+            toml.dump(self.settings,f)
     def generate_error_page(self, status_code, exception_message=None):
         error_message = self.http_status_codes.get(status_code, "")
         error_page = f"""
