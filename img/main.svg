@@ -44,12 +44,12 @@
      class="clr-i-outline clr-i-outline-path-2"
      d="M18,26.16a1,1,0,0,1-.43-.1L2.57,19a1,1,0,1,1,.85-1.81L18,24.06l14.57-6.89A1,1,0,1,1,33.43,19l-15,7.09A1,1,0,0,1,18,26.16Z"
      id="path6"
-     style="fill:#00ff00" />
+     style="fill:#00aa00" />
   <path
      class="clr-i-outline clr-i-outline-path-3"
      d="M18,32.07a1,1,0,0,1-.43-.1l-15-7.09a1,1,0,0,1,.85-1.81L18,30l14.57-6.89a1,1,0,1,1,.85,1.81L18.43,32A1,1,0,0,1,18,32.07Z"
      id="path8"
-     style="fill:#00ffff" />
+     style="fill:#0055d4" />
   <rect
      x="0"
      y="0"

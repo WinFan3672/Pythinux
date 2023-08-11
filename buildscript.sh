@@ -30,8 +30,6 @@ clean() {
 curr = $(date +%s)
 touch .working
 echo BUILD START.
-echo RESET INSTALLATION
-python resetinstall.py
 echo CLEANING UP INSTALLATION [PASS 1/2]
 clean
 echo GENERATE PYDOC
