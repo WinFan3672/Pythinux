@@ -3,6 +3,7 @@ import requests
 import markdown
 import pickle
 import toml
+import traceback
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from PyQt5.QtWidgets import *
@@ -90,6 +91,7 @@ class WebBrowser(QMainWindow):
         self.init_ui()
 
     def init_ui(self):
+        self.loadSettings()
         self.setGeometry(100, 100, 800, 600)
 
         
@@ -97,7 +99,8 @@ class WebBrowser(QMainWindow):
         self.bookmarks = QToolBar()
         
         self.baseLayout.addWidget(self.toolbar)
-        self.baseLayout.addWidget(self.bookmarks)
+        if self.settings["init"]["bookmarksbar"]:
+            self.baseLayout.addWidget(self.bookmarks)
 
         address_bar_container = QWidget()
         address_bar_layout = QHBoxLayout()
@@ -141,7 +144,7 @@ class WebBrowser(QMainWindow):
         
         bookmark_action = QAction("Bookmark", self)
         bookmark_action.triggered.connect(self.bookmark_page)
-        self.toolbar.addAction(bookmark_action)
+        # self.toolbar.addAction(bookmark_action)
 
         self.url_input.setText("about:home")
         self.load_url()
@@ -149,7 +152,6 @@ class WebBrowser(QMainWindow):
         self.text_browser.viewport().installEventFilter(self)
         self.text_browser.setTextInteractionFlags(Qt.LinksAccessibleByMouse | Qt.LinksAccessibleByKeyboard)
         
-        self.loadSettings()
         
         b = self.load_bookmarks()
         for item in b:
@@ -177,7 +179,7 @@ class WebBrowser(QMainWindow):
     def loadSettings(self):
         Default = {
             "init": {
-                "useragent":"",
+                "useragent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
                 "bookmarksbar":True,
                 },
             "bookmarks":{
@@ -187,9 +189,9 @@ class WebBrowser(QMainWindow):
             }
         try:
             with open("config/system/webbrowser.toml") as f:
-                g = pickle.load(f)
-                self.settings = toml.loads(g)
+                self.settings = toml.load(f)
         except:
+            print(traceback.format_exc())
             self.settings = Default
         self.saveSettings()
     def saveSettings(self):
@@ -224,7 +226,7 @@ class WebBrowser(QMainWindow):
         else:
             try:
                 headers = {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
+                    'User-Agent': self.settings["init"]["useragent"]
                 }
                 response = requests.get(url, headers=headers)
                 if response.status_code == 200:

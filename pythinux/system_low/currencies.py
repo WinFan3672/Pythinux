@@ -14,6 +14,8 @@ class Application(QMainWindow):
         self.base = QVBoxLayout()
         self.init_ui()
         self.setWindowTitle("Currencies")
+        self.icon = QIcon("../img/coinbag.svg")
+        self.setWindowIcon(self.icon)
     def init_ui(self):
         self.c = CurrencyRates()
         self.central = QWidget()

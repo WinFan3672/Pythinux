@@ -1,7 +1,10 @@
 #!/usr/bin/python
 import sys
 import random
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout
+
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 
 # Define card-related constants
 suits = ('H', 'D', 'C', 'S')
@@ -48,7 +51,9 @@ class BlackjackApp(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Blackjack")
-
+        self.icon = QIcon("../img/crown.svg")
+        self.setWindowIcon(self.icon)
+        
         self.init_ui()
 
     def init_ui(self):

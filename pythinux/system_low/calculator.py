@@ -35,6 +35,8 @@ class Calculator(QMainWindow):
         super().__init__()
         self.init_ui()
         self.setWindowTitle("Calculator")
+        self.icon = QIcon("../img/calculator.svg")
+        self.setWindowIcon(self.icon)
         w, h = self.width(), self.height()
 
     def init_ui(self):
