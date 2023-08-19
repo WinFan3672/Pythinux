@@ -347,10 +347,10 @@ class Base:
 
 
 class DataBundle(Base):
-    def add(self,name,value):
-        setattr(self,name,value)
-        
-        
+    def add(self, name, value):
+        setattr(self, name, value)
+
+
 class SudoError(Exception):
     """
     Generic exception for issues with sudo priveleges.
@@ -433,6 +433,7 @@ class Group(Base):
         self.locked = locked
         self.builtin = builtin
 
+
 class GroupList(Base):
     """
     GroupList class for use in saveGroupList()/loadGroupList().
@@ -453,6 +454,7 @@ class GroupList(Base):
             ),
             Group("god", True, True, True, True, True, builtin=True),
         ]
+
     def add(self, group):
         """
         Adds a group to the GroupList.
@@ -1076,10 +1078,10 @@ def loadProgramBase(
                 "classes": copy(classes),
                 "settingsApp": copy(settings),
                 "load_library": copy(load_library),
-                "DataBundle":copy(DataBundle),
-                "serialiseToDict":copy(serialiseToDict),
-                "deserialiseFromDict":copy(deserialiseFromDict),
-                "MessageBox":copy(MessageBox),
+                "DataBundle": copy(DataBundle),
+                "serialiseToDict": copy(serialiseToDict),
+                "deserialiseFromDict": copy(deserialiseFromDict),
+                "MessageBox": copy(MessageBox),
             }
             if directory in [
                 system_directory,
@@ -1209,7 +1211,7 @@ def loadAL():
 
 def cls(block=True):
     """
-    This function is only used by the cls command, 
+    This function is only used by the cls command,
     and is unused in the GUI.
     """
     res = platform.uname()
@@ -1323,7 +1325,7 @@ def init(user):
         elif i == "terminal":
             terminal(user)
         else:
-            main(user,i)
+            main(user, i)
 
 
 def saveUserList(userList):
@@ -1565,13 +1567,16 @@ def setupWizardBase(username, password, autoLogin):
         saveAL(username)
         cls()
 
+
 def terminal(currentUser):
     while True:
-        ch = input("{}@{} $".format(currentUser.group.name, currentUser.username))
-        if ch in ["quit","exit"]:
+        ch = input(
+            "{}@{} $".format(currentUser.group.name, currentUser.username)
+        )
+        if ch in ["quit", "exit"]:
             sys.exit()
         else:
-            main(currentUser,ch,shell="terminal_tty")
+            main(currentUser, ch, shell="terminal_tty")
 
 
 def setupWizard():
@@ -1592,7 +1597,7 @@ def setupWizard():
     login_button.clicked.connect(app.quit)
 
     checkbox = QCheckBox("Enable Automatic Login")
-    
+
     combobox = QComboBox()
     combobox.addItem("Graphical User Interface")
     combobox.addItem("Command-Line Only")
@@ -1603,7 +1608,7 @@ def setupWizard():
     layout.addWidget(password_label, 1, 0)
     layout.addWidget(password_input, 1, 1)
     layout.addWidget(checkbox, 2, 1)
-    layout.addWidget(combobox,3,1)
+    layout.addWidget(combobox, 3, 1)
     layout.addWidget(login_button, 4, 1)
 
     window.setLayout(layout)

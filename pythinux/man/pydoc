@@ -12,6 +12,7 @@ CLASSES
         SudoError
     builtins.object
         Base
+            DataBundle
             Group
             GroupList
             User
@@ -23,7 +24,7 @@ CLASSES
     
     class Base(builtins.object)
      |  Base class used by all classes.
-     |  This class is used as a base for other classes exclusively,
+     |  This class is used as afbase for other classes exclusively,
      |  and is not called directly.
      |  
      |  Methods defined here:
@@ -36,7 +37,7 @@ CLASSES
      |      Runing len() for a Base object returns the amount of attributes it has.
      |  
      |  __str__(self)
-     |      Printing an object will return the object passed
+     |      Printing an object will return thne object passed
      |      through pprint_dict(obj_to_dict()).
      |  
      |  ----------------------------------------------------------------------
@@ -72,6 +73,42 @@ CLASSES
      |  __class__ = <class 'type'>
      |      type(object) -> the object's type
      |      type(name, bases, dict, **kwds) -> a new type
+    
+    class DataBundle(Base)
+     |  Method resolution order:
+     |      DataBundle
+     |      Base
+     |      builtins.object
+     |  
+     |  Methods defined here:
+     |  
+     |  add(self, name, value)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from Base:
+     |  
+     |  __iter__(self)
+     |      Iterating through a Base object iterates through the keys and not the
+     |      values.
+     |  
+     |  __len__(self)
+     |      Runing len() for a Base object returns the amount of attributes it has.
+     |  
+     |  __str__(self)
+     |      Printing an object will return thne object passed
+     |      through pprint_dict(obj_to_dict()).
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Base:
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
     
     class FileError(builtins.Exception)
      |  FileError(text)
@@ -225,11 +262,6 @@ CLASSES
      |      dictionary for instance variables (if defined)
      |  
      |  ----------------------------------------------------------------------
-     |  Data and other attributes defined here:
-     |  
-     |  __slotnames__ = []
-     |  
-     |  ----------------------------------------------------------------------
      |  Methods inherited from Base:
      |  
      |  __iter__(self)
@@ -240,7 +272,7 @@ CLASSES
      |      Runing len() for a Base object returns the amount of attributes it has.
      |  
      |  __str__(self)
-     |      Printing an object will return the object passed
+     |      Printing an object will return thne object passed
      |      through pprint_dict(obj_to_dict()).
      |  
      |  ----------------------------------------------------------------------
@@ -285,11 +317,6 @@ CLASSES
      |      dictionary for instance variables (if defined)
      |  
      |  ----------------------------------------------------------------------
-     |  Data and other attributes defined here:
-     |  
-     |  __slotnames__ = []
-     |  
-     |  ----------------------------------------------------------------------
      |  Methods inherited from Base:
      |  
      |  __iter__(self)
@@ -297,7 +324,7 @@ CLASSES
      |      values.
      |  
      |  __str__(self)
-     |      Printing an object will return the object passed
+     |      Printing an object will return thne object passed
      |      through pprint_dict(obj_to_dict()).
      |  
      |  ----------------------------------------------------------------------
@@ -319,7 +346,7 @@ CLASSES
      |      list of weak references to the object (if defined)
     
     class MessageBox(PyQt5.QtWidgets.QDialog)
-     |  MessageBox(title, message)
+     |  MessageBox(title, message, parent=None)
      |  
      |  Method resolution order:
      |      MessageBox
@@ -333,7 +360,7 @@ CLASSES
      |  
      |  Methods defined here:
      |  
-     |  __init__(self, title, message)
+     |  __init__(self, title, message, parent=None)
      |      Initialize self.  See help(type(self)) for accurate signature.
      |  
      |  initUI(self)
@@ -1574,7 +1601,7 @@ CLASSES
      |  args
     
     class User(Base)
-     |  User(group, username, password='42237fba190c3e59602d8ff848a963c791b3bed0d58c1b4220ca19380f5c1560bd605bebd1e4a24968ce1f7123e909ba', hidden=False)
+     |  User(group, username, password='62b85de2f408cdbd541871ed94354cf94b5f3f42afae5f11d676074593ff7777dacf104c9453db2b3b267df7d167f3c7', hidden=False)
      |  
      |  User class used by Pythinux.
      |  See __init__() for how to create User objects properly.
@@ -1589,7 +1616,7 @@ CLASSES
      |  USERTYPE(self)
      |      Returns the name of the user's group.
      |  
-     |  __init__(self, group, username, password='42237fba190c3e59602d8ff848a963c791b3bed0d58c1b4220ca19380f5c1560bd605bebd1e4a24968ce1f7123e909ba', hidden=False)
+     |  __init__(self, group, username, password='62b85de2f408cdbd541871ed94354cf94b5f3f42afae5f11d676074593ff7777dacf104c9453db2b3b267df7d167f3c7', hidden=False)
      |      Constructor for User class.
      |      Args:
      |          group: a Group object.
@@ -1604,7 +1631,7 @@ CLASSES
      |      Returns whether or not the user's level is 2 or higher,
      |      indicating a root user.
      |  
-     |  check(self, username, password='6909a05e8d73b255d34291122a249f5c263731fe3a85438f2caf51495819ff77b062d54fb35775ca6047220059c222fc')
+     |  check(self, username, password='c93b84c33705b68d1e609a630b1853597f95b46748395a4db7ab625704b5a53f750089e4b3e256cba5e54ba4f7240884')
      |      Function for checking whether a User class and passed details match.
      |      Args:
      |          username: string
@@ -1624,11 +1651,6 @@ CLASSES
      |      dictionary for instance variables (if defined)
      |  
      |  ----------------------------------------------------------------------
-     |  Data and other attributes defined here:
-     |  
-     |  __slotnames__ = []
-     |  
-     |  ----------------------------------------------------------------------
      |  Methods inherited from Base:
      |  
      |  __iter__(self)
@@ -1639,7 +1661,7 @@ CLASSES
      |      Runing len() for a Base object returns the amount of attributes it has.
      |  
      |  __str__(self)
-     |      Printing an object will return the object passed
+     |      Printing an object will return thne object passed
      |      through pprint_dict(obj_to_dict()).
      |  
      |  ----------------------------------------------------------------------
@@ -1682,11 +1704,6 @@ CLASSES
      |      dictionary for instance variables (if defined)
      |  
      |  ----------------------------------------------------------------------
-     |  Data and other attributes defined here:
-     |  
-     |  __slotnames__ = []
-     |  
-     |  ----------------------------------------------------------------------
      |  Methods inherited from Base:
      |  
      |  __iter__(self)
@@ -1694,7 +1711,7 @@ CLASSES
      |      values.
      |  
      |  __str__(self)
-     |      Printing an object will return the object passed
+     |      Printing an object will return thne object passed
      |      through pprint_dict(obj_to_dict()).
      |  
      |  ----------------------------------------------------------------------
@@ -1781,10 +1798,9 @@ FUNCTIONS
         Clears the contents of the tmp/ directory in the
         Pythinux install directory.
     
-    cls()
-        Old function. Used to clear the terminal.
-        Now that the terminal is no longer used (just emulated),
-        it is blocked from running.
+    cls(block=True)
+        This function is only used by the cls command, 
+        and is unused in the GUI.
     
     copy(obj)
         See python's copy.deepcopy(). It's the same thing.
@@ -2044,6 +2060,8 @@ FUNCTIONS
     
     sudoPrompt()
     
+    terminal(currentUser)
+    
     verifyHash(plaintext, saltedHashString)
         Verifies a hash.
         Args:
@@ -2053,11 +2071,11 @@ FUNCTIONS
 
 DATA
     QWIDGETSIZE_MAX = 16777215
-    aliases = {}
-    cdir = '/home/winfan3672/Documents/GitHub/Pythinux/pythinux'
+    aliases = {'?': 'help', 'ab': 'about', 'al': 'alias list', 'all': 'pkm...
+    cdir = '/home/winfan3672/Documents/GitHub/Pythinux-CodeBerg/pythinux'
     groupList = <pythinux.GroupList object>
     osName = 'Pythinux'
-    pdir = ['Base', 'CompileOS', 'CurrentProgram', 'FileError', 'Fuse', 'G...
+    pdir = ['Base', 'CompileOS', 'CurrentProgram', 'DataBundle', 'FileErro...
     qApp = <PyQt5.QtWidgets.QApplication object>
     userList = <pythinux.UserList object>
     var = {}
